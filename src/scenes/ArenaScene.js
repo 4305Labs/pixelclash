@@ -35,6 +35,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.sprites = new Map(); // player id -> Player display object
     this.bolts = new Map(); // projectile id -> circle
     this.minionSprites = new Map(); // minion id -> Minion display object
+    this.pickupSprites = new Map(); // pickup id -> sprite
     this.towerSprites = new Map(); // team -> Tower display object
     this.baseSprites = new Map(); // team -> Base display object
     this.damageNumbers = []; // active floating damage-number texts
@@ -242,6 +243,7 @@ export default class ArenaScene extends Phaser.Scene {
     // 2) Sync everything to the server's snapshot.
     this.syncBases();
     this.syncTowers();
+    this.syncPickups();
     this.syncMinions();
     this.syncPlayers(dt);
     this.syncProjectiles();
@@ -402,6 +404,7 @@ export default class ArenaScene extends Phaser.Scene {
 
       sprite.setHp(p.hp);
       sprite.setAlive(p.alive);
+      sprite.setPowered(p.powered);
     }
     for (const [id, sprite] of this.sprites) {
       if (!seen.has(id)) {
@@ -481,6 +484,35 @@ export default class ArenaScene extends Phaser.Scene {
       sprite.lastAlive = tw.alive;
       sprite.setHp(tw.hp, tw.maxHp);
       sprite.setAlive(tw.alive);
+    }
+  }
+
+  // Draw the available map pickups (the snapshot lists only active ones), with
+  // a gentle pulse. A pickup that's been grabbed drops out of the list and its
+  // sprite is removed.
+  syncPickups() {
+    const seen = new Set();
+    for (const pk of this.net.pickups) {
+      seen.add(pk.id);
+      if (!this.pickupSprites.has(pk.id)) {
+        const tex = pk.kind === "heal" ? "pickup_heal" : "pickup_power";
+        const sprite = this.add.sprite(pk.x, pk.y, tex).setDepth(5);
+        this.tweens.add({
+          targets: sprite,
+          scale: 1.18,
+          yoyo: true,
+          repeat: -1,
+          duration: 600,
+          ease: "Sine.inOut",
+        });
+        this.pickupSprites.set(pk.id, sprite);
+      }
+    }
+    for (const [id, sprite] of this.pickupSprites) {
+      if (!seen.has(id)) {
+        sprite.destroy();
+        this.pickupSprites.delete(id);
+      }
     }
   }
 

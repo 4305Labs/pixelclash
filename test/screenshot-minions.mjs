@@ -14,8 +14,12 @@ await page.evaluate(() => {
     winner: null,
     score: { blue: 2, red: 1 },
     players: [
-      { id: "p1", team: "blue", x: 330, y: 300, hp: 100, alive: true },
+      { id: "p1", team: "blue", x: 330, y: 300, hp: 100, alive: true, powered: true },
       { id: "p2", team: "red", x: 470, y: 240, hp: 70, alive: true },
+    ],
+    pickups: [
+      { id: "heal_top", kind: "heal", x: 400, y: 60 },
+      { id: "heal_bot", kind: "heal", x: 400, y: 540 },
     ],
     projectiles: [
       { id: "b1", team: "blue", kind: "basic", x: 410, y: 290 },

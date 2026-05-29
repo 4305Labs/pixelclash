@@ -87,6 +87,11 @@ you whittle it down. **A base is shielded (a glowing ring) and can't be touched
 until its own tower is destroyed**, so the tower is the gate to victory: break
 the tower, then raze the exposed base to win.
 
+**Map pickups:** orbs sit at fixed spots down the center of the arena (fair to
+both teams, but contested). Grab a green **heal** orb to restore HP, or an
+orange **power** orb to boost your attack damage for a few seconds (you'll glow).
+Taken orbs reappear on a timer.
+
 **Scoreboard & respawns:** a team kill scoreboard sits at the top of the screen,
 and when you're knocked out a "Respawning in N…" countdown tells you how long
 until you're back in the fight.

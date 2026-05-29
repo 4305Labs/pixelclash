@@ -35,6 +35,8 @@ const tests = [
   "./m19.towergate.render.mjs",
   "./m20.scoreboard.mjs",
   "./m20.scoreboard.render.mjs",
+  "./m21.pickups.mjs",
+  "./m21.pickups.render.mjs",
 ];
 
 let failed = false;

@@ -59,7 +59,7 @@ touch points — a config entry, a server `try…` method + an `onMessage` case,
 
 ---
 
-## 4. Tune the lane minions & guard towers (already done ✅)
+## 4. Tune the lane minions, towers & pickups (already done ✅)
 
 Both teams now spawn waves of weak AI **minions** that march toward the enemy
 base, fight whatever they meet, and chip the base when they arrive. Everything
@@ -106,6 +106,24 @@ tower is gone — so the tower is the gate to victory. That rule is just
 `damageBase()` and `nearestTarget()`; the client shows a glowing ring around a
 shielded base (`Base.setShielded`). Want classic uncapturable bases or a
 different gate? Tweak `baseVulnerable`.
+
+**Map pickups** are tuned in `src/config.js` → `PICKUP`, and placed by
+`PICKUP_SPOTS` (all on the center column so they're fair to both teams):
+
+| You want… | Change this | Try |
+|---|---|---|
+| Bigger heals | `PICKUP.heal` | `60` |
+| Stronger power buff | `PICKUP.powerMult` | `2.0` |
+| Longer power buff | `PICKUP.powerMs` | `10000` (=10s) |
+| Faster orb respawns | `PICKUP.respawnMs` | `6000` |
+| Add/move an orb | `PICKUP_SPOTS` | `{ id, kind: "heal"`\|`"power", x, y }` |
+
+The logic is `GameServer.stepPickups()` (grant to a player standing on an active
+orb, then respawn it on a timer) and `grantPickup()`. A heal restores HP
+instantly; a power orb sets `player.powerUntil`, and `tryAttack()` multiplies a
+buffed bolt's damage. The client draws active orbs (`syncPickups`) and a glow on
+a powered hero (`Player.setPowered`). New `kind`s are easy: add a case to
+`grantPickup` and a texture in `textures.js`.
 
 ---
 

@@ -20,6 +20,9 @@ export default class Player extends Phaser.GameObjects.Container {
     this.targetX = x;
     this.targetY = y;
 
+    // A soft orange aura shown behind the body while a power buff is active.
+    this.aura = scene.add.circle(0, 0, (PLAYER_SIZE * SPRITE_SCALE) / 2 + 6, 0xffa300, 0);
+
     const texture = team === "red" ? "player_red" : "player_blue";
     this.bodySprite = scene.add.sprite(0, 0, texture).setScale(SPRITE_SCALE);
 
@@ -29,8 +32,13 @@ export default class Player extends Phaser.GameObjects.Container {
       .rectangle(-BAR_W / 2, BAR_Y, BAR_W, 3, 0x00e436)
       .setOrigin(0, 0.5);
 
-    this.add([this.bodySprite, this.hpBg, this.hpFill]);
+    this.add([this.aura, this.bodySprite, this.hpBg, this.hpFill]);
     scene.add.existing(this);
+  }
+
+  // Toggle the power-buff aura.
+  setPowered(on) {
+    this.aura.setFillStyle(0xffa300, on ? 0.4 : 0);
   }
 
   setTarget(x, y) {

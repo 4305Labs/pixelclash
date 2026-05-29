@@ -22,6 +22,8 @@ import {
   MINION,
   TOWER,
   TOWER_POS,
+  PICKUP,
+  PICKUP_SPOTS,
 } from "../config.js";
 import { stepPosition, normalizeInput, resolveMove, pointInWall } from "../sim.js";
 
@@ -44,8 +46,10 @@ export default class GameServer {
 
     this.bases = new Map(); // team -> { team, x, y, hp, alive }
     this.towers = new Map(); // team -> { team, x, y, hp, alive, cd }
+    this.pickups = []; // [{ id, kind, x, y, active, respawnAt }]
     this.resetBases();
     this.resetTowers();
+    this.resetPickups();
     // Match lifecycle:
     //   "waiting"   — not enough players yet; the world is frozen in the lobby
     //   "countdown" — enough players; a short "get ready" timer is running
@@ -70,6 +74,17 @@ export default class GameServer {
       const pos = TOWER_POS[team];
       this.towers.set(team, { team, x: pos.x, y: pos.y, hp: TOWER.maxHp, alive: true, cd: 0 });
     }
+  }
+
+  resetPickups() {
+    this.pickups = PICKUP_SPOTS.map((s) => ({
+      id: s.id,
+      kind: s.kind,
+      x: s.x,
+      y: s.y,
+      active: true, // available to grab
+      respawnAt: 0, // when an inactive one comes back (ms on the sim clock)
+    }));
   }
 
   addConnection(conn) {
@@ -144,6 +159,7 @@ export default class GameServer {
       alive: true,
       deadUntil: 0,
       cd: { basic: 0, ability: 0, dash: 0 },
+      powerUntil: 0, // attack-damage buff active while timeMs < this
     };
   }
 
@@ -203,6 +219,10 @@ export default class GameServer {
     ax /= len;
     ay /= len;
 
+    // A power pickup boosts this attack's damage while the buff is active.
+    const powered = this.timeMs < player.powerUntil;
+    const dmg = Math.round(spec.dmg * (powered ? PICKUP.powerMult : 1));
+
     this.projectiles.push({
       id: "b" + this.nextProjId++,
       ownerId: player.id,
@@ -212,7 +232,7 @@ export default class GameServer {
       y: player.y,
       vx: ax * spec.speed,
       vy: ay * spec.speed,
-      dmg: spec.dmg,
+      dmg,
       dieAt: this.timeMs + spec.ttl,
     });
   }
@@ -470,6 +490,9 @@ export default class GameServer {
     // 3) Let the towers zap any enemy in range.
     this.stepTowers();
 
+    // 3b) Pick-ups: grant to anyone standing on them; respawn taken ones.
+    this.stepPickups();
+
     // 4) Move projectiles; expire; check hits on players, minions, towers, bases.
     const survivors = [];
     for (const b of this.projectiles) {
@@ -536,6 +559,37 @@ export default class GameServer {
     }
   }
 
+  // --- Map pickups -----------------------------------------------------------
+
+  // Grant any active pickup to a living player standing on it (then send it on a
+  // respawn timer), and bring back ones whose timer has elapsed.
+  stepPickups() {
+    const reach = PICKUP.radius + PLAYER_HALF;
+    for (const pk of this.pickups) {
+      if (!pk.active) {
+        if (this.timeMs >= pk.respawnAt) pk.active = true;
+        continue;
+      }
+      for (const p of this.players.values()) {
+        if (!p.alive) continue;
+        if ((p.x - pk.x) ** 2 + (p.y - pk.y) ** 2 <= reach * reach) {
+          this.grantPickup(p, pk);
+          pk.active = false;
+          pk.respawnAt = this.timeMs + PICKUP.respawnMs;
+          break;
+        }
+      }
+    }
+  }
+
+  grantPickup(player, pk) {
+    if (pk.kind === "heal") {
+      player.hp = Math.min(COMBAT.maxHp, player.hp + PICKUP.heal);
+    } else if (pk.kind === "power") {
+      player.powerUntil = this.timeMs + PICKUP.powerMs;
+    }
+  }
+
   damageBase(base, amount) {
     if (!this.baseVulnerable(base.team)) return; // shielded while its tower stands
     base.hp = Math.max(0, base.hp - amount);
@@ -567,6 +621,7 @@ export default class GameServer {
   resetMatch() {
     this.resetBases();
     this.resetTowers();
+    this.resetPickups();
     this.score = { blue: 0, red: 0 };
     for (const p of this.players.values()) {
       const fresh = this.freshPlayer(p.id, p.team, p.spawnIndex);
@@ -605,6 +660,7 @@ export default class GameServer {
         alive: p.alive,
         // Seconds until this player respawns (0 if alive) — for the HUD timer.
         respawnIn: p.alive ? 0 : Math.max(0, Math.ceil((p.deadUntil - this.timeMs) / 1000)),
+        powered: this.timeMs < p.powerUntil, // power buff active (for the aura)
       })),
       projectiles: this.projectiles.map((b) => ({
         id: b.id,
@@ -621,6 +677,10 @@ export default class GameServer {
         hp: m.hp,
         alive: m.alive,
       })),
+      // Only the currently-available pickups (the client shows what's listed).
+      pickups: this.pickups
+        .filter((pk) => pk.active)
+        .map((pk) => ({ id: pk.id, kind: pk.kind, x: pk.x, y: pk.y })),
       towers: [...this.towers.values()].map((tw) => ({
         team: tw.team,
         x: tw.x,

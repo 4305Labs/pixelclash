@@ -5,7 +5,7 @@
 // Later you can replace these with real .png art without changing game logic.
 // ===========================================================================
 
-import { COLORS, PLAYER_SIZE, BASE, MINION, TOWER } from "./config.js";
+import { COLORS, PLAYER_SIZE, BASE, MINION, TOWER, PICKUP } from "./config.js";
 
 // Draws one little 16x16 character sprite into a named texture.
 // `key` is the name we'll refer to it by; `bodyColor` is its team color.
@@ -104,6 +104,30 @@ function makeTowerTexture(scene, key, color) {
   g.destroy();
 }
 
+// Draws a pickup orb: a round, outlined disc with a symbol. A green disc with a
+// white cross = heal; an orange disc with a white "bolt" wedge = power.
+function makePickupTexture(scene, key, kind) {
+  const g = scene.make.graphics({ x: 0, y: 0 }, false);
+  const r = PICKUP.radius;
+  const s = r * 2;
+  g.fillStyle(COLORS.outline, 1);
+  g.fillCircle(r, r, r);
+  g.fillStyle(kind === "heal" ? 0x00e436 : 0xffa300, 1);
+  g.fillCircle(r, r, r - 2);
+  g.fillStyle(COLORS.white, 1);
+  if (kind === "heal") {
+    // A plus sign.
+    g.fillRect(r - 1.5, r - 6, 3, 12);
+    g.fillRect(r - 6, r - 1.5, 12, 3);
+  } else {
+    // A little lightning bolt (two stacked triangles offset sideways).
+    g.fillTriangle(r + 2, r - 7, r - 4, r + 1, r + 1, r + 1);
+    g.fillTriangle(r - 2, r + 7, r + 4, r - 1, r - 1, r - 1);
+  }
+  g.generateTexture(key, s, s);
+  g.destroy();
+}
+
 // Called once when the arena starts. Creates every texture the game needs.
 export function generateTextures(scene) {
   makeCharacterTexture(scene, "player_blue", COLORS.blueTeam);
@@ -114,4 +138,6 @@ export function generateTextures(scene) {
   makeMinionTexture(scene, "minion_red", COLORS.minionRed);
   makeTowerTexture(scene, "tower_blue", COLORS.blueTeam);
   makeTowerTexture(scene, "tower_red", COLORS.redTeam);
+  makePickupTexture(scene, "pickup_heal", "heal");
+  makePickupTexture(scene, "pickup_power", "power");
 }

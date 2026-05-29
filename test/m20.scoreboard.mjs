@@ -69,6 +69,7 @@ try {
 
   // --- The kill also flows through the projectile path ----------------------
   server.towers.clear(); // isolate: no tower zaps stealing the kill
+  server.pickups = []; // ...and no center power orb changing the bolt's damage
   for (const p of server.players.values()) {
     p.alive = true;
     p.hp = COMBAT.maxHp;

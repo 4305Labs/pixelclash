@@ -99,6 +99,25 @@ export const DASH = {
   cd: 2000, // cooldown in milliseconds
 };
 
+// --- Map pickups ------------------------------------------------------------
+// Orbs that sit at fixed spots in the open arena. Walk over one to grab it: a
+// HEAL orb restores HP instantly, a POWER orb boosts your attack damage for a
+// few seconds. After it's taken, it reappears on a timer. All spots sit on the
+// center column (x = middle) so neither team is closer — fair but contested.
+export const PICKUP = {
+  radius: 12, // on-screen size
+  respawnMs: 12000, // time to reappear after being grabbed
+  heal: 40, // HP restored by a heal orb
+  powerMult: 1.6, // attack-damage multiplier while a power buff is active
+  powerMs: 6000, // how long the power buff lasts
+};
+
+export const PICKUP_SPOTS = [
+  { id: "heal_top", kind: "heal", x: GAME_WIDTH / 2, y: 60 },
+  { id: "heal_bot", kind: "heal", x: GAME_WIDTH / 2, y: GAME_HEIGHT - 60 },
+  { id: "power_mid", kind: "power", x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 },
+];
+
 // --- Bases & match ----------------------------------------------------------
 export const BASE = {
   maxHp: 250, // ~31 basic hits, or fewer with the ability — short matches
