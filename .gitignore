@@ -1,0 +1,15 @@
+# Dependencies (re-downloaded with "npm install" — never committed)
+node_modules/
+
+# Build output
+dist/
+
+# Mac system files
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor folders
+.vscode/

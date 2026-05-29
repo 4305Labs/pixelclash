@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Makes the page fit phone screens and prevents pinch-zoom while playing -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>PixelClash</title>
+    <style>
+      /* Fill the whole window with a dark background and remove default margins */
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        background: #111;
+        overflow: hidden;
+      }
+      /* The game canvas Phaser creates goes inside this box, centered */
+      #game-root {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-root"></div>
+    <!-- This loads our game code. type="module" lets us use modern imports. -->
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
