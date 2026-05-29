@@ -44,28 +44,18 @@ usually won't need to touch it just to rebalance.
 
 ---
 
-## 3. Add a second ability (a "dash")
+## 3. The dash ability (already done ✅)
 
-This is the natural next feature. A dash teleports you a short distance.
+There's now a **dash**: a quick burst along the direction you're facing, on a
+cooldown. Use the **C** button (touch) or **L** / **Shift** (keyboard).
 
-1. In `src/config.js`, add a dash spec near `COMBAT`:
-   ```js
-   export const DASH = { distance: 120, cd: 2000 }; // 120px hop, 2s cooldown
-   ```
-2. In `src/net/GameServer.js` → `onMessage()`, handle a new message:
-   ```js
-   } else if (msg.t === "dash") {
-     this.tryDash(p);
-   }
-   ```
-   and add a `tryDash(player)` method that checks a cooldown and moves the
-   player `DASH.distance` pixels along `player.face`.
-3. In `src/net/NetClient.js`, add `sendDash() { this.conn.send({ t: "dash" }); }`.
-4. In `src/scenes/ArenaScene.js`, add a key (e.g. `keydown-L`) and/or a third
-   `ActionButton` that calls `this.net.sendDash()`.
+- Tune it in `src/config.js` → `DASH` (`distance` in pixels, `cd` cooldown ms).
+- Server logic is `GameServer.tryDash()`; the client sends it via
+  `NetClient.sendDash()`, wired to the key/button in `ArenaScene`.
 
-Ask your AI assistant to write these exact edits — this list tells it precisely
-where each piece goes.
+This is a good template for **adding your own ability**: copy the same four
+touch points — a config entry, a server `try…` method + an `onMessage` case, a
+`send…` on `NetClient`, and a key/button in `ArenaScene`.
 
 ---
 
