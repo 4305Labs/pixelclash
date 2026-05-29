@@ -17,6 +17,8 @@ export const COLORS = {
   redTeam: 0xff004d, // player team 2
   outline: 0x000000,
   white: 0xfff1e8,
+  wall: 0x4a5680, // stone-blue obstacles
+  wallEdge: 0x29366f, // darker wall outline
 };
 
 // How fast a player moves, in pixels per second.
@@ -86,6 +88,24 @@ export const BASE_POS = {
   blue: { x: 44, y: GAME_HEIGHT / 2 },
   red: { x: GAME_WIDTH - 44, y: GAME_HEIGHT / 2 },
 };
+
+// --- Map / obstacles --------------------------------------------------------
+// A few solid walls that block movement, dash, and projectiles. Each is an
+// axis-aligned rectangle given as its top-left corner plus width/height, in
+// world pixels. The layout is mirror-symmetric about the center so neither
+// team gets an advantage, and it deliberately leaves the center row (y≈300,
+// where the bases line up) and a vertical gap through the middle open so
+// players can still path across.
+export const WALLS = [
+  // Two central pillars on the mid-line, with a gap between them.
+  { x: 392, y: 80, w: 16, h: 150 },
+  { x: 392, y: 370, w: 16, h: 150 },
+  // Cover blocks flanking the center, clear of the spawn rows (y=150/300/450).
+  { x: 230, y: 225, w: 80, h: 16 },
+  { x: 490, y: 225, w: 80, h: 16 },
+  { x: 230, y: 359, w: 80, h: 16 },
+  { x: 490, y: 359, w: 80, h: 16 },
+];
 
 export const MATCH = {
   resetMs: 5000, // pause on the win banner, then start a fresh match

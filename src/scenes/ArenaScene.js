@@ -5,7 +5,7 @@
 // ===========================================================================
 
 import Phaser from "phaser";
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, COMBAT, DASH } from "../config.js";
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, COMBAT, DASH, WALLS } from "../config.js";
 import { generateTextures } from "../textures.js";
 import { stepPosition } from "../sim.js";
 import Player from "../entities/Player.js";
@@ -25,6 +25,7 @@ export default class ArenaScene extends Phaser.Scene {
   create() {
     generateTextures(this);
     this.drawGrid();
+    this.drawWalls();
 
     this.net = this.registry.get("net");
     this.sprites = new Map(); // player id -> Player display object
@@ -346,5 +347,17 @@ export default class ArenaScene extends Phaser.Scene {
     for (let x = 0; x <= GAME_WIDTH; x += step) g.lineBetween(x, 0, x, GAME_HEIGHT);
     for (let y = 0; y <= GAME_HEIGHT; y += step) g.lineBetween(0, y, GAME_WIDTH, y);
     g.setDepth(-10);
+  }
+
+  // Draw the solid obstacles from config. They sit above the grid but below
+  // the players and bolts, so characters clearly pass in front of them.
+  drawWalls() {
+    const g = this.add.graphics().setDepth(-5);
+    for (const w of WALLS) {
+      g.fillStyle(COLORS.wall, 1);
+      g.fillRect(w.x, w.y, w.w, w.h);
+      g.lineStyle(2, COLORS.wallEdge, 1);
+      g.strokeRect(w.x, w.y, w.w, w.h);
+    }
   }
 }

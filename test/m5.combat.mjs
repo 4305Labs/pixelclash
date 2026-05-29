@@ -34,6 +34,11 @@ try {
   // skip straight into active play.
   server.phase = "playing";
 
+  // The map now has walls. Put both fighters on the open center row (y=300,
+  // which the map keeps clear) so the bolt has an unobstructed straight shot.
+  A.y = 300;
+  B.y = 300;
+
   // Cooldown: two basic attacks fired instantly => only one bolt spawns.
   alice.sendAttack("basic");
   alice.sendAttack("basic");

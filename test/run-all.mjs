@@ -22,6 +22,7 @@ const tests = [
   "./m11.feedback.mjs",
   "./m12.lobby.mjs",
   "./m12.lobby.render.mjs",
+  "./m13.walls.mjs",
 ];
 
 let failed = false;

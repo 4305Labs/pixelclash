@@ -20,7 +20,7 @@ import {
   BASE_POS,
   MATCH,
 } from "../config.js";
-import { stepPosition, normalizeInput } from "../sim.js";
+import { stepPosition, normalizeInput, resolveMove, pointInWall } from "../sim.js";
 
 export default class GameServer {
   constructor() {
@@ -154,10 +154,17 @@ export default class GameServer {
     if (this.timeMs < player.cd.dash) return; // cooling down
     player.cd.dash = this.timeMs + DASH.cd;
 
-    // Dash along the way we're facing (last movement direction).
+    // Dash along the way we're facing (last movement direction). Walls stop
+    // the dash just like normal movement does (shared resolveMove).
     const f = normalizeInput(player.face.x, player.face.y);
-    player.x = clamp(player.x + f.dx * DASH.distance, PLAYER_HALF, GAME_WIDTH - PLAYER_HALF);
-    player.y = clamp(player.y + f.dy * DASH.distance, PLAYER_HALF, GAME_HEIGHT - PLAYER_HALF);
+    const dest = resolveMove(
+      player.x,
+      player.y,
+      player.x + f.dx * DASH.distance,
+      player.y + f.dy * DASH.distance
+    );
+    player.x = dest.x;
+    player.y = dest.y;
   }
 
   tryAttack(player, kind) {
@@ -249,6 +256,7 @@ export default class GameServer {
       b.y += b.vy * dt;
       const offscreen = b.x < 0 || b.x > GAME_WIDTH || b.y < 0 || b.y > GAME_HEIGHT;
       if (this.timeMs >= b.dieAt || offscreen) continue;
+      if (pointInWall(b.x, b.y)) continue; // a wall swallows the bolt
 
       const victim = this.hitPlayer(b);
       if (victim) {

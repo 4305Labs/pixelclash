@@ -31,7 +31,7 @@ tint/feedback flag and a damage-number object is spawned. No console errors.
 **Acceptance:** server unit test for the lifecycle transitions; headless test
 that the lobby text shows and the arena begins after enough players join.
 
-## Phase C — A real map `[ ]`
+## Phase C — A real map `[x]`
 **Why:** the open grid makes positioning and dash meaningless.
 - Add a few walls/obstacles in `config.js` (rectangles), drawn in the arena.
 - Server movement + dash collide with walls (shared in `sim.js`).
