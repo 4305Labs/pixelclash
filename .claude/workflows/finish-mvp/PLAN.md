@@ -12,7 +12,7 @@ cooldown indicators. This plan covers the remaining polish for a shippable MVP.
 
 ---
 
-## Phase A — Combat feedback `[ ]`
+## Phase A — Combat feedback `[x]`
 **Why:** hits currently have no juice; players can't tell when they connect.
 - Flash a player white briefly when damaged (server already knows HP drops;
   client detects HP decrease per snapshot and tweens a tint).

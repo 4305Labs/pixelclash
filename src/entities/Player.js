@@ -51,6 +51,16 @@ export default class Player extends Phaser.GameObjects.Container {
     this.hpFill.setFillStyle(color);
   }
 
+  // Flash white briefly to show a hit landed. `hit` is a flag the tests read.
+  flashHit() {
+    this.hit = true;
+    this.bodySprite.setTintFill(0xffffff); // solid white silhouette
+    this.scene.time.delayedCall(110, () => {
+      this.bodySprite.clearTint();
+      this.hit = false;
+    });
+  }
+
   // Dead players fade out and hide their (empty) health bar.
   setAlive(alive) {
     this.bodySprite.setAlpha(alive ? 1 : 0.2);

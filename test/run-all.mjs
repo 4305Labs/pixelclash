@@ -19,6 +19,7 @@ const tests = [
   "./m9.dash.mjs",
   "./m9.render.mjs",
   "./m10.cooldown.mjs",
+  "./m11.feedback.mjs",
 ];
 
 let failed = false;

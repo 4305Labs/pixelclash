@@ -30,6 +30,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.sprites = new Map(); // player id -> Player display object
     this.bolts = new Map(); // projectile id -> circle
     this.baseSprites = new Map(); // team -> Base display object
+    this.damageNumbers = []; // active floating damage-number texts
 
     // --- Input: movement -----------------------------------------------------
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -165,8 +166,11 @@ export default class ArenaScene extends Phaser.Scene {
       let base = this.baseSprites.get(b.team);
       if (!base) {
         base = new Base(this, b.x, b.y, b.team);
+        base.lastHp = b.hp; // remember HP to detect damage
         this.baseSprites.set(b.team, base);
       }
+      if (b.alive && b.hp < base.lastHp) base.flashHit();
+      base.lastHp = b.hp;
       base.setHp(b.hp, b.maxHp);
       base.setAlive(b.alive);
     }
@@ -192,6 +196,7 @@ export default class ArenaScene extends Phaser.Scene {
       let sprite = this.sprites.get(p.id);
       if (!sprite) {
         sprite = new Player(this, p.x, p.y, p.team);
+        sprite.lastHp = p.hp; // remember HP so we can detect damage later
         this.sprites.set(p.id, sprite);
       }
 
@@ -204,6 +209,15 @@ export default class ArenaScene extends Phaser.Scene {
         sprite.setTarget(p.x, p.y);
         sprite.smoothFollow();
       }
+
+      // Detect damage: if HP dropped since the last snapshot, show feedback.
+      if (p.alive && p.hp < sprite.lastHp) {
+        const dmg = sprite.lastHp - p.hp;
+        sprite.flashHit();
+        this.spawnDamageNumber(sprite.x, sprite.y, dmg);
+      }
+      sprite.lastHp = p.hp;
+
       sprite.setHp(p.hp);
       sprite.setAlive(p.alive);
     }
@@ -213,6 +227,33 @@ export default class ArenaScene extends Phaser.Scene {
         this.sprites.delete(id);
       }
     }
+  }
+
+  // A floating damage number that rises and fades, then cleans itself up.
+  spawnDamageNumber(x, y, amount) {
+    const text = this.add
+      .text(x, y - 18, String(amount), {
+        fontFamily: "monospace",
+        fontSize: "18px",
+        color: "#ffffff",
+        stroke: "#000000",
+        strokeThickness: 3,
+      })
+      .setOrigin(0.5)
+      .setDepth(1500);
+    this.damageNumbers.push(text);
+    this.tweens.add({
+      targets: text,
+      y: y - 50,
+      alpha: 0,
+      duration: 650,
+      ease: "Quad.out",
+      onComplete: () => {
+        const i = this.damageNumbers.indexOf(text);
+        if (i !== -1) this.damageNumbers.splice(i, 1);
+        text.destroy();
+      },
+    });
   }
 
   // Client-side prediction for the local player.

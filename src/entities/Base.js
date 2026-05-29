@@ -32,6 +32,16 @@ export default class Base extends Phaser.GameObjects.Container {
     this.hpFill.setFillStyle(color);
   }
 
+  // Flash white briefly to show the base took a hit.
+  flashHit() {
+    this.hit = true;
+    this.crystal.setTintFill(0xffffff);
+    this.scene.time.delayedCall(110, () => {
+      this.crystal.clearTint();
+      this.hit = false;
+    });
+  }
+
   setAlive(alive) {
     this.crystal.setAlpha(alive ? 1 : 0.15);
     this.hpBg.setVisible(alive);
