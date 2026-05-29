@@ -1,0 +1,19 @@
+// Runs every milestone test in one process so the game bundle is built once
+// and reused (the build is cached inside helpers.mjs).
+import { buildInlinedHtml } from "./helpers.mjs";
+
+console.log("Building game bundle once for all tests...");
+buildInlinedHtml();
+
+const tests = ["./m3.movement.mjs"];
+
+let failed = false;
+for (const t of tests) {
+  console.log(`\n=== ${t} ===`);
+  const before = process.exitCode;
+  await import(t);
+  if (process.exitCode && process.exitCode !== before) failed = true;
+}
+
+console.log(failed ? "\nSOME TESTS FAILED" : "\nALL TESTS PASSED");
+process.exit(failed ? 1 : 0);

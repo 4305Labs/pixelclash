@@ -1,30 +1,32 @@
 // ===========================================================================
-// PixelClash — main entry point
-// This file boots the Phaser game engine and loads our first scene.
-// (A "scene" is one screen of the game — like a menu, or the arena.)
+// PixelClash — main entry point.
+// Boots the Phaser game engine, configures physics, and loads the arena.
 // ===========================================================================
 
 import Phaser from "phaser";
-import HelloScene from "./scenes/HelloScene.js";
-
-// The size of our game world, in pixels. We use a fixed logical size and
-// let Phaser scale it to fit any screen (phone or desktop) for us.
-export const GAME_WIDTH = 800;
-export const GAME_HEIGHT = 600;
+import { GAME_WIDTH, GAME_HEIGHT, COLORS } from "./config.js";
+import ArenaScene from "./scenes/ArenaScene.js";
 
 const config = {
-  type: Phaser.AUTO, // Let Phaser pick the best renderer (WebGL, falls back to Canvas)
-  parent: "game-root", // Put the game inside the <div id="game-root"> in index.html
-  backgroundColor: "#1d2b53", // A dark blue background (classic pixel-art palette)
-  pixelArt: true, // Keep pixels crisp instead of blurry when scaled
+  type: Phaser.AUTO, // best renderer (WebGL, falls back to Canvas)
+  parent: "game-root",
+  backgroundColor: COLORS.bg,
+  pixelArt: true, // keep pixels crisp when scaled
   scale: {
-    mode: Phaser.Scale.FIT, // Scale the game to fit the screen, keeping proportions
-    autoCenter: Phaser.Scale.CENTER_BOTH, // Center it horizontally and vertically
+    mode: Phaser.Scale.FIT, // scale to fit the screen, keep proportions
+    autoCenter: Phaser.Scale.CENTER_BOTH,
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
   },
-  scene: [HelloScene], // The list of scenes; the first one starts automatically
+  physics: {
+    default: "arcade", // simple, fast 2D physics — perfect for top-down
+    arcade: { debug: false },
+  },
+  scene: [ArenaScene],
 };
 
-// Create the game. This single line starts everything.
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+
+// Expose the game on the window so our automated tests (and you, in the
+// browser console) can inspect what's happening. Harmless in production.
+window.PIXELCLASH = { game };
