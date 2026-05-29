@@ -5,7 +5,7 @@
 // Later you can replace these with real .png art without changing game logic.
 // ===========================================================================
 
-import { COLORS, PLAYER_SIZE, BASE, MINION } from "./config.js";
+import { COLORS, PLAYER_SIZE, BASE, MINION, TOWER } from "./config.js";
 
 // Draws one little 16x16 character sprite into a named texture.
 // `key` is the name we'll refer to it by; `bodyColor` is its team color.
@@ -80,6 +80,30 @@ function diamond(cx, cy, r) {
   ];
 }
 
+// Draws a guard tower: a chunky stone fort (square) with a team-colored turret
+// disc on top and a bright aperture, so it reads as a defensive structure —
+// clearly different from the diamond base.
+function makeTowerTexture(scene, key, color) {
+  const g = scene.make.graphics({ x: 0, y: 0 }, false);
+  const s = TOWER.radius * 2;
+  const c = TOWER.radius;
+  // Stone fort: black-outlined square.
+  g.fillStyle(COLORS.outline, 1);
+  g.fillRect(0, 0, s, s);
+  g.fillStyle(COLORS.wall, 1);
+  g.fillRect(2, 2, s - 4, s - 4);
+  // Team-colored turret disc.
+  g.fillStyle(COLORS.outline, 1);
+  g.fillCircle(c, c, c - 4);
+  g.fillStyle(color, 1);
+  g.fillCircle(c, c, c - 6);
+  // Bright aperture in the middle.
+  g.fillStyle(COLORS.white, 1);
+  g.fillCircle(c, c, (c - 6) * 0.4);
+  g.generateTexture(key, s, s);
+  g.destroy();
+}
+
 // Called once when the arena starts. Creates every texture the game needs.
 export function generateTextures(scene) {
   makeCharacterTexture(scene, "player_blue", COLORS.blueTeam);
@@ -88,4 +112,6 @@ export function generateTextures(scene) {
   makeBaseTexture(scene, "base_red", COLORS.redTeam);
   makeMinionTexture(scene, "minion_blue", COLORS.minionBlue);
   makeMinionTexture(scene, "minion_red", COLORS.minionRed);
+  makeTowerTexture(scene, "tower_blue", COLORS.blueTeam);
+  makeTowerTexture(scene, "tower_red", COLORS.redTeam);
 }

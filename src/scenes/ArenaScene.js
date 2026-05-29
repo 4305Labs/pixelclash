@@ -5,12 +5,13 @@
 // ===========================================================================
 
 import Phaser from "phaser";
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, COMBAT, DASH, WALLS, BUTTONS } from "../config.js";
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, COMBAT, DASH, WALLS, BUTTONS, TOWER } from "../config.js";
 import { generateTextures } from "../textures.js";
 import { stepPosition } from "../sim.js";
 import Player from "../entities/Player.js";
 import Base from "../entities/Base.js";
 import Minion from "../entities/Minion.js";
+import Tower from "../entities/Tower.js";
 import VirtualJoystick from "../ui/VirtualJoystick.js";
 import ActionButton from "../ui/ActionButton.js";
 
@@ -34,6 +35,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.sprites = new Map(); // player id -> Player display object
     this.bolts = new Map(); // projectile id -> circle
     this.minionSprites = new Map(); // minion id -> Minion display object
+    this.towerSprites = new Map(); // team -> Tower display object
     this.baseSprites = new Map(); // team -> Base display object
     this.damageNumbers = []; // active floating damage-number texts
 
@@ -211,6 +213,7 @@ export default class ArenaScene extends Phaser.Scene {
 
     // 2) Sync everything to the server's snapshot.
     this.syncBases();
+    this.syncTowers();
     this.syncMinions();
     this.syncPlayers(dt);
     this.syncProjectiles();
@@ -415,6 +418,29 @@ export default class ArenaScene extends Phaser.Scene {
     }
   }
 
+  // Draw the guard towers (one per team): flash + chime on damage, big boom
+  // when one is destroyed, faded rubble afterwards.
+  syncTowers() {
+    for (const tw of this.net.towers) {
+      let sprite = this.towerSprites.get(tw.team);
+      if (!sprite) {
+        sprite = new Tower(this, tw.x, tw.y, tw.team);
+        sprite.lastHp = tw.hp;
+        sprite.lastAlive = tw.alive;
+        this.towerSprites.set(tw.team, sprite);
+      }
+      if (tw.alive && tw.hp < sprite.lastHp) {
+        sprite.flashHit();
+        this.audio.play("hit");
+      }
+      sprite.lastHp = tw.hp;
+      if (sprite.lastAlive && !tw.alive) this.audio.play("base"); // a structure falls
+      sprite.lastAlive = tw.alive;
+      sprite.setHp(tw.hp, tw.maxHp);
+      sprite.setAlive(tw.alive);
+    }
+  }
+
   // Draw the lane minions: create on first sight, glide toward their reported
   // position, flash on damage, and clean up the dead/departed.
   syncMinions() {
@@ -447,8 +473,17 @@ export default class ArenaScene extends Phaser.Scene {
       seen.add(b.id);
       let dot = this.bolts.get(b.id);
       if (!dot) {
-        const spec = COMBAT[b.kind] || COMBAT.basic;
-        dot = this.add.circle(b.x, b.y, spec.radius, spec.color).setDepth(50);
+        // Tower zaps have their own look; everything else uses its attack style.
+        let radius, color;
+        if (b.kind === "tower") {
+          radius = TOWER.boltRadius;
+          color = TOWER.boltColor;
+        } else {
+          const spec = COMBAT[b.kind] || COMBAT.basic;
+          radius = spec.radius;
+          color = spec.color;
+        }
+        dot = this.add.circle(b.x, b.y, radius, color).setDepth(50);
         this.bolts.set(b.id, dot);
       }
       dot.setPosition(b.x, b.y);

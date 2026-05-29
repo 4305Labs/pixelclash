@@ -59,7 +59,7 @@ touch points — a config entry, a server `try…` method + an `onMessage` case,
 
 ---
 
-## 4. Tune the lane minions (already done ✅)
+## 4. Tune the lane minions & guard towers (already done ✅)
 
 Both teams now spawn waves of weak AI **minions** that march toward the enemy
 base, fight whatever they meet, and chip the base when they arrive. Everything
@@ -82,6 +82,23 @@ as players, and are drawn by `src/entities/Minion.js`.
 > Minions only spawn during a live match (after the countdown), so the lobby
 > stays calm. If you want lane creeps to feel central, raise `perWave` and lower
 > `waveEvery`; for a more hero-focused game, do the opposite.
+
+**Guard towers** live alongside them, tuned in `src/config.js` → `TOWER` (and
+positioned by `TOWER_POS`). A tower auto-zaps the nearest enemy unit in range:
+
+| You want… | Change this | Try |
+|---|---|---|
+| Tankier towers | `maxHp` | `300` |
+| Towers that hit harder | `dmg` | `20` |
+| Faster-firing towers | `cd` | `500` (=0.5s) |
+| Longer tower reach | `range` | `220` |
+| Move a tower | `TOWER_POS.blue` / `.red` | `{ x, y }` in world px |
+
+The logic is `GameServer.stepTowers()` (find nearest enemy unit in range, fire a
+bolt on cooldown) and `nearestEnemyUnit()`. Towers reuse the projectile system,
+so a tower bolt damages enemies exactly like a hero's does. They're drawn by
+`src/entities/Tower.js`. Destroying a tower never wins the match — only razing
+the enemy **base** does.
 
 ---
 

@@ -111,6 +111,29 @@ export const BASE_POS = {
   red: { x: GAME_WIDTH - 44, y: GAME_HEIGHT / 2 },
 };
 
+// --- Defensive towers -------------------------------------------------------
+// One guard tower per team, standing in the lane between the base and the
+// center. A tower auto-zaps the nearest enemy unit (minion or hero) in range,
+// so pushing into enemy territory is dangerous until the tower is destroyed.
+// Towers don't end the match (only the base does) — they're a defensive wall.
+export const TOWER = {
+  maxHp: 180, // sturdier than a minion, softer than a base
+  range: 160, // targeting radius, and roughly how far its bolt reaches
+  cd: 900, // ms between shots
+  dmg: 12, // damage per zap
+  speed: 480, // bolt px/sec
+  ttl: 1200, // bolt lifetime (ms)
+  radius: 22, // body + hit radius
+  boltRadius: 6,
+  boltColor: 0xffa300, // orange zap, distinct from hero/minion bolts
+};
+
+// Towers sit on the center row, guarding the one clear horizontal lane.
+export const TOWER_POS = {
+  blue: { x: 250, y: GAME_HEIGHT / 2 },
+  red: { x: GAME_WIDTH - 250, y: GAME_HEIGHT / 2 },
+};
+
 // --- Map / obstacles --------------------------------------------------------
 // A few solid walls that block movement, dash, and projectiles. Each is an
 // axis-aligned rectangle given as its top-left corner plus width/height, in

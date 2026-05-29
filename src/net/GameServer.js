@@ -20,6 +20,8 @@ import {
   BASE_POS,
   MATCH,
   MINION,
+  TOWER,
+  TOWER_POS,
 } from "../config.js";
 import { stepPosition, normalizeInput, resolveMove, pointInWall } from "../sim.js";
 
@@ -41,7 +43,9 @@ export default class GameServer {
     this.loopTimer = null;
 
     this.bases = new Map(); // team -> { team, x, y, hp, alive }
+    this.towers = new Map(); // team -> { team, x, y, hp, alive, cd }
     this.resetBases();
+    this.resetTowers();
     // Match lifecycle:
     //   "waiting"   — not enough players yet; the world is frozen in the lobby
     //   "countdown" — enough players; a short "get ready" timer is running
@@ -57,6 +61,13 @@ export default class GameServer {
     for (const team of ["blue", "red"]) {
       const pos = BASE_POS[team];
       this.bases.set(team, { team, x: pos.x, y: pos.y, hp: BASE.maxHp, alive: true });
+    }
+  }
+
+  resetTowers() {
+    for (const team of ["blue", "red"]) {
+      const pos = TOWER_POS[team];
+      this.towers.set(team, { team, x: pos.x, y: pos.y, hp: TOWER.maxHp, alive: true, cd: 0 });
     }
   }
 
@@ -222,6 +233,9 @@ export default class GameServer {
     for (const m of this.minions) {
       if (m.team !== player.team && m.alive) consider(m.x, m.y);
     }
+    for (const tw of this.towers.values()) {
+      if (tw.team !== player.team && tw.alive) consider(tw.x, tw.y);
+    }
     for (const b of this.bases.values()) {
       if (b.team !== player.team && b.alive) consider(b.x, b.y);
     }
@@ -306,6 +320,9 @@ export default class GameServer {
     for (const p of this.players.values()) {
       if (p.team !== m.team && p.alive) consider(p.x, p.y, () => this.damage(p, MINION.dmg));
     }
+    for (const tw of this.towers.values()) {
+      if (tw.team !== m.team && tw.alive) consider(tw.x, tw.y, () => this.damageTower(tw, MINION.dmg));
+    }
     if (best) return best;
     const base = this.bases.get(m.team === "blue" ? "red" : "blue");
     if (base && base.alive) {
@@ -351,6 +368,70 @@ export default class GameServer {
     if (m.hp === 0) m.alive = false;
   }
 
+  // --- Defensive towers ------------------------------------------------------
+
+  // Each living tower zaps the nearest enemy unit in range, on its cooldown.
+  stepTowers() {
+    for (const tw of this.towers.values()) {
+      if (!tw.alive || this.timeMs < tw.cd) continue;
+      const target = this.nearestEnemyUnit(tw, TOWER.range);
+      if (!target) continue;
+      tw.cd = this.timeMs + TOWER.cd;
+      let ax = target.x - tw.x;
+      let ay = target.y - tw.y;
+      const len = Math.hypot(ax, ay) || 1;
+      ax /= len;
+      ay /= len;
+      this.projectiles.push({
+        id: "b" + this.nextProjId++,
+        ownerId: "tower_" + tw.team,
+        team: tw.team,
+        kind: "tower",
+        x: tw.x,
+        y: tw.y,
+        vx: ax * TOWER.speed,
+        vy: ay * TOWER.speed,
+        dmg: TOWER.dmg,
+        dieAt: this.timeMs + TOWER.ttl,
+      });
+    }
+  }
+
+  // Nearest living enemy unit (minion or hero) to a source point, within range.
+  // Towers only shoot units, never bases — so they can't snipe across the map.
+  nearestEnemyUnit(src, range) {
+    let best = null;
+    let bestD = range * range;
+    const consider = (x, y) => {
+      const d = (x - src.x) ** 2 + (y - src.y) ** 2;
+      if (d < bestD) {
+        bestD = d;
+        best = { x, y };
+      }
+    };
+    for (const p of this.players.values()) {
+      if (p.team !== src.team && p.alive) consider(p.x, p.y);
+    }
+    for (const mob of this.minions) {
+      if (mob.team !== src.team && mob.alive) consider(mob.x, mob.y);
+    }
+    return best;
+  }
+
+  hitTower(b) {
+    const reach = COMBAT.hitPad + TOWER.radius;
+    for (const tw of this.towers.values()) {
+      if (tw.team === b.team || !tw.alive) continue;
+      if ((tw.x - b.x) ** 2 + (tw.y - b.y) ** 2 <= reach * reach) return tw;
+    }
+    return null;
+  }
+
+  damageTower(tw, amount) {
+    tw.hp = Math.max(0, tw.hp - amount);
+    if (tw.hp === 0) tw.alive = false; // destroying a tower doesn't end the match
+  }
+
   step(dt) {
     this.tick++;
     this.timeMs += dt * 1000;
@@ -385,7 +466,10 @@ export default class GameServer {
     // 2) Spawn, march, and resolve the lane minions.
     this.stepMinions(dt);
 
-    // 3) Move projectiles; expire; check hits on players, then minions, then bases.
+    // 3) Let the towers zap any enemy in range.
+    this.stepTowers();
+
+    // 4) Move projectiles; expire; check hits on players, minions, towers, bases.
     const survivors = [];
     for (const b of this.projectiles) {
       b.x += b.vx * dt;
@@ -402,6 +486,11 @@ export default class GameServer {
       const mob = this.hitMinion(b);
       if (mob) {
         this.damageMinion(mob, b.dmg);
+        continue;
+      }
+      const tower = this.hitTower(b);
+      if (tower) {
+        this.damageTower(tower, b.dmg);
         continue;
       }
       const base = this.hitBase(b);
@@ -463,6 +552,7 @@ export default class GameServer {
   // Start a fresh round: bases and all players restored to their spawn slots.
   resetMatch() {
     this.resetBases();
+    this.resetTowers();
     for (const p of this.players.values()) {
       const fresh = this.freshPlayer(p.id, p.team, p.spawnIndex);
       Object.assign(p, fresh);
@@ -512,6 +602,14 @@ export default class GameServer {
         y: Math.round(m.y),
         hp: m.hp,
         alive: m.alive,
+      })),
+      towers: [...this.towers.values()].map((tw) => ({
+        team: tw.team,
+        x: tw.x,
+        y: tw.y,
+        hp: tw.hp,
+        maxHp: TOWER.maxHp,
+        alive: tw.alive,
       })),
       bases: [...this.bases.values()].map((b) => ({
         team: b.team,

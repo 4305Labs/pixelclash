@@ -34,6 +34,11 @@ try {
   // skip straight into active play.
   server.phase = "playing";
 
+  // This test isolates hero-vs-hero combat: clear the guard towers that now
+  // stand on the center row so they don't soak the straight shot. (Minions
+  // don't spawn here either — waves only arm via the real countdown.)
+  server.towers.clear();
+
   // The map now has walls. Put both fighters on the open center row (y=300,
   // which the map keeps clear) so the bolt has an unobstructed straight shot.
   A.y = 300;

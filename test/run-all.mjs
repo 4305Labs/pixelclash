@@ -29,6 +29,8 @@ const tests = [
   "./m16.serverurl.node.mjs",
   "./m17.minions.mjs",
   "./m17.minions.render.mjs",
+  "./m18.towers.mjs",
+  "./m18.towers.render.mjs",
 ];
 
 let failed = false;

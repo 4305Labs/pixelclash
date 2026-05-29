@@ -16,7 +16,10 @@ await page.evaluate(() => {
       { id: "p1", team: "blue", x: 330, y: 300, hp: 100, alive: true },
       { id: "p2", team: "red", x: 470, y: 240, hp: 70, alive: true },
     ],
-    projectiles: [{ id: "b1", team: "blue", kind: "basic", x: 410, y: 290 }],
+    projectiles: [
+      { id: "b1", team: "blue", kind: "basic", x: 410, y: 290 },
+      { id: "z1", team: "red", kind: "tower", x: 500, y: 296 },
+    ],
     minions: [
       { id: "mb1", team: "blue", x: 360, y: 260, hp: 40, alive: true },
       { id: "mb2", team: "blue", x: 360, y: 300, hp: 28, alive: true },
@@ -24,6 +27,10 @@ await page.evaluate(() => {
       { id: "mr1", team: "red", x: 430, y: 260, hp: 16, alive: true },
       { id: "mr2", team: "red", x: 430, y: 300, hp: 40, alive: true },
       { id: "mr3", team: "red", x: 430, y: 340, hp: 40, alive: true },
+    ],
+    towers: [
+      { team: "blue", x: 250, y: 300, hp: 180, maxHp: 180, alive: true },
+      { team: "red", x: 550, y: 300, hp: 120, maxHp: 180, alive: true },
     ],
     bases: [
       { team: "blue", x: 44, y: 300, hp: 250, maxHp: 250, alive: true },

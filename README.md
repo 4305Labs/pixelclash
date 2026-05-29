@@ -1,9 +1,9 @@
 # PixelClash 🟦⚔️🟥
 
 A pixel-art, browser-first **MOBA arena battler**. Move, basic attack, one
-ability, dash — and waves of **lane minions** march out to help you tear down
-the enemy base. Destroy that base to win. Built to start as **1v1** and grow to
-**3v3**.
+ability, dash — and waves of **lane minions** march out to help you push past
+the enemy's **guard tower** and tear down their base. Destroy that base to win.
+Built to start as **1v1** and grow to **3v3**.
 
 ![A live match](docs/screenshot-match.png)
 
@@ -80,6 +80,12 @@ wave of AI minions that march down the middle toward the enemy base, fighting
 whatever they meet. They're weak on their own, but they soak up fire and chip
 the base — push alongside your wave to break through.
 
+**Guard towers:** each team has one defensive tower standing in the lane between
+its base and the center. A tower auto-zaps the nearest enemy in range (orange
+bolts), so diving in alone is dangerous — let your minions soak the tower while
+you whittle it down. Towers are destructible but don't end the match; only the
+base does.
+
 ### Play on your phone (same Wi-Fi)
 
 While `npm run dev` is running, it also prints a `Network:` address like
@@ -120,6 +126,7 @@ pixelclash/
 │  ├─ entities/
 │  │  ├─ Player.js         ← on-screen player + health bar
 │  │  ├─ Minion.js         ← on-screen lane minion + health bar
+│  │  ├─ Tower.js          ← on-screen guard tower + health bar
 │  │  └─ Base.js           ← on-screen base crystal + health bar
 │  ├─ ui/
 │  │  ├─ VirtualJoystick.js← touch movement stick

@@ -93,6 +93,7 @@ try {
   assert(server.phase === "playing", "one chip doesn't end the match");
 
   // --- Player bolts kill minions (and minions are auto-aim targets) ---------
+  server.projectiles = []; // clear any stray tower zaps from earlier sub-steps
   server.minions = [
     { id: "tgt", team: "red", x: 440, y: 300, laneY: 300, hp: MINION.maxHp, alive: true, cd: 0 },
   ];
@@ -101,8 +102,9 @@ try {
   p1.y = 300;
   p1.cd.basic = 0;
   server.tryAttack(p1, "basic");
-  assert(server.projectiles.length === 1, "blue fires — auto-aim locks the nearby red minion");
-  assert(server.projectiles[0].vx > 0, "the bolt heads toward the minion (to the right)");
+  const shot = server.projectiles.find((b) => b.kind !== "tower");
+  assert(shot, "blue fires — auto-aim locks the nearby red minion");
+  assert(shot.vx > 0, "the bolt heads toward the minion (to the right)");
   stepN(server, 4);
   assert(
     server.minions.find((m) => m.id === "tgt").hp < MINION.maxHp,
