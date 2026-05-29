@@ -43,20 +43,13 @@ export async function openGame() {
   page.on("pageerror", (e) => errors.push(String(e)));
 
   await page.setContent(html, { waitUntil: "load" });
-  // Wait for Phaser to boot and the arena scene to be live.
+  // Wait for Phaser to boot and the arena scene's create() to finish (it sets
+  // up the `sprites` map and `joystick` near the end of create()).
   await page.waitForFunction(
-    () => window.PIXELCLASH?.game?.scene?.getScene("ArenaScene")?.player,
+    () => window.PIXELCLASH?.game?.scene?.getScene("ArenaScene")?.joystick,
     { timeout: 10000 }
   );
   return { browser, page, errors };
-}
-
-// Read live state out of the running Phaser game.
-export async function getPlayerPos(page) {
-  return page.evaluate(() => {
-    const s = window.PIXELCLASH.game.scene.getScene("ArenaScene");
-    return { x: s.player.x, y: s.player.y };
-  });
 }
 
 export function assert(cond, msg) {

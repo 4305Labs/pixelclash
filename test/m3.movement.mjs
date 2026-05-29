@@ -1,6 +1,7 @@
-// Milestone 3 verification: the player loads, moves with the keyboard,
-// and cannot leave the arena bounds. Runs in headless Chromium, no server.
-import { openGame, getPlayerPos, assert } from "./helpers.mjs";
+// Milestone 3 verification (now networked): the on-screen controls are read
+// each frame and sent to the server as an input vector. We stub the network
+// send to capture what the keyboard produces, with no real socket involved.
+import { openGame, assert } from "./helpers.mjs";
 
 let browser;
 try {
@@ -8,38 +9,45 @@ try {
   browser = game.browser;
   const { page, errors } = game;
 
-  const start = await getPlayerPos(page);
-  console.log("start pos:", start);
+  // Pretend we've been welcomed (so update() actually sends input), and
+  // capture every input vector the scene tries to send.
+  await page.evaluate(() => {
+    const net = window.PIXELCLASH.net;
+    net._receive({ t: "welcome", id: "p1", team: "blue" });
+    window.__last = null;
+    net.sendInput = (dx, dy) => {
+      window.__last = { dx, dy };
+    };
+  });
 
-  // Hold "D" (right) for a bit; player x should increase.
+  const read = () => page.evaluate(() => window.__last);
+
+  // Press D (right): dx should be +1.
   await page.keyboard.down("d");
-  await page.waitForTimeout(500);
-  await page.keyboard.up("d");
-  await page.waitForTimeout(100);
-  const afterRight = await getPlayerPos(page);
-  console.log("after right:", afterRight);
-  assert(afterRight.x > start.x + 20, "moving right increases x");
+  await page.waitForTimeout(120);
+  let v = await read();
+  console.log("after D:", JSON.stringify(v));
+  assert(v && v.dx === 1 && v.dy === 0, "pressing D sends dx=+1");
 
-  // Hold "W" (up) for a bit; player y should decrease (up = smaller y).
+  // Add W (up) while holding D: dx=+1, dy=-1 (diagonal).
   await page.keyboard.down("w");
-  await page.waitForTimeout(500);
-  await page.keyboard.up("w");
-  await page.waitForTimeout(100);
-  const afterUp = await getPlayerPos(page);
-  console.log("after up:", afterUp);
-  assert(afterUp.y < afterRight.y - 20, "moving up decreases y");
+  await page.waitForTimeout(120);
+  v = await read();
+  console.log("after D+W:", JSON.stringify(v));
+  assert(v.dx === 1 && v.dy === -1, "D+W sends dx=+1, dy=-1");
 
-  // Slam into the right wall; confirm we stay inside the 800-wide arena.
-  await page.keyboard.down("d");
-  await page.waitForTimeout(1800);
+  // Release everything: should send a stop (0,0).
   await page.keyboard.up("d");
-  const atWall = await getPlayerPos(page);
-  console.log("at wall:", atWall);
-  assert(atWall.x < 800, "player stays within right bound");
-  assert(atWall.x > afterRight.x, "player kept moving toward the wall");
+  await page.keyboard.up("w");
+  await page.waitForTimeout(120);
+  v = await read();
+  console.log("after release:", JSON.stringify(v));
+  assert(v.dx === 0 && v.dy === 0, "releasing keys sends a stop");
 
-  assert(errors.length === 0, "no console/page errors: " + JSON.stringify(errors));
-  console.log("\nMILESTONE 3 TESTS PASSED");
+  const realErrors = errors.filter((e) => !/websocket|ws:\/\//i.test(e));
+  assert(realErrors.length === 0, "no unexpected errors: " + JSON.stringify(realErrors));
+
+  console.log("\nMILESTONE 3 CONTROL TESTS PASSED");
 } catch (e) {
   console.error("\nTEST FAILURE:", e.message);
   process.exitCode = 1;

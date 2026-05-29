@@ -27,3 +27,18 @@ export const PLAYER_SIZE = 16;
 
 // How much we scale the tiny pixel sprites up so they're visible.
 export const SPRITE_SCALE = 2;
+
+// Half the on-screen size of a player (used to keep them inside the walls).
+export const PLAYER_HALF = (PLAYER_SIZE * SPRITE_SCALE) / 2;
+
+// --- Networking -------------------------------------------------------------
+export const NET = {
+  port: 2567, // the port the game server listens on
+  tickHz: 30, // how many times per second the server updates & broadcasts
+};
+
+// Where each team spawns. Blue starts on the left, Red on the right.
+export const SPAWNS = {
+  blue: { x: 120, y: GAME_HEIGHT / 2 },
+  red: { x: GAME_WIDTH - 120, y: GAME_HEIGHT / 2 },
+};

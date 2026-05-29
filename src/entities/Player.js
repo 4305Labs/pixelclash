@@ -1,31 +1,39 @@
 // ===========================================================================
-// Player — a controllable character in the arena.
-// It's a physics sprite, which means Phaser tracks its velocity and keeps it
-// inside the arena walls for us.
+// Player — the on-screen representation of one player in the arena.
+// In our networked model the SERVER decides positions; this object just shows
+// a player and smoothly glides toward the latest position the server reported
+// (so movement looks fluid even though updates arrive 30 times a second).
+//
+// It's a Container (a group you can move as one) so we can attach a health bar
+// to it in the next milestone.
 // ===========================================================================
 
 import Phaser from "phaser";
-import { PLAYER_SPEED, SPRITE_SCALE } from "../config.js";
+import { SPRITE_SCALE } from "../config.js";
 
-export default class Player extends Phaser.Physics.Arcade.Sprite {
-  // scene = the arena, x/y = start position, team = "blue" or "red".
-  constructor(scene, x, y, team = "blue") {
-    super(scene, x, y, team === "red" ? "player_red" : "player_blue");
+export default class Player extends Phaser.GameObjects.Container {
+  constructor(scene, x, y, team) {
+    super(scene, x, y);
     this.team = team;
+    this.targetX = x;
+    this.targetY = y;
 
-    // Register this sprite with the scene's display list and physics engine.
+    const texture = team === "red" ? "player_red" : "player_blue";
+    this.bodySprite = scene.add.sprite(0, 0, texture).setScale(SPRITE_SCALE);
+    this.add(this.bodySprite);
+
     scene.add.existing(this);
-    scene.physics.add.existing(this);
-
-    this.setScale(SPRITE_SCALE);
-    this.setCollideWorldBounds(true); // can't walk off the edge of the arena
   }
 
-  // Move based on a direction vector (dx, dy), each between -1 and 1.
-  // (0,0) means stop. We normalize so diagonal movement isn't faster.
-  move(dx, dy) {
-    const v = new Phaser.Math.Vector2(dx, dy);
-    if (v.lengthSq() > 1) v.normalize(); // cap length at 1 for diagonals
-    this.setVelocity(v.x * PLAYER_SPEED, v.y * PLAYER_SPEED);
+  // Tell the player where the server says it should be.
+  setTarget(x, y) {
+    this.targetX = x;
+    this.targetY = y;
+  }
+
+  // Glide a fraction of the way toward the target each frame (interpolation).
+  smoothFollow() {
+    this.x += (this.targetX - this.x) * 0.3;
+    this.y += (this.targetY - this.y) * 0.3;
   }
 }
