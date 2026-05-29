@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "server": "node server.js",
-    "test": "node test/run-all.mjs"
+    "test": "node test/run-all.mjs",
+    "test:live": "node test/live.mjs",
+    "test:live-browser": "node test/live-browser.mjs"
   },
   "dependencies": {
     "phaser": "3.80.1",
