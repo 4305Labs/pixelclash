@@ -6,16 +6,16 @@
 
 import Phaser from "phaser";
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, COMBAT } from "../config.js";
-
-// How firmly the local player is pulled toward the server's truth, per second.
-// Equilibrium error while moving ≈ PLAYER_SPEED / RECONCILE_RATE pixels.
-const RECONCILE_RATE = 8;
 import { generateTextures } from "../textures.js";
 import { stepPosition } from "../sim.js";
 import Player from "../entities/Player.js";
 import Base from "../entities/Base.js";
 import VirtualJoystick from "../ui/VirtualJoystick.js";
 import ActionButton from "../ui/ActionButton.js";
+
+// How firmly the local player is pulled toward the server's truth, per second.
+// Equilibrium error while moving ≈ PLAYER_SPEED / RECONCILE_RATE pixels.
+const RECONCILE_RATE = 8;
 
 export default class ArenaScene extends Phaser.Scene {
   constructor() {
@@ -95,7 +95,10 @@ export default class ArenaScene extends Phaser.Scene {
     this.net.join();
   }
 
-  update() {
+  // `delta` is the milliseconds since the last frame (Phaser passes it in).
+  update(time, delta) {
+    const dt = Math.min(delta / 1000, 0.05); // seconds, clamped to avoid big jumps
+
     // 1) Read movement input and send it.
     let dx = 0;
     let dy = 0;
@@ -108,11 +111,12 @@ export default class ArenaScene extends Phaser.Scene {
       dx = v.x;
       dy = v.y;
     }
+    this.lastInput = { dx, dy };
     if (this.net.localId) this.net.sendInput(dx, dy);
 
     // 2) Sync everything to the server's snapshot.
     this.syncBases();
-    this.syncPlayers();
+    this.syncPlayers(dt);
     this.syncProjectiles();
     this.updateGameOver();
   }
@@ -142,7 +146,7 @@ export default class ArenaScene extends Phaser.Scene {
     }
   }
 
-  syncPlayers() {
+  syncPlayers(dt) {
     const seen = new Set();
     for (const p of this.net.players) {
       seen.add(p.id);
@@ -151,8 +155,16 @@ export default class ArenaScene extends Phaser.Scene {
         sprite = new Player(this, p.x, p.y, p.team);
         this.sprites.set(p.id, sprite);
       }
-      sprite.setTarget(p.x, p.y);
-      sprite.smoothFollow();
+
+      if (p.id === this.net.localId) {
+        // OUR player: predict locally for instant response, then nudge toward
+        // the server's authoritative position so we never drift far.
+        this.predictLocal(sprite, p, dt);
+      } else {
+        // Everyone else: glide toward their latest server position.
+        sprite.setTarget(p.x, p.y);
+        sprite.smoothFollow();
+      }
       sprite.setHp(p.hp);
       sprite.setAlive(p.alive);
     }
@@ -161,6 +173,29 @@ export default class ArenaScene extends Phaser.Scene {
         sprite.destroy();
         this.sprites.delete(id);
       }
+    }
+  }
+
+  // Client-side prediction for the local player.
+  predictLocal(sprite, serverP, dt) {
+    const input = this.lastInput || { dx: 0, dy: 0 };
+
+    // Step our sprite forward using the SAME math the server uses.
+    const moved = stepPosition(sprite.x, sprite.y, input.dx, input.dy, dt);
+    sprite.x = moved.x;
+    sprite.y = moved.y;
+
+    // If the server says we're far from where we think we are (e.g. we just
+    // respawned, or got knocked back), snap. Otherwise correct gently with a
+    // frame-rate-independent pull so the feel is the same at any frame rate.
+    const gap = Math.hypot(serverP.x - sprite.x, serverP.y - sprite.y);
+    if (gap > 60) {
+      sprite.x = serverP.x;
+      sprite.y = serverP.y;
+    } else {
+      const k = Math.min(1, RECONCILE_RATE * dt);
+      sprite.x += (serverP.x - sprite.x) * k;
+      sprite.y += (serverP.y - sprite.y) * k;
     }
   }
 
