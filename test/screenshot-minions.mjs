@@ -33,8 +33,8 @@ await page.evaluate(() => {
       { team: "red", x: 550, y: 300, hp: 120, maxHp: 180, alive: true },
     ],
     bases: [
-      { team: "blue", x: 44, y: 300, hp: 250, maxHp: 250, alive: true },
-      { team: "red", x: 756, y: 300, hp: 200, maxHp: 250, alive: true },
+      { team: "blue", x: 44, y: 300, hp: 250, maxHp: 250, alive: true, shielded: true },
+      { team: "red", x: 756, y: 300, hp: 200, maxHp: 250, alive: true, shielded: true },
     ],
   });
 });

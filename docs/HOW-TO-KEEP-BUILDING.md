@@ -100,6 +100,13 @@ so a tower bolt damages enemies exactly like a hero's does. They're drawn by
 `src/entities/Tower.js`. Destroying a tower never wins the match — only razing
 the enemy **base** does.
 
+A base is **shielded** (immune to damage, and ignored by auto-aim) until its own
+tower is gone — so the tower is the gate to victory. That rule is just
+`GameServer.baseVulnerable(team)` (is the team's tower dead?), checked in
+`damageBase()` and `nearestTarget()`; the client shows a glowing ring around a
+shielded base (`Base.setShielded`). Want classic uncapturable bases or a
+different gate? Tweak `baseVulnerable`.
+
 ---
 
 ## 5. Go from 1v1 to 3v3

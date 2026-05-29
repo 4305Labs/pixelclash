@@ -16,13 +16,22 @@ export default class Base extends Phaser.GameObjects.Container {
 
     this.crystal = scene.add.sprite(0, 0, team === "red" ? "base_red" : "base_blue");
 
+    // A translucent ring shown while the base is shielded (its tower still up).
+    this.shield = scene.add.circle(0, 0, BASE.radius + 8, 0xffffff, 0).setStrokeStyle(2, 0x9bf0ff, 0.7);
+    this.shield.setVisible(false);
+
     this.hpBg = scene.add.rectangle(0, BAR_Y, BAR_W + 2, 7, 0x000000, 0.6);
     this.hpFill = scene.add
       .rectangle(-BAR_W / 2, BAR_Y, BAR_W, 5, 0x00e436)
       .setOrigin(0, 0.5);
 
-    this.add([this.crystal, this.hpBg, this.hpFill]);
+    this.add([this.crystal, this.shield, this.hpBg, this.hpFill]);
     scene.add.existing(this);
+  }
+
+  // Toggle the protective ring (true while the team's tower still stands).
+  setShielded(shielded) {
+    this.shield.setVisible(!!shielded && this.crystal.alpha > 0.5);
   }
 
   setHp(hp, maxHp) {

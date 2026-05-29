@@ -83,8 +83,9 @@ the base — push alongside your wave to break through.
 **Guard towers:** each team has one defensive tower standing in the lane between
 its base and the center. A tower auto-zaps the nearest enemy in range (orange
 bolts), so diving in alone is dangerous — let your minions soak the tower while
-you whittle it down. Towers are destructible but don't end the match; only the
-base does.
+you whittle it down. **A base is shielded (a glowing ring) and can't be touched
+until its own tower is destroyed**, so the tower is the gate to victory: break
+the tower, then raze the exposed base to win.
 
 ### Play on your phone (same Wi-Fi)
 

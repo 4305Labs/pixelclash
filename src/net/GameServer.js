@@ -237,7 +237,7 @@ export default class GameServer {
       if (tw.team !== player.team && tw.alive) consider(tw.x, tw.y);
     }
     for (const b of this.bases.values()) {
-      if (b.team !== player.team && b.alive) consider(b.x, b.y);
+      if (b.team !== player.team && b.alive && this.baseVulnerable(b.team)) consider(b.x, b.y);
     }
     return best;
   }
@@ -530,6 +530,7 @@ export default class GameServer {
   }
 
   damageBase(base, amount) {
+    if (!this.baseVulnerable(base.team)) return; // shielded while its tower stands
     base.hp = Math.max(0, base.hp - amount);
     if (base.hp === 0 && base.alive) {
       base.alive = false;
@@ -537,6 +538,12 @@ export default class GameServer {
       this.winner = base.team === "blue" ? "red" : "blue"; // the attackers win
       this.resetAt = this.timeMs + MATCH.resetMs;
     }
+  }
+
+  // A base can only be harmed once its own team's guard tower is gone.
+  baseVulnerable(team) {
+    const tw = this.towers.get(team);
+    return !tw || !tw.alive;
   }
 
   respawn(p) {
@@ -618,6 +625,7 @@ export default class GameServer {
         hp: b.hp,
         maxHp: BASE.maxHp,
         alive: b.alive,
+        shielded: !this.baseVulnerable(b.team), // protected while its tower lives
       })),
     };
   }

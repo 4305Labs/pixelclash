@@ -31,6 +31,8 @@ const tests = [
   "./m17.minions.render.mjs",
   "./m18.towers.mjs",
   "./m18.towers.render.mjs",
+  "./m19.towergate.mjs",
+  "./m19.towergate.render.mjs",
 ];
 
 let failed = false;

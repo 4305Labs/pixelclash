@@ -279,6 +279,7 @@ export default class ArenaScene extends Phaser.Scene {
       base.lastAlive = b.alive;
       base.setHp(b.hp, b.maxHp);
       base.setAlive(b.alive);
+      base.setShielded(b.shielded);
     }
   }
 

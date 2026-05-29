@@ -84,6 +84,7 @@ try {
     p.y = 60;
   }
   const redBase = server.bases.get("red");
+  server.towers.get("red").alive = false; // base is shielded until its tower falls
   server.minions = [
     { id: "siege", team: "blue", x: redBase.x, y: redBase.y, laneY: redBase.y, hp: MINION.maxHp, alive: true, cd: 0 },
   ];
