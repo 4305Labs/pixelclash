@@ -105,14 +105,23 @@ browser) and **LibreSprite** (free, desktop). Free art packs: **Kenney**
 
 ---
 
-## 6. Make movement feel snappier (client-side prediction)
+## 6. Movement feel (client-side prediction — already done ✅)
 
-Today the browser draws exactly what the server reports, so on a slow
-connection your own character lags slightly behind your finger. The standard
-fix is **client-side prediction**: move your own player locally the instant you
-press a key, then gently correct toward the server's truth. This is a bigger
-change (it touches `ArenaScene` and `NetClient`) — tackle it once the basics
-feel solid, and have your AI assistant walk you through it step by step.
+Your own player now moves the **instant** you press a key, instead of waiting
+for the server to reply. This is "client-side prediction": the browser predicts
+your movement locally, then gently corrects toward the server's authoritative
+position so you never drift out of sync.
+
+- The shared movement math lives in `src/sim.js` (used by **both** the server
+  and the client, so they always agree).
+- The prediction + correction lives in `src/scenes/ArenaScene.js` →
+  `predictLocal()`. The `RECONCILE_RATE` constant at the top of that file
+  controls how firmly you're pulled toward the server's truth — higher = more
+  rigid/accurate, lower = smoother but looser. (Equilibrium error while moving
+  ≈ `PLAYER_SPEED / RECONCILE_RATE` pixels.)
+
+Other players are still drawn by gliding toward their latest reported position
+(interpolation), which is the normal approach for opponents.
 
 ---
 

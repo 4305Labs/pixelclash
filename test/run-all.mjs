@@ -13,6 +13,8 @@ const tests = [
   "./m5.render.mjs",
   "./m6.match.mjs",
   "./m6.render.mjs",
+  "./m7.sim.mjs",
+  "./m7.prediction.mjs",
 ];
 
 let failed = false;

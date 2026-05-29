@@ -11,7 +11,6 @@
 import {
   GAME_WIDTH,
   GAME_HEIGHT,
-  PLAYER_SPEED,
   PLAYER_HALF,
   SPAWNS,
   COMBAT,
@@ -19,6 +18,7 @@ import {
   BASE_POS,
   MATCH,
 } from "../config.js";
+import { stepPosition, normalizeInput } from "../sim.js";
 
 export default class GameServer {
   constructor() {
@@ -160,15 +160,12 @@ export default class GameServer {
         if (this.timeMs >= p.deadUntil) this.respawn(p);
         continue;
       }
-      let { dx, dy } = p.input;
-      const len = Math.hypot(dx, dy);
-      if (len > 1) {
-        dx /= len;
-        dy /= len;
-      }
-      if (len > 0.01) p.face = { x: dx / len, y: dy / len };
-      p.x = clamp(p.x + dx * PLAYER_SPEED * dt, PLAYER_HALF, GAME_WIDTH - PLAYER_HALF);
-      p.y = clamp(p.y + dy * PLAYER_SPEED * dt, PLAYER_HALF, GAME_HEIGHT - PLAYER_HALF);
+      const { dx, dy } = p.input;
+      // Remember facing (for aim fallback) when there's real input.
+      if (Math.hypot(dx, dy) > 0.01) p.face = normalizeInput(dx, dy);
+      const next = stepPosition(p.x, p.y, dx, dy, dt);
+      p.x = next.x;
+      p.y = next.y;
     }
 
     // 2) Move projectiles; expire; check hits on players, then bases.

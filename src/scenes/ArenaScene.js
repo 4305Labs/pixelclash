@@ -6,7 +6,12 @@
 
 import Phaser from "phaser";
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, COMBAT } from "../config.js";
+
+// How firmly the local player is pulled toward the server's truth, per second.
+// Equilibrium error while moving ≈ PLAYER_SPEED / RECONCILE_RATE pixels.
+const RECONCILE_RATE = 8;
 import { generateTextures } from "../textures.js";
+import { stepPosition } from "../sim.js";
 import Player from "../entities/Player.js";
 import Base from "../entities/Base.js";
 import VirtualJoystick from "../ui/VirtualJoystick.js";
