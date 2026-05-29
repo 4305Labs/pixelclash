@@ -15,6 +15,7 @@ import {
   SPAWNS,
   TEAM_SIZE,
   COMBAT,
+  DASH,
   BASE,
   BASE_POS,
   MATCH,
@@ -96,7 +97,7 @@ export default class GameServer {
       hp: COMBAT.maxHp,
       alive: true,
       deadUntil: 0,
-      cd: { basic: 0, ability: 0 },
+      cd: { basic: 0, ability: 0, dash: 0 },
     };
   }
 
@@ -115,7 +116,20 @@ export default class GameServer {
       p.input.dy = clamp(Number(msg.dy) || 0, -1, 1);
     } else if (msg.t === "attack") {
       this.tryAttack(p, msg.kind === "ability" ? "ability" : "basic");
+    } else if (msg.t === "dash") {
+      this.tryDash(p);
     }
+  }
+
+  tryDash(player) {
+    if (this.phase !== "playing" || !player.alive) return;
+    if (this.timeMs < player.cd.dash) return; // cooling down
+    player.cd.dash = this.timeMs + DASH.cd;
+
+    // Dash along the way we're facing (last movement direction).
+    const f = normalizeInput(player.face.x, player.face.y);
+    player.x = clamp(player.x + f.dx * DASH.distance, PLAYER_HALF, GAME_WIDTH - PLAYER_HALF);
+    player.y = clamp(player.y + f.dy * DASH.distance, PLAYER_HALF, GAME_HEIGHT - PLAYER_HALF);
   }
 
   tryAttack(player, kind) {

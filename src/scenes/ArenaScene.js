@@ -46,6 +46,8 @@ export default class ArenaScene extends Phaser.Scene {
     this.input.keyboard.on("keydown-J", () => this.net.sendAttack("basic"));
     this.input.keyboard.on("keydown-SPACE", () => this.net.sendAttack("basic"));
     this.input.keyboard.on("keydown-K", () => this.net.sendAttack("ability"));
+    this.input.keyboard.on("keydown-L", () => this.net.sendDash());
+    this.input.keyboard.on("keydown-SHIFT", () => this.net.sendDash());
 
     // --- Input: attacks (on-screen buttons, bottom-right) -------------------
     new ActionButton(this, GAME_WIDTH - 70, GAME_HEIGHT - 70, "A", COMBAT.basic.color, () =>
@@ -53,6 +55,9 @@ export default class ArenaScene extends Phaser.Scene {
     );
     new ActionButton(this, GAME_WIDTH - 150, GAME_HEIGHT - 120, "B", COMBAT.ability.color, () =>
       this.net.sendAttack("ability")
+    );
+    new ActionButton(this, GAME_WIDTH - 200, GAME_HEIGHT - 60, "C", 0x00e436, () =>
+      this.net.sendDash()
     );
 
     // --- HUD -----------------------------------------------------------------
@@ -68,7 +73,7 @@ export default class ArenaScene extends Phaser.Scene {
 
     this.net.on("welcome", (msg) => {
       const label = msg.team === "red" ? "RED" : "BLUE";
-      this.statusText.setText(`You are ${label}  —  move: left side   attack: A / B`);
+      this.statusText.setText(`You are ${label}  —  move: left side   A/B attack   C dash`);
       this.statusText.setColor(msg.team === "red" ? "#ff6b8b" : "#9bd9ff");
     });
 

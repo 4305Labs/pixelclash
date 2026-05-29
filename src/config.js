@@ -69,6 +69,12 @@ export const COMBAT = {
   hitPad: 14, // extra hit radius so bolts connect with a player's body
 };
 
+// --- Dash (a quick burst move along your facing direction) ------------------
+export const DASH = {
+  distance: 130, // how far the dash carries you, in pixels
+  cd: 2000, // cooldown in milliseconds
+};
+
 // --- Bases & match ----------------------------------------------------------
 export const BASE = {
   maxHp: 250, // ~31 basic hits, or fewer with the ability — short matches

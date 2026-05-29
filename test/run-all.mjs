@@ -16,6 +16,8 @@ const tests = [
   "./m7.sim.mjs",
   "./m7.prediction.mjs",
   "./m8.teams.mjs",
+  "./m9.dash.mjs",
+  "./m9.render.mjs",
 ];
 
 let failed = false;

@@ -41,6 +41,11 @@ export default class NetClient {
     this.conn.send({ t: "attack", kind });
   }
 
+  // Ask the server to dash along our facing direction.
+  sendDash() {
+    this.conn.send({ t: "dash" });
+  }
+
   on(event, cb) {
     if (this._listeners[event]) this._listeners[event].push(cb);
   }

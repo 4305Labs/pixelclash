@@ -64,6 +64,7 @@ To stop either server: click its Terminal and press `Ctrl + C`.
 | Move | `WASD` or arrow keys | Drag the **left** side of the screen (joystick) |
 | Basic attack | `J` or `Space` | Tap the **A** button (bottom-right) |
 | Ability (Power Shot) | `K` | Tap the **B** button |
+| Dash | `L` or `Shift` | Tap the **C** button |
 
 Attacks **auto-aim** at the nearest enemy or their base. Reduce the enemy
 **base** (the diamond crystal) to 0 HP to win. After a win, the match
