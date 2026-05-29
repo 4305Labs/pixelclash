@@ -89,4 +89,12 @@ export const BASE_POS = {
 
 export const MATCH = {
   resetMs: 5000, // pause on the win banner, then start a fresh match
+
+  // --- Lobby / match start ---
+  // Each side needs at least this many players before a match can begin.
+  // Set to 1 for "as soon as one player per team shows up" (1v1+).
+  minPerTeam: 1,
+  // A short "get ready" countdown after enough players are present, before
+  // the action starts. In milliseconds.
+  countdownMs: 3000,
 };

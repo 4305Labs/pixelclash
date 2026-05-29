@@ -13,8 +13,10 @@ export default class NetClient {
     this.players = []; // latest roster: [{ id, team, x, y, hp, alive }]
     this.projectiles = []; // bolts in flight: [{ id, team, kind, x, y }]
     this.bases = []; // [{ team, x, y, hp, maxHp, alive }]
-    this.phase = "playing"; // "playing" | "over"
+    this.phase = "playing"; // "waiting" | "countdown" | "playing" | "over"
     this.winner = null; // winning team when phase === "over"
+    this.needed = 0; // players needed for a match to start (for the lobby text)
+    this.countdown = 0; // seconds left on the "get ready" countdown, else 0
     this.tick = 0;
     this.connected = false;
     this._listeners = { welcome: [], state: [], full: [] };
@@ -66,6 +68,8 @@ export default class NetClient {
       this.bases = msg.bases || [];
       this.phase = msg.phase || "playing";
       this.winner = msg.winner || null;
+      this.needed = msg.needed || 0;
+      this.countdown = msg.countdown || 0;
       this.tick = msg.tick;
       this._emit("state", msg);
     } else if (msg.t === "full") {

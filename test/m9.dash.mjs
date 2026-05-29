@@ -20,6 +20,9 @@ function connect() {
 try {
   const alice = connect(); // blue, faces right by default ({x:1,y:0})
   await flush();
+  // Only one player here, so the lobby would stay "waiting"; this test is about
+  // dash mechanics, so put the match straight into active play.
+  server.phase = "playing";
   const A = server.players.get("p1");
   A.x = 300;
   A.y = 300;

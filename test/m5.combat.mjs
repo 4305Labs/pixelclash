@@ -30,6 +30,10 @@ try {
   const B = server.players.get("p2");
   assert(A.hp === COMBAT.maxHp && B.hp === COMBAT.maxHp, "both start at full HP");
 
+  // A match now opens in a lobby + countdown; this test is about combat, so
+  // skip straight into active play.
+  server.phase = "playing";
+
   // Cooldown: two basic attacks fired instantly => only one bolt spawns.
   alice.sendAttack("basic");
   alice.sendAttack("basic");

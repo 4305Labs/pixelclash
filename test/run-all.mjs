@@ -20,6 +20,8 @@ const tests = [
   "./m9.render.mjs",
   "./m10.cooldown.mjs",
   "./m11.feedback.mjs",
+  "./m12.lobby.mjs",
+  "./m12.lobby.render.mjs",
 ];
 
 let failed = false;

@@ -24,6 +24,9 @@ try {
   const alice = connect(); // 1st -> blue, spawns left (x=120)
   const bob = connect(); // 2nd -> red, spawns right (x=680)
   await flush();
+  // A match now begins in a lobby (waiting -> countdown -> playing). This test
+  // is about movement replication, so skip the countdown and go live.
+  server.phase = "playing";
 
   assert(alice.localId === "p1", "alice got id p1");
   assert(bob.localId === "p2", "bob got id p2");

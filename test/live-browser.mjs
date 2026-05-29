@@ -51,6 +51,14 @@ try {
   assert(idB === "p2" && teamB === "red", "Tab B joined the live server as red");
   assert(game.players.size === 2, "the live server has both real browsers connected");
 
+  // Both teams are now present, so the server runs a short "get ready"
+  // countdown before play. The world is frozen until then, so wait for the
+  // match to actually start before we try to move.
+  await tabA.waitForFunction(() => window.PIXELCLASH.net.phase === "playing", {
+    timeout: 10000,
+  });
+  assert(game.phase === "playing", "the match left the lobby and is now playing");
+
   // Drive Tab A's keyboard. Tab A must be focused to receive keys.
   await tabA.bringToFront();
   const aStart = await tabA.evaluate(

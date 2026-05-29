@@ -35,9 +35,15 @@ export default class GameServer {
 
     this.bases = new Map(); // team -> { team, x, y, hp, alive }
     this.resetBases();
-    this.phase = "playing"; // "playing" | "over"
+    // Match lifecycle:
+    //   "waiting"   — not enough players yet; the world is frozen in the lobby
+    //   "countdown" — enough players; a short "get ready" timer is running
+    //   "playing"   — the action is live
+    //   "over"      — a base fell; the win banner shows, then we reset
+    this.phase = "waiting";
     this.winner = null; // team that won, when phase === "over"
-    this.resetAt = 0;
+    this.resetAt = 0; // when an "over" match resets (ms on our sim clock)
+    this.startAt = 0; // when a "countdown" flips to "playing" (ms)
   }
 
   resetBases() {
@@ -73,6 +79,7 @@ export default class GameServer {
     conn.onMessage((msg) => this.onMessage(id, msg));
     conn.onClose(() => this.removeConnection(id));
 
+    this.evaluateLobby(); // a new arrival may be enough to start the countdown
     this.broadcast();
     return id;
   }
@@ -81,6 +88,26 @@ export default class GameServer {
     let n = 0;
     for (const p of this.players.values()) if (p.team === team) n++;
     return n;
+  }
+
+  // True once both teams have at least the configured minimum of players.
+  enoughToStart() {
+    return (
+      this.countTeam("blue") >= MATCH.minPerTeam &&
+      this.countTeam("red") >= MATCH.minPerTeam
+    );
+  }
+
+  // Move between the two lobby states based on who's here. Called whenever the
+  // roster changes (join/leave) and right after a finished match resets.
+  evaluateLobby() {
+    if (this.phase === "waiting" && this.enoughToStart()) {
+      this.phase = "countdown";
+      this.startAt = this.timeMs + MATCH.countdownMs;
+    } else if (this.phase === "countdown" && !this.enoughToStart()) {
+      this.phase = "waiting";
+      this.startAt = 0;
+    }
   }
 
   freshPlayer(id, team, spawnIndex) {
@@ -105,6 +132,7 @@ export default class GameServer {
     this.players.delete(id);
     this.connections.delete(id);
     this.projectiles = this.projectiles.filter((p) => p.ownerId !== id);
+    this.evaluateLobby(); // dropping below the minimum cancels the countdown
     this.broadcast();
   }
 
@@ -190,6 +218,13 @@ export default class GameServer {
     // When a match is over, just count down to the rematch.
     if (this.phase === "over") {
       if (this.timeMs >= this.resetAt) this.resetMatch();
+      return;
+    }
+
+    // In the lobby (waiting / counting down), the world is frozen.
+    if (this.phase === "waiting") return;
+    if (this.phase === "countdown") {
+      if (this.timeMs >= this.startAt) this.phase = "playing";
       return;
     }
 
@@ -284,8 +319,12 @@ export default class GameServer {
       Object.assign(p, fresh);
     }
     this.projectiles = [];
-    this.phase = "playing";
     this.winner = null;
+    // Return to the lobby; if enough players are still here, evaluateLobby
+    // immediately kicks off a fresh "get ready" countdown.
+    this.phase = "waiting";
+    this.startAt = 0;
+    this.evaluateLobby();
   }
 
   snapshot() {
@@ -294,6 +333,12 @@ export default class GameServer {
       tick: this.tick,
       phase: this.phase,
       winner: this.winner,
+      // Lobby info so the client can show "Waiting… N/NEEDED" and the countdown.
+      needed: MATCH.minPerTeam * 2,
+      countdown:
+        this.phase === "countdown"
+          ? Math.max(0, Math.ceil((this.startAt - this.timeMs) / 1000))
+          : 0,
       players: [...this.players.values()].map((p) => ({
         id: p.id,
         team: p.team,

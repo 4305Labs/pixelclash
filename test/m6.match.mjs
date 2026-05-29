@@ -31,6 +31,13 @@ try {
   const blueBase = server.bases.get("blue");
   assert(redBase.hp === BASE.maxHp && redBase.alive, "red base starts full & alive");
 
+  // With one player per team present, the lobby starts a countdown; once it
+  // elapses the match is "playing". (The lobby itself is tested in m12.)
+  assert(server.phase === "countdown", "both teams present -> match counts down");
+  server.timeMs = server.startAt;
+  server.step(1 / 30);
+  assert(server.phase === "playing", "countdown elapses -> playing");
+
   // Walk Alice up next to the red base so her auto-aim picks the base, and fire.
   A.x = redBase.x - 12;
   A.y = redBase.y;
@@ -55,10 +62,11 @@ try {
   assert(A.x === frozenX, "players are frozen during game over");
   assert(server.projectiles.length === 0, "no attacks register during game over");
 
-  // After the reset delay, a fresh match begins. (resetMatch rebuilds the base
-  // objects, so re-fetch them rather than using the old references.)
+  // After the reset delay, the match resets. With both players still present it
+  // returns to the lobby and immediately starts a fresh countdown. (resetMatch
+  // rebuilds the base objects, so re-fetch them rather than reusing old refs.)
   stepN(server, Math.ceil(MATCH.resetMs / (1000 / 30)) + 2);
-  assert(server.phase === "playing", "match auto-resets to playing");
+  assert(server.phase === "countdown", "after a win the match resets into a fresh countdown");
   assert(server.winner === null, "winner cleared on reset");
   const redBase2 = server.bases.get("red");
   assert(redBase2.hp === BASE.maxHp && redBase2.alive, "red base restored to full");
@@ -66,6 +74,11 @@ try {
     A.hp === COMBAT.maxHp && A.x === SPAWNS.blue[0].x,
     "players reset to spawn at full HP"
   );
+
+  // Let the fresh countdown elapse to confirm the loop returns to playing.
+  server.timeMs = server.startAt;
+  server.step(1 / 30);
+  assert(server.phase === "playing", "the rematch begins after its countdown");
 
   // The other direction: destroying the blue base makes red win.
   server.damageBase(server.bases.get("blue"), 999);

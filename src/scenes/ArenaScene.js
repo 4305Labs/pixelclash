@@ -93,6 +93,22 @@ export default class ArenaScene extends Phaser.Scene {
       this.statusText.setText("Match is full — try again later").setColor("#ffec27");
     });
 
+    // Lobby banner: shown while waiting for players or counting down to the
+    // start. Hidden once the match is "playing"/"over".
+    this.lobbyText = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "", {
+        fontFamily: "monospace",
+        fontSize: "36px",
+        color: "#fff1e8",
+        align: "center",
+        stroke: "#000000",
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(2000)
+      .setVisible(false);
+
     // Win/lose banner (hidden until a base falls).
     this.gameOverText = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "", {
@@ -134,6 +150,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.syncBases();
     this.syncPlayers(dt);
     this.syncProjectiles();
+    this.updateLobby();
     this.updateGameOver();
 
     // 3) Redraw the cooldown sweeps on the action buttons.
@@ -173,6 +190,27 @@ export default class ArenaScene extends Phaser.Scene {
       base.lastHp = b.hp;
       base.setHp(b.hp, b.maxHp);
       base.setAlive(b.alive);
+    }
+  }
+
+  // Show the lobby banner while we wait for players, and the "get ready"
+  // countdown just before the match starts. Hidden during play and game over.
+  updateLobby() {
+    const phase = this.net.phase;
+    if (phase === "waiting") {
+      const present = this.net.players.length;
+      const needed = this.net.needed || 2;
+      this.lobbyText
+        .setText(`Waiting for players…\n${present}/${needed}`)
+        .setColor("#fff1e8")
+        .setVisible(true);
+    } else if (phase === "countdown") {
+      this.lobbyText
+        .setText(`Get ready!\nStarting in ${this.net.countdown}…`)
+        .setColor("#ffec27")
+        .setVisible(true);
+    } else {
+      this.lobbyText.setVisible(false);
     }
   }
 

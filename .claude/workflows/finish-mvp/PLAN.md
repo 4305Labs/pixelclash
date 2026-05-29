@@ -22,7 +22,7 @@ cooldown indicators. This plan covers the remaining polish for a shippable MVP.
 **Acceptance:** a new headless test asserts a damaged player's sprite shows a
 tint/feedback flag and a damage-number object is spawned. No console errors.
 
-## Phase B — Lobby / match start `[ ]`
+## Phase B — Lobby / match start `[x]`
 **Why:** players are dropped straight into an empty arena; no sense of "match."
 - A `LobbyScene` (or lobby state) showing "Waiting for players… N/NEEDED".
 - Server tracks a match lifecycle: `waiting` → `playing` → `over` → reset.
