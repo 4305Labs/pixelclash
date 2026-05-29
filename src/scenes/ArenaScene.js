@@ -28,6 +28,8 @@ export default class ArenaScene extends Phaser.Scene {
     this.drawWalls();
 
     this.net = this.registry.get("net");
+    this.audio = this.registry.get("audio");
+    this.wonPlayed = false; // so the win jingle plays once per match, not per frame
     this.sprites = new Map(); // player id -> Player display object
     this.bolts = new Map(); // projectile id -> circle
     this.baseSprites = new Map(); // team -> Base display object
@@ -71,6 +73,24 @@ export default class ArenaScene extends Phaser.Scene {
     this.input.keyboard.on("keydown-K", () => this.doAction("ability"));
     this.input.keyboard.on("keydown-L", () => this.doAction("dash"));
     this.input.keyboard.on("keydown-SHIFT", () => this.doAction("dash"));
+
+    // --- Audio: mute toggle + wake-on-gesture --------------------------------
+    // Browsers block sound until the player interacts, so resume on the first
+    // tap or key. M toggles mute; a small label in the corner reflects/triggers
+    // it (handy on touch).
+    this.input.once("pointerdown", () => this.audio.resume());
+    this.input.keyboard.once("keydown", () => this.audio.resume());
+    this.input.keyboard.on("keydown-M", () => this.toggleMute());
+    this.muteText = this.add
+      .text(12, 12, "", { fontFamily: "monospace", fontSize: "16px", color: "#fff1e8" })
+      .setScrollFactor(0)
+      .setDepth(1000)
+      .setInteractive({ useHandCursor: true })
+      .on("pointerdown", (p, x, y, e) => {
+        if (e) e.stopPropagation();
+        this.toggleMute();
+      });
+    this.updateMuteLabel();
 
     // --- HUD -----------------------------------------------------------------
     this.statusText = this.add
@@ -170,13 +190,28 @@ export default class ArenaScene extends Phaser.Scene {
   // (the authority) and start the matching button's cooldown sweep when we
   // mirror the server's rules (alive + off cooldown).
   doAction(kind) {
+    this.audio.resume(); // a tap/keypress here is a valid gesture to wake audio
     if (kind === "dash") this.net.sendDash();
     else this.net.sendAttack(kind);
 
     const button = this.buttons[kind];
     if (this.localAlive() && button.isReady()) {
       button.startCooldown(this.cooldowns[kind]);
+      // Play the shoot blip only when we actually fire (alive + off cooldown).
+      if (kind !== "dash") this.audio.play("shoot");
     }
+  }
+
+  // Flip mute on/off (persisted in localStorage by the audio module) and update
+  // the corner label.
+  toggleMute() {
+    this.audio.resume();
+    this.audio.toggleMute();
+    this.updateMuteLabel();
+  }
+
+  updateMuteLabel() {
+    this.muteText.setText(this.audio.muted ? "[M] sound: off" : "[M] sound: on");
   }
 
   syncBases() {
@@ -185,10 +220,17 @@ export default class ArenaScene extends Phaser.Scene {
       if (!base) {
         base = new Base(this, b.x, b.y, b.team);
         base.lastHp = b.hp; // remember HP to detect damage
+        base.lastAlive = b.alive; // ...and alive-state to detect destruction
         this.baseSprites.set(b.team, base);
       }
-      if (b.alive && b.hp < base.lastHp) base.flashHit();
+      if (b.alive && b.hp < base.lastHp) {
+        base.flashHit();
+        this.audio.play("hit");
+      }
       base.lastHp = b.hp;
+      // A base just fell (alive -> dead): play the big "destroyed" boom.
+      if (base.lastAlive && !b.alive) this.audio.play("base");
+      base.lastAlive = b.alive;
       base.setHp(b.hp, b.maxHp);
       base.setAlive(b.alive);
     }
@@ -223,8 +265,14 @@ export default class ArenaScene extends Phaser.Scene {
         .setText(`${who} WINS!\n` + (iWon ? "You win! 🎉" : "You lose…"))
         .setColor(this.net.winner === "blue" ? "#9bd9ff" : "#ff6b8b")
         .setVisible(true);
+      // Play the victory jingle once when the match ends.
+      if (!this.wonPlayed) {
+        this.audio.play("win");
+        this.wonPlayed = true;
+      }
     } else {
       this.gameOverText.setVisible(false);
+      this.wonPlayed = false; // re-arm for the next match
     }
   }
 
@@ -236,6 +284,7 @@ export default class ArenaScene extends Phaser.Scene {
       if (!sprite) {
         sprite = new Player(this, p.x, p.y, p.team);
         sprite.lastHp = p.hp; // remember HP so we can detect damage later
+        sprite.lastAlive = p.alive; // ...and alive-state so we can detect death
         this.sprites.set(p.id, sprite);
       }
 
@@ -254,8 +303,13 @@ export default class ArenaScene extends Phaser.Scene {
         const dmg = sprite.lastHp - p.hp;
         sprite.flashHit();
         this.spawnDamageNumber(sprite.x, sprite.y, dmg);
+        this.audio.play("hit");
       }
       sprite.lastHp = p.hp;
+
+      // Detect a knockout (alive -> dead) for the death sound.
+      if (sprite.lastAlive && !p.alive) this.audio.play("death");
+      sprite.lastAlive = p.alive;
 
       sprite.setHp(p.hp);
       sprite.setAlive(p.alive);

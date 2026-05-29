@@ -39,7 +39,7 @@ that the lobby text shows and the arena begins after enough players join.
 **Acceptance:** sim test that movement/dash stop at a wall; server test that a
 bolt is consumed by a wall. Live test still passes.
 
-## Phase D — Audio `[ ]`
+## Phase D — Audio `[x]`
 **Why:** silence reads as broken. Tiny, generated (WebAudio) blips — no asset
 files, no licensing.
 - Sound on: shoot, hit, death, base destroyed, win.

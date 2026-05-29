@@ -8,10 +8,12 @@ import { GAME_WIDTH, GAME_HEIGHT, COLORS } from "./config.js";
 import ArenaScene from "./scenes/ArenaScene.js";
 import NetClient from "./net/NetClient.js";
 import { WebSocketConnection } from "./net/WebSocketConnection.js";
+import GameAudio from "./audio.js";
 
 // Create the connection + client BEFORE the game, so the arena can use it.
 const conn = new WebSocketConnection();
 const net = new NetClient(conn);
+const audio = new GameAudio();
 
 const config = {
   type: Phaser.AUTO,
@@ -33,6 +35,7 @@ const config = {
 
 const game = new Phaser.Game(config);
 game.registry.set("net", net); // hand the network client to the scenes
+game.registry.set("audio", audio); // ...and the sound effects
 
 // Expose for automated tests and for poking around in the browser console.
-window.PIXELCLASH = { game, net };
+window.PIXELCLASH = { game, net, audio };

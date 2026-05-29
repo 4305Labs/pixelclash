@@ -23,6 +23,8 @@ const tests = [
   "./m12.lobby.mjs",
   "./m12.lobby.render.mjs",
   "./m13.walls.mjs",
+  "./m14.audio.node.mjs",
+  "./m14.audio.mjs",
 ];
 
 let failed = false;
