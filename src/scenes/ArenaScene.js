@@ -8,6 +8,7 @@ import Phaser from "phaser";
 import { GAME_WIDTH, GAME_HEIGHT, COLORS, COMBAT } from "../config.js";
 import { generateTextures } from "../textures.js";
 import Player from "../entities/Player.js";
+import Base from "../entities/Base.js";
 import VirtualJoystick from "../ui/VirtualJoystick.js";
 import ActionButton from "../ui/ActionButton.js";
 
@@ -23,6 +24,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.net = this.registry.get("net");
     this.sprites = new Map(); // player id -> Player display object
     this.bolts = new Map(); // projectile id -> circle
+    this.baseSprites = new Map(); // team -> Base display object
 
     // --- Input: movement -----------------------------------------------------
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -65,6 +67,21 @@ export default class ArenaScene extends Phaser.Scene {
       this.statusText.setColor(msg.team === "red" ? "#ff6b8b" : "#9bd9ff");
     });
 
+    // Win/lose banner (hidden until a base falls).
+    this.gameOverText = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "", {
+        fontFamily: "monospace",
+        fontSize: "56px",
+        color: "#ffffff",
+        align: "center",
+        stroke: "#000000",
+        strokeThickness: 6,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(2000)
+      .setVisible(false);
+
     this.net.join();
   }
 
@@ -83,9 +100,36 @@ export default class ArenaScene extends Phaser.Scene {
     }
     if (this.net.localId) this.net.sendInput(dx, dy);
 
-    // 2) Sync sprites + projectiles to the server's snapshot.
+    // 2) Sync everything to the server's snapshot.
+    this.syncBases();
     this.syncPlayers();
     this.syncProjectiles();
+    this.updateGameOver();
+  }
+
+  syncBases() {
+    for (const b of this.net.bases) {
+      let base = this.baseSprites.get(b.team);
+      if (!base) {
+        base = new Base(this, b.x, b.y, b.team);
+        this.baseSprites.set(b.team, base);
+      }
+      base.setHp(b.hp, b.maxHp);
+      base.setAlive(b.alive);
+    }
+  }
+
+  updateGameOver() {
+    if (this.net.phase === "over" && this.net.winner) {
+      const iWon = this.net.team && this.net.team === this.net.winner;
+      const who = this.net.winner === "blue" ? "BLUE" : "RED";
+      this.gameOverText
+        .setText(`${who} WINS!\n` + (iWon ? "You win! 🎉" : "You lose…"))
+        .setColor(this.net.winner === "blue" ? "#9bd9ff" : "#ff6b8b")
+        .setVisible(true);
+    } else {
+      this.gameOverText.setVisible(false);
+    }
   }
 
   syncPlayers() {

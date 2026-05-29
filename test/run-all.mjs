@@ -11,6 +11,8 @@ const tests = [
   "./m4.render.mjs",
   "./m5.combat.mjs",
   "./m5.render.mjs",
+  "./m6.match.mjs",
+  "./m6.render.mjs",
 ];
 
 let failed = false;

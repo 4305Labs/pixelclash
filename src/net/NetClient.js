@@ -12,6 +12,9 @@ export default class NetClient {
     this.team = null;
     this.players = []; // latest roster: [{ id, team, x, y, hp, alive }]
     this.projectiles = []; // bolts in flight: [{ id, team, kind, x, y }]
+    this.bases = []; // [{ team, x, y, hp, maxHp, alive }]
+    this.phase = "playing"; // "playing" | "over"
+    this.winner = null; // winning team when phase === "over"
     this.tick = 0;
     this.connected = false;
     this._listeners = { welcome: [], state: [] };
@@ -55,6 +58,9 @@ export default class NetClient {
     } else if (msg.t === "state") {
       this.players = msg.players;
       this.projectiles = msg.projectiles || [];
+      this.bases = msg.bases || [];
+      this.phase = msg.phase || "playing";
+      this.winner = msg.winner || null;
       this.tick = msg.tick;
       this._emit("state", msg);
     }

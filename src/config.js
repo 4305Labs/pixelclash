@@ -54,3 +54,19 @@ export const COMBAT = {
 
   hitPad: 14, // extra hit radius so bolts connect with a player's body
 };
+
+// --- Bases & match ----------------------------------------------------------
+export const BASE = {
+  maxHp: 250, // ~31 basic hits, or fewer with the ability — short matches
+  radius: 24, // hit radius and half the on-screen size
+};
+
+// Each team's base sits behind its spawn, near its edge of the arena.
+export const BASE_POS = {
+  blue: { x: 44, y: GAME_HEIGHT / 2 },
+  red: { x: GAME_WIDTH - 44, y: GAME_HEIGHT / 2 },
+};
+
+export const MATCH = {
+  resetMs: 5000, // pause on the win banner, then start a fresh match
+};

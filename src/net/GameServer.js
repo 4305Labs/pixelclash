@@ -1,11 +1,11 @@
 // ===========================================================================
-// GameServer — the authoritative brain of a match. It owns the REAL state:
-// player positions, health, and projectiles. Browsers send input + attack
-// requests; this decides what actually happens and broadcasts the result.
+// GameServer — the authoritative brain of a match. Owns the REAL state:
+// player positions, health, projectiles, and the two team bases. Destroying
+// the enemy base wins the match.
 //
 // It knows nothing about WebSockets or Phaser. It talks to "connections"
-// (anything with .send / .onMessage / .onClose), so we can drive it with real
-// network sockets in production OR with in-memory fakes in tests.
+// (anything with .send / .onMessage / .onClose), so the same logic runs behind
+// real sockets in production and in-memory fakes in tests.
 // ===========================================================================
 
 import {
@@ -15,37 +15,40 @@ import {
   PLAYER_HALF,
   SPAWNS,
   COMBAT,
+  BASE,
+  BASE_POS,
+  MATCH,
 } from "../config.js";
 
 export default class GameServer {
   constructor() {
     this.players = new Map(); // id -> player state
     this.connections = new Map(); // id -> connection
-    this.projectiles = []; // active bolts in flight
+    this.projectiles = [];
     this.nextId = 1;
     this.nextProjId = 1;
     this.tick = 0;
-    this.timeMs = 0; // simulated clock (advanced by step) — keeps tests deterministic
+    this.timeMs = 0; // simulated clock (advanced by step) — deterministic for tests
     this.loopTimer = null;
+
+    this.bases = new Map(); // team -> { team, x, y, hp, alive }
+    this.resetBases();
+    this.phase = "playing"; // "playing" | "over"
+    this.winner = null; // team that won, when phase === "over"
+    this.resetAt = 0;
+  }
+
+  resetBases() {
+    for (const team of ["blue", "red"]) {
+      const pos = BASE_POS[team];
+      this.bases.set(team, { team, x: pos.x, y: pos.y, hp: BASE.maxHp, alive: true });
+    }
   }
 
   addConnection(conn) {
     const id = "p" + this.nextId++;
     const team = this.players.size % 2 === 0 ? "blue" : "red";
-    const spawn = SPAWNS[team];
-
-    this.players.set(id, {
-      id,
-      team,
-      x: spawn.x,
-      y: spawn.y,
-      input: { dx: 0, dy: 0 },
-      face: { x: team === "blue" ? 1 : -1, y: 0 }, // last move direction (aim fallback)
-      hp: COMBAT.maxHp,
-      alive: true,
-      deadUntil: 0,
-      cd: { basic: 0, ability: 0 }, // timestamps when each attack is ready again
-    });
+    this.players.set(id, this.freshPlayer(id, team));
     this.connections.set(id, conn);
 
     conn.send({ t: "welcome", id, team });
@@ -54,6 +57,22 @@ export default class GameServer {
 
     this.broadcast();
     return id;
+  }
+
+  freshPlayer(id, team) {
+    const spawn = SPAWNS[team];
+    return {
+      id,
+      team,
+      x: spawn.x,
+      y: spawn.y,
+      input: { dx: 0, dy: 0 },
+      face: { x: team === "blue" ? 1 : -1, y: 0 },
+      hp: COMBAT.maxHp,
+      alive: true,
+      deadUntil: 0,
+      cd: { basic: 0, ability: 0 },
+    };
   }
 
   removeConnection(id) {
@@ -66,7 +85,6 @@ export default class GameServer {
   onMessage(id, msg) {
     const p = this.players.get(id);
     if (!p || !msg) return;
-
     if (msg.t === "input") {
       p.input.dx = clamp(Number(msg.dx) || 0, -1, 1);
       p.input.dy = clamp(Number(msg.dy) || 0, -1, 1);
@@ -76,21 +94,18 @@ export default class GameServer {
   }
 
   tryAttack(player, kind) {
-    if (!player.alive) return;
+    if (this.phase !== "playing" || !player.alive) return;
     const spec = COMBAT[kind];
-    if (this.timeMs < player.cd[kind]) return; // still cooling down
+    if (this.timeMs < player.cd[kind]) return; // cooling down
     player.cd[kind] = this.timeMs + spec.cd;
 
-    // Aim at the nearest living enemy; if none, fire the way we're facing.
-    const target = this.nearestEnemy(player);
-    let ax, ay;
-    if (target) {
-      ax = target.x - player.x;
-      ay = target.y - player.y;
-    } else {
-      ax = player.face.x;
-      ay = player.face.y;
-    }
+    // Aim at the nearest enemy target (a living enemy player OR the enemy base).
+    const target = this.nearestTarget(player) || {
+      x: player.x + player.face.x,
+      y: player.y + player.face.y,
+    };
+    let ax = target.x - player.x;
+    let ay = target.y - player.y;
     const len = Math.hypot(ax, ay) || 1;
     ax /= len;
     ay /= len;
@@ -109,16 +124,22 @@ export default class GameServer {
     });
   }
 
-  nearestEnemy(player) {
+  // Closest enemy thing to aim at: any living enemy player, or the enemy base.
+  nearestTarget(player) {
     let best = null;
     let bestD = Infinity;
-    for (const o of this.players.values()) {
-      if (o.team === player.team || !o.alive) continue;
-      const d = (o.x - player.x) ** 2 + (o.y - player.y) ** 2;
+    const consider = (x, y) => {
+      const d = (x - player.x) ** 2 + (y - player.y) ** 2;
       if (d < bestD) {
         bestD = d;
-        best = o;
+        best = { x, y };
       }
+    };
+    for (const o of this.players.values()) {
+      if (o.team !== player.team && o.alive) consider(o.x, o.y);
+    }
+    for (const b of this.bases.values()) {
+      if (b.team !== player.team && b.alive) consider(b.x, b.y);
     }
     return best;
   }
@@ -127,7 +148,13 @@ export default class GameServer {
     this.tick++;
     this.timeMs += dt * 1000;
 
-    // 1) Move players from their input; remember facing for aim fallback.
+    // When a match is over, just count down to the rematch.
+    if (this.phase === "over") {
+      if (this.timeMs >= this.resetAt) this.resetMatch();
+      return;
+    }
+
+    // 1) Move players; remember facing for the aim fallback.
     for (const p of this.players.values()) {
       if (!p.alive) {
         if (this.timeMs >= p.deadUntil) this.respawn(p);
@@ -139,12 +166,12 @@ export default class GameServer {
         dx /= len;
         dy /= len;
       }
-      if (len > 0.01) p.face = { x: dx / (len || 1), y: dy / (len || 1) };
+      if (len > 0.01) p.face = { x: dx / len, y: dy / len };
       p.x = clamp(p.x + dx * PLAYER_SPEED * dt, PLAYER_HALF, GAME_WIDTH - PLAYER_HALF);
       p.y = clamp(p.y + dy * PLAYER_SPEED * dt, PLAYER_HALF, GAME_HEIGHT - PLAYER_HALF);
     }
 
-    // 2) Move projectiles, expire old ones, and check for hits.
+    // 2) Move projectiles; expire; check hits on players, then bases.
     const survivors = [];
     for (const b of this.projectiles) {
       b.x += b.vx * dt;
@@ -155,19 +182,32 @@ export default class GameServer {
       const victim = this.hitPlayer(b);
       if (victim) {
         this.damage(victim, b.dmg);
-        continue; // bolt is consumed on hit
+        continue;
+      }
+      const base = this.hitBase(b);
+      if (base) {
+        this.damageBase(base, b.dmg);
+        continue;
       }
       survivors.push(b);
     }
     this.projectiles = survivors;
   }
 
-  // Find an enemy player this projectile is currently touching.
   hitPlayer(b) {
     const reach = COMBAT.hitPad + PLAYER_HALF;
     for (const p of this.players.values()) {
       if (p.team === b.team || !p.alive) continue;
       if ((p.x - b.x) ** 2 + (p.y - b.y) ** 2 <= reach * reach) return p;
+    }
+    return null;
+  }
+
+  hitBase(b) {
+    const reach = COMBAT.hitPad + BASE.radius;
+    for (const base of this.bases.values()) {
+      if (base.team === b.team || !base.alive) continue;
+      if ((base.x - b.x) ** 2 + (base.y - b.y) ** 2 <= reach * reach) return base;
     }
     return null;
   }
@@ -180,6 +220,16 @@ export default class GameServer {
     }
   }
 
+  damageBase(base, amount) {
+    base.hp = Math.max(0, base.hp - amount);
+    if (base.hp === 0 && base.alive) {
+      base.alive = false;
+      this.phase = "over";
+      this.winner = base.team === "blue" ? "red" : "blue"; // the attackers win
+      this.resetAt = this.timeMs + MATCH.resetMs;
+    }
+  }
+
   respawn(p) {
     const spawn = SPAWNS[p.team];
     p.x = spawn.x;
@@ -189,10 +239,24 @@ export default class GameServer {
     p.input = { dx: 0, dy: 0 };
   }
 
+  // Start a fresh round: bases and all players restored.
+  resetMatch() {
+    this.resetBases();
+    for (const p of this.players.values()) {
+      const fresh = this.freshPlayer(p.id, p.team);
+      Object.assign(p, fresh);
+    }
+    this.projectiles = [];
+    this.phase = "playing";
+    this.winner = null;
+  }
+
   snapshot() {
     return {
       t: "state",
       tick: this.tick,
+      phase: this.phase,
+      winner: this.winner,
       players: [...this.players.values()].map((p) => ({
         id: p.id,
         team: p.team,
@@ -207,6 +271,14 @@ export default class GameServer {
         kind: b.kind,
         x: Math.round(b.x),
         y: Math.round(b.y),
+      })),
+      bases: [...this.bases.values()].map((b) => ({
+        team: b.team,
+        x: b.x,
+        y: b.y,
+        hp: b.hp,
+        maxHp: BASE.maxHp,
+        alive: b.alive,
       })),
     };
   }
