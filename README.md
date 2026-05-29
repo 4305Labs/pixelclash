@@ -1,7 +1,8 @@
 # PixelClash 🟦⚔️🟥
 
 A pixel-art, browser-first **MOBA arena battler**. Move, basic attack, one
-ability — destroy the enemy base to win. Built to start as **1v1** and grow to
+ability, dash — and waves of **lane minions** march out to help you tear down
+the enemy base. Destroy that base to win. Built to start as **1v1** and grow to
 **3v3**.
 
 ![A live match](docs/screenshot-match.png)
@@ -70,9 +71,14 @@ To stop either server: click its Terminal and press `Ctrl + C`.
 The first tap or key press dismisses the **"Tap to play"** start gate — this
 also unlocks sound (mobile browsers stay silent until you interact).
 
-Attacks **auto-aim** at the nearest enemy or their base. Reduce the enemy
-**base** (the diamond crystal) to 0 HP to win. After a win, the match
-auto-resets in 5 seconds.
+Attacks **auto-aim** at the nearest enemy — an enemy hero, an enemy **minion**,
+or their base. Reduce the enemy **base** (the diamond crystal) to 0 HP to win.
+After a win, the match auto-resets in 5 seconds.
+
+**Lane minions:** once a match starts, both sides periodically send out a small
+wave of AI minions that march down the middle toward the enemy base, fighting
+whatever they meet. They're weak on their own, but they soak up fire and chip
+the base — push alongside your wave to break through.
 
 ### Play on your phone (same Wi-Fi)
 
@@ -87,15 +93,15 @@ that address in the phone's browser to join the battle with touch controls.
 Once you've played locally, you can host the game online for free so anyone can
 join from anywhere. It's two steps — host the server, point the page at it —
 and it's written up plainly in
-[docs/HOW-TO-KEEP-BUILDING.md → *Put it online*](docs/HOW-TO-KEEP-BUILDING.md#7-put-it-online-so-friends-can-play).
+[docs/HOW-TO-KEEP-BUILDING.md → *Put it online*](docs/HOW-TO-KEEP-BUILDING.md#8-put-it-online-so-friends-can-play).
 
 ---
 
 ## A look at it
 
-| The arena (with walls) | Waiting in the lobby | On a phone |
-|---|---|---|
-| ![Match](docs/screenshot-map.png) | ![Lobby](docs/screenshot-lobby.png) | ![Mobile](docs/screenshot-mobile.png) |
+| Lane minions clash | The arena (with walls) | Waiting in the lobby | On a phone |
+|---|---|---|---|
+| ![Minions](docs/screenshot-minions.png) | ![Match](docs/screenshot-map.png) | ![Lobby](docs/screenshot-lobby.png) | ![Mobile](docs/screenshot-mobile.png) |
 
 ---
 
@@ -113,6 +119,7 @@ pixelclash/
 │  │  └─ ArenaScene.js     ← the playing field: input, rendering, HUD
 │  ├─ entities/
 │  │  ├─ Player.js         ← on-screen player + health bar
+│  │  ├─ Minion.js         ← on-screen lane minion + health bar
 │  │  └─ Base.js           ← on-screen base crystal + health bar
 │  ├─ ui/
 │  │  ├─ VirtualJoystick.js← touch movement stick

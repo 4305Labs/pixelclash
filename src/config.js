@@ -19,6 +19,8 @@ export const COLORS = {
   white: 0xfff1e8,
   wall: 0x4a5680, // stone-blue obstacles
   wallEdge: 0x29366f, // darker wall outline
+  minionBlue: 0xa8e0ff, // lighter team tints so minions read as "lesser" units
+  minionRed: 0xffa3b8,
 };
 
 // How fast a player moves, in pixels per second.
@@ -69,6 +71,26 @@ export const COMBAT = {
   ability: { dmg: 30, cd: 2500, speed: 560, ttl: 1400, radius: 9, color: 0xff77a8 },
 
   hitPad: 14, // extra hit radius so bolts connect with a player's body
+};
+
+// --- Lane minions -----------------------------------------------------------
+// Periodic waves of weak AI fighters that march from each base toward the enemy
+// base. They attack the nearest enemy minion/player in their way (melee), and
+// chip the enemy base once they arrive. Minions give the lane a constant push
+// so a match keeps progressing even when the heroes are sparring elsewhere.
+export const MINION = {
+  maxHp: 40,
+  speed: 95, // px/sec — slower than a player (220) so heroes can outrun them
+  dmg: 4, // damage per melee hit
+  attackCd: 600, // ms between a minion's hits
+  range: 40, // melee reach (center-to-center, px) to land a hit
+  aggro: 150, // how close an enemy unit must be for a minion to chase it (px)
+  half: 10, // half the on-screen size (smaller than a 16px player)
+  waveEvery: 9000, // ms between waves
+  perWave: 3, // minions spawned per team each wave
+  laneGap: 40, // vertical spacing between minions in a wave
+  firstWaveMs: 2000, // delay after "playing" begins before the first wave
+  spawnAhead: 70, // how far in front of the base a wave appears (px)
 };
 
 // --- Dash (a quick burst move along your facing direction) ------------------

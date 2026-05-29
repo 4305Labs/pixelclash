@@ -19,6 +19,7 @@ import {
   BASE,
   BASE_POS,
   MATCH,
+  MINION,
 } from "../config.js";
 import { stepPosition, normalizeInput, resolveMove, pointInWall } from "../sim.js";
 
@@ -27,8 +28,14 @@ export default class GameServer {
     this.players = new Map(); // id -> player state
     this.connections = new Map(); // id -> connection
     this.projectiles = [];
+    this.minions = []; // AI lane fighters: { id, team, x, y, laneY, hp, alive, cd }
     this.nextId = 1;
     this.nextProjId = 1;
+    this.nextMinionId = 1;
+    // Sim-clock time (ms) the next wave spawns. Infinity = disarmed: waves only
+    // start once a match actually begins (beginPlaying arms it), so they never
+    // appear in the frozen lobby or in tests that drive the server directly.
+    this.nextWaveAt = Infinity;
     this.tick = 0;
     this.timeMs = 0; // simulated clock (advanced by step) — deterministic for tests
     this.loopTimer = null;
@@ -212,10 +219,136 @@ export default class GameServer {
     for (const o of this.players.values()) {
       if (o.team !== player.team && o.alive) consider(o.x, o.y);
     }
+    for (const m of this.minions) {
+      if (m.team !== player.team && m.alive) consider(m.x, m.y);
+    }
     for (const b of this.bases.values()) {
       if (b.team !== player.team && b.alive) consider(b.x, b.y);
     }
     return best;
+  }
+
+  // --- Lane minions ----------------------------------------------------------
+
+  // Called when the countdown flips to live play: clear any leftover minions
+  // and arm the first wave.
+  beginPlaying() {
+    this.phase = "playing";
+    this.minions = [];
+    this.nextWaveAt = this.timeMs + MINION.firstWaveMs;
+  }
+
+  // Spawn one wave for each team, just in front of its base, staggered across
+  // the open center lane so they march through the gap between the pillars.
+  spawnWave() {
+    const cy = GAME_HEIGHT / 2;
+    for (const team of ["blue", "red"]) {
+      const base = this.bases.get(team);
+      if (!base || !base.alive) continue;
+      const dir = team === "blue" ? 1 : -1; // blue pushes right, red pushes left
+      const startX = base.x + dir * MINION.spawnAhead;
+      for (let i = 0; i < MINION.perWave; i++) {
+        const laneY = cy + (i - (MINION.perWave - 1) / 2) * MINION.laneGap;
+        this.minions.push({
+          id: "m" + this.nextMinionId++,
+          team,
+          x: startX,
+          y: laneY,
+          laneY,
+          hp: MINION.maxHp,
+          alive: true,
+          cd: 0,
+        });
+      }
+    }
+  }
+
+  stepMinions(dt) {
+    if (this.timeMs >= this.nextWaveAt) {
+      this.spawnWave();
+      this.nextWaveAt = this.timeMs + MINION.waveEvery;
+    }
+    for (const m of this.minions) {
+      if (!m.alive) continue;
+      const target = this.minionTarget(m);
+      if (!target) continue;
+      const dist = Math.hypot(target.x - m.x, target.y - m.y);
+      if (dist <= MINION.range) {
+        // In reach: stand and trade blows on the minion's own cooldown.
+        if (this.timeMs >= m.cd) {
+          m.cd = this.timeMs + MINION.attackCd;
+          this.hurtTarget(target);
+        }
+      } else {
+        this.moveMinion(m, target.x, target.y, dt);
+      }
+    }
+    // Sweep up the fallen.
+    this.minions = this.minions.filter((m) => m.alive);
+  }
+
+  // Pick what a minion fights: the nearest enemy unit (minion or player) within
+  // aggro range, otherwise march on the enemy base. Returns the point to head
+  // for plus a `hurt` callback that applies damage to whatever it is.
+  minionTarget(m) {
+    let best = null;
+    let bestD = MINION.aggro * MINION.aggro;
+    const consider = (x, y, hurt) => {
+      const d = (x - m.x) ** 2 + (y - m.y) ** 2;
+      if (d < bestD) {
+        bestD = d;
+        best = { x, y, hurt };
+      }
+    };
+    for (const o of this.minions) {
+      if (o.team !== m.team && o.alive) consider(o.x, o.y, () => this.damageMinion(o, MINION.dmg));
+    }
+    for (const p of this.players.values()) {
+      if (p.team !== m.team && p.alive) consider(p.x, p.y, () => this.damage(p, MINION.dmg));
+    }
+    if (best) return best;
+    const base = this.bases.get(m.team === "blue" ? "red" : "blue");
+    if (base && base.alive) {
+      return { x: base.x, y: base.y, hurt: () => this.damageBase(base, MINION.dmg) };
+    }
+    return null;
+  }
+
+  hurtTarget(target) {
+    target.hurt();
+  }
+
+  // Step a minion toward (tx,ty), sliding along walls. If a wall blocks the
+  // straight approach, funnel toward the open center lane to get around it.
+  moveMinion(m, tx, ty, dt) {
+    let dx = tx - m.x;
+    let dy = ty - m.y;
+    const len = Math.hypot(dx, dy) || 1;
+    dx /= len;
+    dy /= len;
+    const stepLen = MINION.speed * dt;
+    let next = resolveMove(m.x, m.y, m.x + dx * stepLen, m.y + dy * stepLen);
+    if (Math.hypot(next.x - m.x, next.y - m.y) < stepLen * 0.5) {
+      const cy = GAME_HEIGHT / 2;
+      const toward = Math.sign(cy - m.y) || 1;
+      next = resolveMove(m.x, m.y, m.x + dx * stepLen, m.y + toward * stepLen);
+    }
+    m.x = next.x;
+    m.y = next.y;
+  }
+
+  hitMinion(b) {
+    const reach = COMBAT.hitPad + MINION.half;
+    for (const m of this.minions) {
+      if (m.team === b.team || !m.alive) continue;
+      if ((m.x - b.x) ** 2 + (m.y - b.y) ** 2 <= reach * reach) return m;
+    }
+    return null;
+  }
+
+  damageMinion(m, amount) {
+    m.hp = Math.max(0, m.hp - amount);
+    if (m.hp === 0) m.alive = false;
   }
 
   step(dt) {
@@ -231,7 +364,7 @@ export default class GameServer {
     // In the lobby (waiting / counting down), the world is frozen.
     if (this.phase === "waiting") return;
     if (this.phase === "countdown") {
-      if (this.timeMs >= this.startAt) this.phase = "playing";
+      if (this.timeMs >= this.startAt) this.beginPlaying();
       return;
     }
 
@@ -249,7 +382,10 @@ export default class GameServer {
       p.y = next.y;
     }
 
-    // 2) Move projectiles; expire; check hits on players, then bases.
+    // 2) Spawn, march, and resolve the lane minions.
+    this.stepMinions(dt);
+
+    // 3) Move projectiles; expire; check hits on players, then minions, then bases.
     const survivors = [];
     for (const b of this.projectiles) {
       b.x += b.vx * dt;
@@ -261,6 +397,11 @@ export default class GameServer {
       const victim = this.hitPlayer(b);
       if (victim) {
         this.damage(victim, b.dmg);
+        continue;
+      }
+      const mob = this.hitMinion(b);
+      if (mob) {
+        this.damageMinion(mob, b.dmg);
         continue;
       }
       const base = this.hitBase(b);
@@ -327,6 +468,8 @@ export default class GameServer {
       Object.assign(p, fresh);
     }
     this.projectiles = [];
+    this.minions = [];
+    this.nextWaveAt = Infinity; // re-armed by beginPlaying on the next match
     this.winner = null;
     // Return to the lobby; if enough players are still here, evaluateLobby
     // immediately kicks off a fresh "get ready" countdown.
@@ -361,6 +504,14 @@ export default class GameServer {
         kind: b.kind,
         x: Math.round(b.x),
         y: Math.round(b.y),
+      })),
+      minions: this.minions.map((m) => ({
+        id: m.id,
+        team: m.team,
+        x: Math.round(m.x),
+        y: Math.round(m.y),
+        hp: m.hp,
+        alive: m.alive,
       })),
       bases: [...this.bases.values()].map((b) => ({
         team: b.team,

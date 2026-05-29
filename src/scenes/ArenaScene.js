@@ -10,6 +10,7 @@ import { generateTextures } from "../textures.js";
 import { stepPosition } from "../sim.js";
 import Player from "../entities/Player.js";
 import Base from "../entities/Base.js";
+import Minion from "../entities/Minion.js";
 import VirtualJoystick from "../ui/VirtualJoystick.js";
 import ActionButton from "../ui/ActionButton.js";
 
@@ -32,6 +33,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.wonPlayed = false; // so the win jingle plays once per match, not per frame
     this.sprites = new Map(); // player id -> Player display object
     this.bolts = new Map(); // projectile id -> circle
+    this.minionSprites = new Map(); // minion id -> Minion display object
     this.baseSprites = new Map(); // team -> Base display object
     this.damageNumbers = []; // active floating damage-number texts
 
@@ -209,6 +211,7 @@ export default class ArenaScene extends Phaser.Scene {
 
     // 2) Sync everything to the server's snapshot.
     this.syncBases();
+    this.syncMinions();
     this.syncPlayers(dt);
     this.syncProjectiles();
     this.updateLobby();
@@ -409,6 +412,32 @@ export default class ArenaScene extends Phaser.Scene {
       const k = Math.min(1, RECONCILE_RATE * dt);
       sprite.x += (serverP.x - sprite.x) * k;
       sprite.y += (serverP.y - sprite.y) * k;
+    }
+  }
+
+  // Draw the lane minions: create on first sight, glide toward their reported
+  // position, flash on damage, and clean up the dead/departed.
+  syncMinions() {
+    const seen = new Set();
+    for (const m of this.net.minions) {
+      seen.add(m.id);
+      let sprite = this.minionSprites.get(m.id);
+      if (!sprite) {
+        sprite = new Minion(this, m.x, m.y, m.team);
+        sprite.lastHp = m.hp;
+        this.minionSprites.set(m.id, sprite);
+      }
+      sprite.setTarget(m.x, m.y);
+      sprite.smoothFollow();
+      if (m.hp < sprite.lastHp) sprite.flashHit(); // hit feedback (no sound — too many)
+      sprite.lastHp = m.hp;
+      sprite.setHp(m.hp);
+    }
+    for (const [id, sprite] of this.minionSprites) {
+      if (!seen.has(id)) {
+        sprite.destroy();
+        this.minionSprites.delete(id);
+      }
     }
   }
 

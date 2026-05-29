@@ -59,7 +59,33 @@ touch points — a config entry, a server `try…` method + an `onMessage` case,
 
 ---
 
-## 4. Go from 1v1 to 3v3
+## 4. Tune the lane minions (already done ✅)
+
+Both teams now spawn waves of weak AI **minions** that march toward the enemy
+base, fight whatever they meet, and chip the base when they arrive. Everything
+about them lives in `src/config.js` → `MINION`:
+
+| You want… | Change this | Try |
+|---|---|---|
+| Bigger waves | `perWave` | `5` |
+| Waves more often | `waveEvery` | `6000` (=6s) |
+| Tankier minions | `maxHp` | `70` |
+| Harder-hitting minions | `dmg` | `7` |
+| Minions that chase further | `aggro` | `220` |
+| Faster minions | `speed` | `130` |
+
+The brain is `GameServer.stepMinions()` (spawning, target choice, and melee);
+`spawnWave()` places each wave just in front of its base, staggered across the
+open center lane. Minions reuse the same wall-sliding movement (`resolveMove`)
+as players, and are drawn by `src/entities/Minion.js`.
+
+> Minions only spawn during a live match (after the countdown), so the lobby
+> stays calm. If you want lane creeps to feel central, raise `perWave` and lower
+> `waveEvery`; for a more hero-focused game, do the opposite.
+
+---
+
+## 5. Go from 1v1 to 3v3
 
 Good news: the server already supports any number of players (it alternates
 teams as people join), friendly fire is already off, and bolts already pick the
@@ -77,7 +103,7 @@ The networking itself does **not** need to change to add more players.
 
 ---
 
-## 5. Replace the code-drawn art with real pixel art
+## 6. Replace the code-drawn art with real pixel art
 
 Right now sprites are drawn in `src/textures.js`. To use real art instead:
 
@@ -95,7 +121,7 @@ browser) and **LibreSprite** (free, desktop). Free art packs: **Kenney**
 
 ---
 
-## 6. Movement feel (client-side prediction — already done ✅)
+## 7. Movement feel (client-side prediction — already done ✅)
 
 Your own player now moves the **instant** you press a key, instead of waiting
 for the server to reply. This is "client-side prediction": the browser predicts
@@ -115,7 +141,7 @@ Other players are still drawn by gliding toward their latest reported position
 
 ---
 
-## 7. Put it online so friends can play
+## 8. Put it online so friends can play
 
 To play with someone **not** on your Wi-Fi, two things need a home on the
 internet: the **game server** (`server.js`, a long-running Node process) and the

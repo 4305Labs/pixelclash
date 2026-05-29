@@ -5,7 +5,7 @@
 // Later you can replace these with real .png art without changing game logic.
 // ===========================================================================
 
-import { COLORS, PLAYER_SIZE, BASE } from "./config.js";
+import { COLORS, PLAYER_SIZE, BASE, MINION } from "./config.js";
 
 // Draws one little 16x16 character sprite into a named texture.
 // `key` is the name we'll refer to it by; `bodyColor` is its team color.
@@ -54,6 +54,22 @@ function makeBaseTexture(scene, key, color) {
   g.destroy();
 }
 
+// Draws a minion: a small outlined square in a lighter team tint, with one
+// little eye so it reads as a tiny creature rather than a block. Drawn at the
+// minion's on-screen size (so it's noticeably smaller than a player).
+function makeMinionTexture(scene, key, color) {
+  const g = scene.make.graphics({ x: 0, y: 0 }, false);
+  const s = MINION.half * 2; // on-screen pixels; rendered at scale 1
+  g.fillStyle(COLORS.outline, 1);
+  g.fillRect(0, 0, s, s);
+  g.fillStyle(color, 1);
+  g.fillRect(1, 1, s - 2, s - 2);
+  g.fillStyle(COLORS.white, 1);
+  g.fillRect(s - 6, 3, 2, 2); // a single forward "eye"
+  g.generateTexture(key, s, s);
+  g.destroy();
+}
+
 // Four points of a diamond centered at (cx, cy).
 function diamond(cx, cy, r) {
   return [
@@ -70,4 +86,6 @@ export function generateTextures(scene) {
   makeCharacterTexture(scene, "player_red", COLORS.redTeam);
   makeBaseTexture(scene, "base_blue", COLORS.blueTeam);
   makeBaseTexture(scene, "base_red", COLORS.redTeam);
+  makeMinionTexture(scene, "minion_blue", COLORS.minionBlue);
+  makeMinionTexture(scene, "minion_red", COLORS.minionRed);
 }
