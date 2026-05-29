@@ -72,6 +72,11 @@ export default class ArenaScene extends Phaser.Scene {
       this.statusText.setColor(msg.team === "red" ? "#ff6b8b" : "#9bd9ff");
     });
 
+    // Both teams full: tell the player instead of leaving them stuck.
+    this.net.on("full", () => {
+      this.statusText.setText("Match is full — try again later").setColor("#ffec27");
+    });
+
     // Win/lose banner (hidden until a base falls).
     this.gameOverText = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "", {

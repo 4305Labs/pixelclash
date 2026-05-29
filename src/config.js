@@ -37,10 +37,24 @@ export const NET = {
   tickHz: 30, // how many times per second the server updates & broadcasts
 };
 
-// Where each team spawns. Blue starts on the left, Red on the right.
+// Max players per team. The game already supports this many on each side;
+// set to 1 for strict 1v1, or 3 for 3v3.
+export const TEAM_SIZE = 3;
+
+// Spawn points per team — one per possible teammate so they don't stack.
+// Blue spawns down the left edge, Red down the right edge.
+const cy = GAME_HEIGHT / 2;
 export const SPAWNS = {
-  blue: { x: 120, y: GAME_HEIGHT / 2 },
-  red: { x: GAME_WIDTH - 120, y: GAME_HEIGHT / 2 },
+  blue: [
+    { x: 120, y: cy - 150 },
+    { x: 120, y: cy },
+    { x: 120, y: cy + 150 },
+  ],
+  red: [
+    { x: GAME_WIDTH - 120, y: cy - 150 },
+    { x: GAME_WIDTH - 120, y: cy },
+    { x: GAME_WIDTH - 120, y: cy + 150 },
+  ],
 };
 
 // --- Combat -----------------------------------------------------------------

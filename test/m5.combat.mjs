@@ -69,7 +69,10 @@ try {
   assert(!B.alive && B.hp === 0, "bob is knocked out at 0 HP");
   stepN(server, Math.ceil(COMBAT.respawnMs / (1000 / 30)) + 2);
   assert(B.alive && B.hp === COMBAT.maxHp, "bob respawns at full HP");
-  assert(B.x === SPAWNS.red.x && B.y === SPAWNS.red.y, "bob respawns at the red spawn");
+  assert(
+    B.x === SPAWNS.red[0].x && B.y === SPAWNS.red[0].y,
+    "bob respawns at the red spawn"
+  );
 
   // Friendly fire: a bolt should never hit a teammate (only 1v1 here, but the
   // rule matters for 3v3). Confirm same-team is skipped by the hit check.

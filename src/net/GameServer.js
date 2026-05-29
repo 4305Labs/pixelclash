@@ -13,6 +13,7 @@ import {
   GAME_HEIGHT,
   PLAYER_HALF,
   SPAWNS,
+  TEAM_SIZE,
   COMBAT,
   BASE,
   BASE_POS,
@@ -46,9 +47,25 @@ export default class GameServer {
   }
 
   addConnection(conn) {
+    // Pick the team with fewer players (ties go to blue) for balanced sides.
+    const team = this.countTeam("blue") <= this.countTeam("red") ? "blue" : "red";
+
+    // If that team is already full, both teams are full — reject politely.
+    if (this.countTeam(team) >= TEAM_SIZE) {
+      conn.send({ t: "full" });
+      conn.close();
+      return null;
+    }
+
     const id = "p" + this.nextId++;
-    const team = this.players.size % 2 === 0 ? "blue" : "red";
-    this.players.set(id, this.freshPlayer(id, team));
+    // Give this player the first free spawn slot on their team.
+    const used = new Set(
+      [...this.players.values()].filter((p) => p.team === team).map((p) => p.spawnIndex)
+    );
+    let spawnIndex = 0;
+    while (used.has(spawnIndex)) spawnIndex++;
+
+    this.players.set(id, this.freshPlayer(id, team, spawnIndex));
     this.connections.set(id, conn);
 
     conn.send({ t: "welcome", id, team });
@@ -59,11 +76,19 @@ export default class GameServer {
     return id;
   }
 
-  freshPlayer(id, team) {
-    const spawn = SPAWNS[team];
+  countTeam(team) {
+    let n = 0;
+    for (const p of this.players.values()) if (p.team === team) n++;
+    return n;
+  }
+
+  freshPlayer(id, team, spawnIndex) {
+    const list = SPAWNS[team];
+    const spawn = list[spawnIndex % list.length];
     return {
       id,
       team,
+      spawnIndex,
       x: spawn.x,
       y: spawn.y,
       input: { dx: 0, dy: 0 },
@@ -228,7 +253,8 @@ export default class GameServer {
   }
 
   respawn(p) {
-    const spawn = SPAWNS[p.team];
+    const list = SPAWNS[p.team];
+    const spawn = list[p.spawnIndex % list.length];
     p.x = spawn.x;
     p.y = spawn.y;
     p.hp = COMBAT.maxHp;
@@ -236,11 +262,11 @@ export default class GameServer {
     p.input = { dx: 0, dy: 0 };
   }
 
-  // Start a fresh round: bases and all players restored.
+  // Start a fresh round: bases and all players restored to their spawn slots.
   resetMatch() {
     this.resetBases();
     for (const p of this.players.values()) {
-      const fresh = this.freshPlayer(p.id, p.team);
+      const fresh = this.freshPlayer(p.id, p.team, p.spawnIndex);
       Object.assign(p, fresh);
     }
     this.projectiles = [];

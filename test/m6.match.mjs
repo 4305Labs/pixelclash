@@ -62,7 +62,10 @@ try {
   assert(server.winner === null, "winner cleared on reset");
   const redBase2 = server.bases.get("red");
   assert(redBase2.hp === BASE.maxHp && redBase2.alive, "red base restored to full");
-  assert(A.hp === COMBAT.maxHp && A.x === SPAWNS.blue.x, "players reset to spawn at full HP");
+  assert(
+    A.hp === COMBAT.maxHp && A.x === SPAWNS.blue[0].x,
+    "players reset to spawn at full HP"
+  );
 
   // The other direction: destroying the blue base makes red win.
   server.damageBase(server.bases.get("blue"), 999);

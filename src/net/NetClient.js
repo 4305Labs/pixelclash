@@ -17,7 +17,7 @@ export default class NetClient {
     this.winner = null; // winning team when phase === "over"
     this.tick = 0;
     this.connected = false;
-    this._listeners = { welcome: [], state: [] };
+    this._listeners = { welcome: [], state: [], full: [] };
 
     conn.onMessage((msg) => this._receive(msg));
     conn.onClose(() => {
@@ -63,6 +63,9 @@ export default class NetClient {
       this.winner = msg.winner || null;
       this.tick = msg.tick;
       this._emit("state", msg);
+    } else if (msg.t === "full") {
+      this.full = true;
+      this._emit("full", msg);
     }
   }
 
