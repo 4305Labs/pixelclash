@@ -12,6 +12,7 @@ await page.evaluate(() => {
     tick: 1,
     phase: "playing",
     winner: null,
+    score: { blue: 2, red: 1 },
     players: [
       { id: "p1", team: "blue", x: 330, y: 300, hp: 100, alive: true },
       { id: "p2", team: "red", x: 470, y: 240, hp: 70, alive: true },

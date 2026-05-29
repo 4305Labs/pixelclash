@@ -110,6 +110,34 @@ export default class ArenaScene extends Phaser.Scene {
       this.statusText.setColor(msg.team === "red" ? "#ff6b8b" : "#9bd9ff");
     });
 
+    // Team kill scoreboard, just below the status line.
+    this.scoreText = this.add
+      .text(GAME_WIDTH / 2, 48, "", {
+        fontFamily: "monospace",
+        fontSize: "20px",
+        color: "#fff1e8",
+        stroke: "#000000",
+        strokeThickness: 3,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(500);
+
+    // Respawn countdown, shown centered while the local player is knocked out.
+    this.respawnText = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40, "", {
+        fontFamily: "monospace",
+        fontSize: "30px",
+        color: "#ffec27",
+        align: "center",
+        stroke: "#000000",
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(2000)
+      .setVisible(false);
+
     // Both teams full: tell the player instead of leaving them stuck.
     this.net.on("full", () => {
       this.statusText.setText("Match is full — try again later").setColor("#ffec27");
@@ -219,6 +247,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.syncProjectiles();
     this.updateLobby();
     this.updateGameOver();
+    this.updateHud();
 
     // 3) Redraw the cooldown sweeps on the action buttons.
     this.buttons.basic.update();
@@ -320,6 +349,19 @@ export default class ArenaScene extends Phaser.Scene {
     } else {
       this.gameOverText.setVisible(false);
       this.wonPlayed = false; // re-arm for the next match
+    }
+  }
+
+  // The team scoreboard, and a respawn countdown while the local hero is down.
+  updateHud() {
+    const s = this.net.score || { blue: 0, red: 0 };
+    this.scoreText.setText(`BLUE  ${s.blue} : ${s.red}  RED`);
+
+    const me = this.net.players.find((p) => p.id === this.net.localId);
+    if (this.net.phase === "playing" && me && !me.alive) {
+      this.respawnText.setText(`Knocked out!\nRespawning in ${me.respawnIn || 0}…`).setVisible(true);
+    } else {
+      this.respawnText.setVisible(false);
     }
   }
 

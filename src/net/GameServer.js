@@ -52,6 +52,7 @@ export default class GameServer {
     //   "playing"   — the action is live
     //   "over"      — a base fell; the win banner shows, then we reset
     this.phase = "waiting";
+    this.score = { blue: 0, red: 0 }; // hero kills this match, per team
     this.winner = null; // team that won, when phase === "over"
     this.resetAt = 0; // when an "over" match resets (ms on our sim clock)
     this.startAt = 0; // when a "countdown" flips to "playing" (ms)
@@ -318,7 +319,7 @@ export default class GameServer {
       if (o.team !== m.team && o.alive) consider(o.x, o.y, () => this.damageMinion(o, MINION.dmg));
     }
     for (const p of this.players.values()) {
-      if (p.team !== m.team && p.alive) consider(p.x, p.y, () => this.damage(p, MINION.dmg));
+      if (p.team !== m.team && p.alive) consider(p.x, p.y, () => this.damage(p, MINION.dmg, m.team));
     }
     for (const tw of this.towers.values()) {
       if (tw.team !== m.team && tw.alive) consider(tw.x, tw.y, () => this.damageTower(tw, MINION.dmg));
@@ -480,7 +481,7 @@ export default class GameServer {
 
       const victim = this.hitPlayer(b);
       if (victim) {
-        this.damage(victim, b.dmg);
+        this.damage(victim, b.dmg, b.team); // credit the firing team for a kill
         continue;
       }
       const mob = this.hitMinion(b);
@@ -521,11 +522,17 @@ export default class GameServer {
     return null;
   }
 
-  damage(player, amount) {
+  // `byTeam` (optional) is the team that dealt the blow, used to credit a kill
+  // to the scoreboard when this knocks the player out.
+  damage(player, amount, byTeam) {
+    if (!player.alive) return;
     player.hp = Math.max(0, player.hp - amount);
     if (player.hp === 0) {
       player.alive = false;
       player.deadUntil = this.timeMs + COMBAT.respawnMs;
+      if (byTeam && byTeam !== player.team && this.score[byTeam] !== undefined) {
+        this.score[byTeam]++;
+      }
     }
   }
 
@@ -560,6 +567,7 @@ export default class GameServer {
   resetMatch() {
     this.resetBases();
     this.resetTowers();
+    this.score = { blue: 0, red: 0 };
     for (const p of this.players.values()) {
       const fresh = this.freshPlayer(p.id, p.team, p.spawnIndex);
       Object.assign(p, fresh);
@@ -581,6 +589,7 @@ export default class GameServer {
       tick: this.tick,
       phase: this.phase,
       winner: this.winner,
+      score: { blue: this.score.blue, red: this.score.red },
       // Lobby info so the client can show "Waiting… N/NEEDED" and the countdown.
       needed: MATCH.minPerTeam * 2,
       countdown:
@@ -594,6 +603,8 @@ export default class GameServer {
         y: Math.round(p.y),
         hp: p.hp,
         alive: p.alive,
+        // Seconds until this player respawns (0 if alive) — for the HUD timer.
+        respawnIn: p.alive ? 0 : Math.max(0, Math.ceil((p.deadUntil - this.timeMs) / 1000)),
       })),
       projectiles: this.projectiles.map((b) => ({
         id: b.id,

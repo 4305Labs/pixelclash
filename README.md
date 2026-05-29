@@ -87,6 +87,10 @@ you whittle it down. **A base is shielded (a glowing ring) and can't be touched
 until its own tower is destroyed**, so the tower is the gate to victory: break
 the tower, then raze the exposed base to win.
 
+**Scoreboard & respawns:** a team kill scoreboard sits at the top of the screen,
+and when you're knocked out a "Respawning in N…" countdown tells you how long
+until you're back in the fight.
+
 ### Play on your phone (same Wi-Fi)
 
 While `npm run dev` is running, it also prints a `Network:` address like
