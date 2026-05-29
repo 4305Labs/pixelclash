@@ -47,7 +47,7 @@ files, no licensing.
 **Acceptance:** headless test that the audio module exists and mute toggles a
 flag; guard so tests run headless without a real audio device.
 
-## Phase E — Mobile & UX polish `[ ]`
+## Phase E — Mobile & UX polish `[x]`
 **Why:** it's a mobile game; verify the touch layout and readability.
 - Buttons sized/positioned for thumbs; safe-area insets.
 - "Tap to start / unmute" gate (mobile browsers block audio until a tap).

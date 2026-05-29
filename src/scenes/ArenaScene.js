@@ -5,7 +5,7 @@
 // ===========================================================================
 
 import Phaser from "phaser";
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, COMBAT, DASH, WALLS } from "../config.js";
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, COMBAT, DASH, WALLS, BUTTONS } from "../config.js";
 import { generateTextures } from "../textures.js";
 import { stepPosition } from "../sim.js";
 import Player from "../entities/Player.js";
@@ -49,13 +49,13 @@ export default class ArenaScene extends Phaser.Scene {
     // --- Input: action buttons (touch, bottom-right) ------------------------
     // Each button triggers an action and shows its own cooldown sweep.
     this.buttons = {
-      basic: new ActionButton(this, GAME_WIDTH - 70, GAME_HEIGHT - 70, "A", COMBAT.basic.color, () =>
+      basic: new ActionButton(this, BUTTONS.basic.x, BUTTONS.basic.y, "A", COMBAT.basic.color, () =>
         this.doAction("basic")
       ),
-      ability: new ActionButton(this, GAME_WIDTH - 150, GAME_HEIGHT - 120, "B", COMBAT.ability.color, () =>
+      ability: new ActionButton(this, BUTTONS.ability.x, BUTTONS.ability.y, "B", COMBAT.ability.color, () =>
         this.doAction("ability")
       ),
-      dash: new ActionButton(this, GAME_WIDTH - 200, GAME_HEIGHT - 60, "C", 0x00e436, () =>
+      dash: new ActionButton(this, BUTTONS.dash.x, BUTTONS.dash.y, "C", 0x00e436, () =>
         this.doAction("dash")
       ),
     };
@@ -74,12 +74,9 @@ export default class ArenaScene extends Phaser.Scene {
     this.input.keyboard.on("keydown-L", () => this.doAction("dash"));
     this.input.keyboard.on("keydown-SHIFT", () => this.doAction("dash"));
 
-    // --- Audio: mute toggle + wake-on-gesture --------------------------------
-    // Browsers block sound until the player interacts, so resume on the first
-    // tap or key. M toggles mute; a small label in the corner reflects/triggers
-    // it (handy on touch).
-    this.input.once("pointerdown", () => this.audio.resume());
-    this.input.keyboard.once("keydown", () => this.audio.resume());
+    // --- Audio: mute toggle --------------------------------------------------
+    // M toggles mute; a small label in the corner reflects/triggers it (handy
+    // on touch). Audio is unlocked by the tap-to-start gate below.
     this.input.keyboard.on("keydown-M", () => this.toggleMute());
     this.muteText = this.add
       .text(12, 12, "", { fontFamily: "monospace", fontSize: "16px", color: "#fff1e8" })
@@ -145,7 +142,50 @@ export default class ArenaScene extends Phaser.Scene {
       .setDepth(2000)
       .setVisible(false);
 
+    this.createStartGate();
     this.net.join();
+  }
+
+  // A full-screen "tap to start" gate. Mobile browsers won't play any sound
+  // until the player interacts, so we use that first tap/key to unlock audio.
+  // It also gives the match a clear "begin" moment. Dismissed on first input.
+  createStartGate() {
+    const dim = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.72)
+      .setScrollFactor(0)
+      .setDepth(3000)
+      .setInteractive(); // swallow the first tap so it can't leak to controls
+    const text = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "PIXELCLASH\n\nTap to play  🔊", {
+        fontFamily: "monospace",
+        fontSize: "34px",
+        color: "#fff1e8",
+        align: "center",
+        stroke: "#000000",
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(3001);
+    this.startGate = { dim, text, dismissed: false };
+
+    // The first real gesture (tap or key) unlocks audio and clears the gate.
+    // Stop the tap from also reaching the movement joystick underneath.
+    dim.once("pointerdown", (pointer, x, y, event) => {
+      if (event) event.stopPropagation();
+      this.dismissStartGate();
+    });
+    this.input.keyboard.once("keydown", () => this.dismissStartGate());
+  }
+
+  // Hide the start gate and wake the audio (idempotent). Also callable from
+  // tests/screenshots to clear the gate without a real gesture.
+  dismissStartGate() {
+    this.audio.resume();
+    if (!this.startGate || this.startGate.dismissed) return;
+    this.startGate.dismissed = true;
+    this.startGate.dim.destroy();
+    this.startGate.text.destroy();
   }
 
   // `delta` is the milliseconds since the last frame (Phaser passes it in).

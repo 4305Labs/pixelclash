@@ -118,3 +118,23 @@ export const MATCH = {
   // the action starts. In milliseconds.
   countdownMs: 3000,
 };
+
+// --- Touch UI layout --------------------------------------------------------
+// Sizing and placement for the on-screen controls, tuned for thumbs on a
+// phone. `margin` keeps controls clear of the very edges (a rough safe area so
+// they aren't clipped by rounded corners or gesture bars). The action buttons
+// are anchored to the bottom-right; positions are derived from the world size
+// so tweaking the numbers here moves everything together.
+export const UI = {
+  margin: 26, // min gap from a screen edge, in world px
+  buttonRadius: 44, // action-button radius (bigger = easier to tap)
+  joystickRadius: 70, // how far the movement thumb-stick can travel
+};
+
+// Bottom-right action cluster. A = basic, B = ability (up-left), C = dash
+// (left of A). Kept inside UI.margin so all three are comfortably on-screen.
+export const BUTTONS = {
+  basic: { x: GAME_WIDTH - UI.margin - UI.buttonRadius, y: GAME_HEIGHT - UI.margin - UI.buttonRadius },
+  ability: { x: GAME_WIDTH - UI.margin - UI.buttonRadius - 92, y: GAME_HEIGHT - UI.margin - UI.buttonRadius - 84 },
+  dash: { x: GAME_WIDTH - UI.margin - UI.buttonRadius - 150, y: GAME_HEIGHT - UI.margin - UI.buttonRadius },
+};

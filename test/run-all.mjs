@@ -25,6 +25,7 @@ const tests = [
   "./m13.walls.mjs",
   "./m14.audio.node.mjs",
   "./m14.audio.mjs",
+  "./m15.mobile.mjs",
 ];
 
 let failed = false;

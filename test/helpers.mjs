@@ -24,18 +24,22 @@ export function buildInlinedHtml() {
   const js = readFileSync(`dist/assets/${jsFile}`, "utf8");
 
   // Minimal page with our game-root div and the bundle inlined as a module.
+  // game-root fills the viewport, so the Playwright viewport size controls the
+  // play area (lets us test phone/portrait sizes by changing the viewport).
   cachedHtml = `<!doctype html><html><head><meta charset="utf-8">
     <style>html,body{margin:0;width:100%;height:100%;background:#111}
-    #game-root{width:900px;height:700px}</style></head>
+    #game-root{width:100vw;height:100vh}</style></head>
     <body><div id="game-root"></div>
     <script type="module">${js}</script></body></html>`;
   return cachedHtml;
 }
 
-export async function openGame() {
+// Open the game in a headless browser. Pass { width, height } to simulate a
+// different screen (e.g. a portrait phone); defaults to the desktop test size.
+export async function openGame({ width = 900, height = 700 } = {}) {
   const html = buildInlinedHtml();
   const browser = await chromium.launch({ executablePath: CHROME });
-  const page = await browser.newPage({ viewport: { width: 900, height: 700 } });
+  const page = await browser.newPage({ viewport: { width, height } });
   const errors = [];
   page.on("console", (m) => {
     if (m.type() === "error") errors.push(m.text());

@@ -65,6 +65,10 @@ To stop either server: click its Terminal and press `Ctrl + C`.
 | Basic attack | `J` or `Space` | Tap the **A** button (bottom-right) |
 | Ability (Power Shot) | `K` | Tap the **B** button |
 | Dash | `L` or `Shift` | Tap the **C** button |
+| Mute / unmute sound | `M` | Tap **[M] sound** (top-left) |
+
+The first tap or key press dismisses the **"Tap to play"** start gate — this
+also unlocks sound (mobile browsers stay silent until you interact).
 
 Attacks **auto-aim** at the nearest enemy or their base. Reduce the enemy
 **base** (the diamond crystal) to 0 HP to win. After a win, the match

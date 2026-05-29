@@ -89,6 +89,12 @@ try {
   );
   console.log(`B renders ${bBolts} bolt(s) from A's attack`);
 
+  // Clear each tab's start gate so the screenshots show the live arena.
+  for (const t of [tabA, tabB]) {
+    await t.evaluate(() =>
+      window.PIXELCLASH.game.scene.getScene("ArenaScene").dismissStartGate()
+    );
+  }
   await tabA.screenshot({ path: "docs/live-tabA.png" });
   await tabB.screenshot({ path: "docs/live-tabB.png" });
   console.log("saved docs/live-tabA.png and docs/live-tabB.png");

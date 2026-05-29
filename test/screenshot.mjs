@@ -6,6 +6,7 @@ const { browser, page } = await openGame();
 
 // A lively mid-match scene: two players, health bars, bolts, and both bases.
 await page.evaluate(() => {
+  window.PIXELCLASH.game.scene.getScene("ArenaScene").dismissStartGate();
   const net = window.PIXELCLASH.net;
   net._receive({ t: "welcome", id: "p1", team: "blue" });
   net._receive({

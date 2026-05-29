@@ -6,21 +6,22 @@
 // ===========================================================================
 
 import Phaser from "phaser";
-
-const RADIUS = 38;
+import { UI } from "../config.js";
 
 export default class ActionButton {
-  constructor(scene, x, y, label, color, onPress) {
+  // `radius` defaults to the configured touch size, but can be overridden.
+  constructor(scene, x, y, label, color, onPress, radius = UI.buttonRadius) {
     this.scene = scene;
     this.x = x;
     this.y = y;
+    this.radius = radius;
     this.baseColor = color;
     this.cooldownUntil = 0; // timestamp (ms) when the action is ready again
     this.cooldownMs = 0; // how long the current cooldown lasts
 
-    this.circle = scene.add.circle(x, y, RADIUS, color, 0.85).setScrollFactor(0).setDepth(1000);
+    this.circle = scene.add.circle(x, y, radius, color, 0.85).setScrollFactor(0).setDepth(1000);
     this.label = scene.add
-      .text(x, y, label, { fontFamily: "monospace", fontSize: "22px", color: "#000000" })
+      .text(x, y, label, { fontFamily: "monospace", fontSize: "24px", color: "#000000" })
       .setOrigin(0.5)
       .setScrollFactor(0)
       .setDepth(1002);
@@ -76,7 +77,7 @@ export default class ActionButton {
     this.overlay.fillStyle(0x000000, 0.55);
     this.overlay.beginPath();
     this.overlay.moveTo(this.x, this.y);
-    this.overlay.arc(this.x, this.y, RADIUS, start, end, false);
+    this.overlay.arc(this.x, this.y, this.radius, start, end, false);
     this.overlay.closePath();
     this.overlay.fillPath();
   }

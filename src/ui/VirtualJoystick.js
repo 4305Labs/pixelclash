@@ -6,8 +6,9 @@
 // ===========================================================================
 
 import Phaser from "phaser";
+import { UI } from "../config.js";
 
-const RADIUS = 60; // how far the thumb can travel from the center, in pixels
+const RADIUS = UI.joystickRadius; // how far the thumb can travel, in pixels
 
 export default class VirtualJoystick {
   constructor(scene) {
