@@ -26,6 +26,7 @@ const tests = [
   "./m14.audio.node.mjs",
   "./m14.audio.mjs",
   "./m15.mobile.mjs",
+  "./m16.serverurl.node.mjs",
 ];
 
 let failed = false;

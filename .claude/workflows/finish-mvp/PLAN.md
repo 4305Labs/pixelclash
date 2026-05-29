@@ -55,7 +55,7 @@ flag; guard so tests run headless without a real audio device.
 **Acceptance:** headless test at a phone viewport that joystick + 3 buttons are
 present and on-screen; screenshot at portrait phone size.
 
-## Phase F — Deploy guide + final docs `[ ]`
+## Phase F — Deploy guide + final docs `[x]`
 **Why:** an MVP friends can't reach isn't shipped.
 - Step-by-step free hosting (server on Render/Railway free tier — flag the
   account requirement; static page on GitHub Pages/Netlify), with the exact

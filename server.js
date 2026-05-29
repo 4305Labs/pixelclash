@@ -12,7 +12,10 @@ import { NET } from "./src/config.js";
 const game = new GameServer();
 game.start(NET.tickHz);
 
-const wss = new WebSocketServer({ port: NET.port });
+// Hosting providers (Render, Railway, …) tell your app which port to listen on
+// via the PORT environment variable; locally we fall back to NET.port (2567).
+const port = Number(process.env.PORT) || NET.port;
+const wss = new WebSocketServer({ port });
 
 // Wrap each raw WebSocket in our simple connection interface so GameServer
 // doesn't need to know anything about the "ws" library.
@@ -37,5 +40,5 @@ wss.on("connection", (socket) => {
   );
 });
 
-console.log(`[server] PixelClash server listening on ws://localhost:${NET.port}`);
+console.log(`[server] PixelClash server listening on ws://localhost:${port}`);
 console.log(`[server] Ticking at ${NET.tickHz}Hz. Press Ctrl+C to stop.`);

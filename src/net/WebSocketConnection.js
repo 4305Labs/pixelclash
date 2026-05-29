@@ -6,11 +6,31 @@
 
 import { NET } from "../config.js";
 
-// Build the server address from the current page's hostname. When you open the
-// game on your Mac it's "localhost"; when a phone on your Wi-Fi opens it via
-// your Mac's IP, it'll use that same IP automatically.
+// Work out which server address to connect to. Three cases, in priority order:
+//
+//   1. An explicit override — a `?server=...` URL query param, or a global
+//      `window.PIXELCLASH_SERVER` you can set in index.html. Use this when the
+//      web page and the game server live on DIFFERENT hosts (the usual setup
+//      once you deploy: page on GitHub Pages, server on Render). Example:
+//      `window.PIXELCLASH_SERVER = "wss://pixelclash.onrender.com";`
+//
+//   2. Page served over HTTPS (e.g. GitHub Pages) with no override — browsers
+//      forbid an insecure `ws://` from a secure page, so use `wss://` on the
+//      same host and the standard port (443), which your host terminates TLS on.
+//
+//   3. Local development over plain HTTP — `ws://<host>:<port>`. On your Mac
+//      that's "localhost"; a phone on your Wi-Fi opening your Mac's IP reuses
+//      that IP automatically.
 export function defaultServerUrl() {
+  if (typeof window !== "undefined" && typeof location !== "undefined") {
+    const fromQuery = new URLSearchParams(location.search || "").get("server");
+    if (fromQuery) return fromQuery;
+    if (window.PIXELCLASH_SERVER) return window.PIXELCLASH_SERVER;
+  }
   const host = (typeof location !== "undefined" && location.hostname) || "localhost";
+  if (typeof location !== "undefined" && location.protocol === "https:") {
+    return `wss://${host}`;
+  }
   return `ws://${host}:${NET.port}`;
 }
 

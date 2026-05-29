@@ -117,21 +117,62 @@ Other players are still drawn by gliding toward their latest reported position
 
 ## 7. Put it online so friends can play
 
-To play with someone **not** on your Wi-Fi, the server needs to live on the
-internet. Beginner-friendly, free-tier-friendly options:
+To play with someone **not** on your Wi-Fi, two things need a home on the
+internet: the **game server** (`server.js`, a long-running Node process) and the
+**web page** (a folder of static files). They can live in different places.
 
-- **Render** (<https://render.com>) or **Railway** (<https://railway.app>) for
-  the Node server (`server.js`). ⚠️ These have free tiers but **require making
-  an account**, and free instances may sleep when idle — check current pricing
-  before relying on them.
-- **The web page** (the Vite build, `npm run build` → `dist/`) can be hosted
-  free on **GitHub Pages**, **Netlify**, or **Cloudflare Pages**.
-- You'll then point the client at your hosted server's address. The lookup
-  lives in `src/net/WebSocketConnection.js` → `defaultServerUrl()`; you'd swap
-  `ws://` for `wss://` (secure) and use your server's public hostname.
+> ⚠️ The free tiers below **require making an account**, and free servers often
+> **sleep when idle** — the first player after a quiet spell may wait ~30s for
+> it to wake. That's fine for playing with friends; check current pricing before
+> relying on it for anything bigger.
 
-We can do this together when you're ready — flag it and we'll go one step at a
-time.
+### Step 1 — Host the game server (Render, free tier)
+
+1. Push this project to a GitHub repo (it probably already is).
+2. Go to <https://render.com>, sign up, and click **New → Web Service**.
+   Connect your GitHub and pick this repo.
+3. Set:
+   - **Build Command:** `npm install`
+   - **Start Command:** `npm run server`
+   - **Instance Type:** Free
+4. Create the service. When it's live, Render gives you a URL like
+   `https://pixelclash-xyz.onrender.com`. Your WebSocket address is the **same
+   host with `wss://`**: `wss://pixelclash-xyz.onrender.com`. Copy it.
+
+   (No port to configure: the server already reads Render's `PORT` for you, and
+   Render handles the secure `wss://` layer.)
+
+   Railway (<https://railway.app>) works the same way if you prefer it.
+
+### Step 2 — Point the web page at that server
+
+Open **`index.html`**. Near the bottom there's a commented-out line; uncomment
+it and paste your server address:
+
+```html
+<script>window.PIXELCLASH_SERVER = "wss://pixelclash-xyz.onrender.com";</script>
+```
+
+That's the **only** code change needed to go online. (Under the hood
+`src/net/WebSocketConnection.js` → `defaultServerUrl()` reads that value; with no
+override it auto-uses `wss://` on an https page and `ws://localhost` in dev. You
+can also test without editing anything by adding `?server=wss://…` to the page
+URL.)
+
+### Step 3 — Host the web page (GitHub Pages or Netlify, free)
+
+1. Build the static page: `npm run build` → it writes the `dist/` folder.
+2. Put `dist/` online:
+   - **Netlify** (<https://netlify.com>): drag-and-drop the `dist/` folder onto
+     their dashboard — done, you get a public URL.
+   - **GitHub Pages** / **Cloudflare Pages**: point them at this repo with build
+     command `npm run build` and publish directory `dist`.
+3. Open the page's URL on any device, share it with a friend, and you're both in
+   the same battle. 🎉
+
+> **Must be https:** browsers block a secure page from talking to an insecure
+> `ws://` server, which is why Step 1 uses `wss://`. Netlify/Pages serve https
+> automatically, so this just works.
 
 ---
 

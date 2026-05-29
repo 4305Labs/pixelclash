@@ -82,6 +82,21 @@ that address in the phone's browser to join the battle with touch controls.
 (If it won't connect, see the troubleshooting note in
 [docs/HOW-TO-KEEP-BUILDING.md](docs/HOW-TO-KEEP-BUILDING.md).)
 
+### Play with friends over the internet
+
+Once you've played locally, you can host the game online for free so anyone can
+join from anywhere. It's two steps — host the server, point the page at it —
+and it's written up plainly in
+[docs/HOW-TO-KEEP-BUILDING.md → *Put it online*](docs/HOW-TO-KEEP-BUILDING.md#7-put-it-online-so-friends-can-play).
+
+---
+
+## A look at it
+
+| The arena (with walls) | Waiting in the lobby | On a phone |
+|---|---|---|
+| ![Match](docs/screenshot-map.png) | ![Lobby](docs/screenshot-lobby.png) | ![Mobile](docs/screenshot-mobile.png) |
+
 ---
 
 ## Project layout

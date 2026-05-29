@@ -31,6 +31,16 @@
   </head>
   <body>
     <div id="game-root"></div>
+
+    <!--
+      DEPLOY STEP: when you host the web page and the game server on different
+      sites (e.g. page on GitHub Pages, server on Render), tell the page where
+      the server lives by uncommenting the line below and pasting your server's
+      address. Use wss:// (secure) for an https page. Locally you can leave this
+      commented out — the game auto-connects to your own machine.
+    -->
+    <!-- <script>window.PIXELCLASH_SERVER = "wss://YOUR-SERVER.onrender.com";</script> -->
+
     <!-- This loads our game code. type="module" lets us use modern imports. -->
     <script type="module" src="/src/main.js"></script>
   </body>
