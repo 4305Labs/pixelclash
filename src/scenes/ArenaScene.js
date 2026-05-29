@@ -5,7 +5,7 @@
 // ===========================================================================
 
 import Phaser from "phaser";
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, COMBAT } from "../config.js";
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, COMBAT, DASH } from "../config.js";
 import { generateTextures } from "../textures.js";
 import { stepPosition } from "../sim.js";
 import Player from "../entities/Player.js";
@@ -42,23 +42,33 @@ export default class ArenaScene extends Phaser.Scene {
     this.input.addPointer(2);
     this.joystick = new VirtualJoystick(this);
 
-    // --- Input: attacks (keyboard) ------------------------------------------
-    this.input.keyboard.on("keydown-J", () => this.net.sendAttack("basic"));
-    this.input.keyboard.on("keydown-SPACE", () => this.net.sendAttack("basic"));
-    this.input.keyboard.on("keydown-K", () => this.net.sendAttack("ability"));
-    this.input.keyboard.on("keydown-L", () => this.net.sendDash());
-    this.input.keyboard.on("keydown-SHIFT", () => this.net.sendDash());
+    // --- Input: action buttons (touch, bottom-right) ------------------------
+    // Each button triggers an action and shows its own cooldown sweep.
+    this.buttons = {
+      basic: new ActionButton(this, GAME_WIDTH - 70, GAME_HEIGHT - 70, "A", COMBAT.basic.color, () =>
+        this.doAction("basic")
+      ),
+      ability: new ActionButton(this, GAME_WIDTH - 150, GAME_HEIGHT - 120, "B", COMBAT.ability.color, () =>
+        this.doAction("ability")
+      ),
+      dash: new ActionButton(this, GAME_WIDTH - 200, GAME_HEIGHT - 60, "C", 0x00e436, () =>
+        this.doAction("dash")
+      ),
+    };
 
-    // --- Input: attacks (on-screen buttons, bottom-right) -------------------
-    new ActionButton(this, GAME_WIDTH - 70, GAME_HEIGHT - 70, "A", COMBAT.basic.color, () =>
-      this.net.sendAttack("basic")
-    );
-    new ActionButton(this, GAME_WIDTH - 150, GAME_HEIGHT - 120, "B", COMBAT.ability.color, () =>
-      this.net.sendAttack("ability")
-    );
-    new ActionButton(this, GAME_WIDTH - 200, GAME_HEIGHT - 60, "C", 0x00e436, () =>
-      this.net.sendDash()
-    );
+    // How long each action's cooldown lasts (matches the server's values).
+    this.cooldowns = {
+      basic: COMBAT.basic.cd,
+      ability: COMBAT.ability.cd,
+      dash: DASH.cd,
+    };
+
+    // --- Input: keyboard shortcuts for the same actions ---------------------
+    this.input.keyboard.on("keydown-J", () => this.doAction("basic"));
+    this.input.keyboard.on("keydown-SPACE", () => this.doAction("basic"));
+    this.input.keyboard.on("keydown-K", () => this.doAction("ability"));
+    this.input.keyboard.on("keydown-L", () => this.doAction("dash"));
+    this.input.keyboard.on("keydown-SHIFT", () => this.doAction("dash"));
 
     // --- HUD -----------------------------------------------------------------
     this.statusText = this.add
@@ -124,6 +134,30 @@ export default class ArenaScene extends Phaser.Scene {
     this.syncPlayers(dt);
     this.syncProjectiles();
     this.updateGameOver();
+
+    // 3) Redraw the cooldown sweeps on the action buttons.
+    this.buttons.basic.update();
+    this.buttons.ability.update();
+    this.buttons.dash.update();
+  }
+
+  // Whether our local player is currently alive (false if not yet connected).
+  localAlive() {
+    const me = this.net.players.find((p) => p.id === this.net.localId);
+    return !!me && me.alive;
+  }
+
+  // Trigger an action ("basic" | "ability" | "dash"): send it to the server
+  // (the authority) and start the matching button's cooldown sweep when we
+  // mirror the server's rules (alive + off cooldown).
+  doAction(kind) {
+    if (kind === "dash") this.net.sendDash();
+    else this.net.sendAttack(kind);
+
+    const button = this.buttons[kind];
+    if (this.localAlive() && button.isReady()) {
+      button.startCooldown(this.cooldowns[kind]);
+    }
   }
 
   syncBases() {

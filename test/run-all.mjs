@@ -18,6 +18,7 @@ const tests = [
   "./m8.teams.mjs",
   "./m9.dash.mjs",
   "./m9.render.mjs",
+  "./m10.cooldown.mjs",
 ];
 
 let failed = false;
