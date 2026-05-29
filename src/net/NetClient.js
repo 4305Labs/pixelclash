@@ -10,7 +10,8 @@ export default class NetClient {
     this.conn = conn;
     this.localId = null; // our own player's id, set by the server's "welcome"
     this.team = null;
-    this.players = []; // latest roster: [{ id, team, x, y }]
+    this.players = []; // latest roster: [{ id, team, x, y, hp, alive }]
+    this.projectiles = []; // bolts in flight: [{ id, team, kind, x, y }]
     this.tick = 0;
     this.connected = false;
     this._listeners = { welcome: [], state: [] };
@@ -32,6 +33,11 @@ export default class NetClient {
     this.conn.send({ t: "input", dx, dy });
   }
 
+  // Ask the server to fire an attack. kind is "basic" or "ability".
+  sendAttack(kind) {
+    this.conn.send({ t: "attack", kind });
+  }
+
   on(event, cb) {
     if (this._listeners[event]) this._listeners[event].push(cb);
   }
@@ -48,6 +54,7 @@ export default class NetClient {
       this._emit("welcome", msg);
     } else if (msg.t === "state") {
       this.players = msg.players;
+      this.projectiles = msg.projectiles || [];
       this.tick = msg.tick;
       this._emit("state", msg);
     }

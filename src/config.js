@@ -42,3 +42,15 @@ export const SPAWNS = {
   blue: { x: 120, y: GAME_HEIGHT / 2 },
   red: { x: GAME_WIDTH - 120, y: GAME_HEIGHT / 2 },
 };
+
+// --- Combat -----------------------------------------------------------------
+export const COMBAT = {
+  maxHp: 100,
+  respawnMs: 2000, // time knocked out before respawning at your spawn
+
+  // Two attack types. cd = cooldown in ms, speed = px/sec, ttl = lifetime (ms).
+  basic: { dmg: 8, cd: 400, speed: 420, ttl: 1400, radius: 5, color: 0xffec27 },
+  ability: { dmg: 30, cd: 2500, speed: 560, ttl: 1400, radius: 9, color: 0xff77a8 },
+
+  hitPad: 14, // extra hit radius so bolts connect with a player's body
+};

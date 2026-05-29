@@ -1,13 +1,15 @@
 // ===========================================================================
-// ArenaScene — the playing field. It connects to the game server, sends our
-// input, and draws every player the server reports (us and any opponents).
+// ArenaScene — the playing field. Connects to the game server, sends input and
+// attack requests, and draws every player (with health bars) plus all the
+// projectiles the server reports.
 // ===========================================================================
 
 import Phaser from "phaser";
-import { GAME_WIDTH, GAME_HEIGHT, COLORS } from "../config.js";
+import { GAME_WIDTH, GAME_HEIGHT, COLORS, COMBAT } from "../config.js";
 import { generateTextures } from "../textures.js";
 import Player from "../entities/Player.js";
 import VirtualJoystick from "../ui/VirtualJoystick.js";
+import ActionButton from "../ui/ActionButton.js";
 
 export default class ArenaScene extends Phaser.Scene {
   constructor() {
@@ -18,11 +20,11 @@ export default class ArenaScene extends Phaser.Scene {
     generateTextures(this);
     this.drawGrid();
 
-    // The network client was created in main.js and stored in the registry.
     this.net = this.registry.get("net");
     this.sprites = new Map(); // player id -> Player display object
+    this.bolts = new Map(); // projectile id -> circle
 
-    // --- Input ---------------------------------------------------------------
+    // --- Input: movement -----------------------------------------------------
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasd = this.input.keyboard.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.W,
@@ -32,6 +34,19 @@ export default class ArenaScene extends Phaser.Scene {
     });
     this.input.addPointer(2);
     this.joystick = new VirtualJoystick(this);
+
+    // --- Input: attacks (keyboard) ------------------------------------------
+    this.input.keyboard.on("keydown-J", () => this.net.sendAttack("basic"));
+    this.input.keyboard.on("keydown-SPACE", () => this.net.sendAttack("basic"));
+    this.input.keyboard.on("keydown-K", () => this.net.sendAttack("ability"));
+
+    // --- Input: attacks (on-screen buttons, bottom-right) -------------------
+    new ActionButton(this, GAME_WIDTH - 70, GAME_HEIGHT - 70, "A", COMBAT.basic.color, () =>
+      this.net.sendAttack("basic")
+    );
+    new ActionButton(this, GAME_WIDTH - 150, GAME_HEIGHT - 120, "B", COMBAT.ability.color, () =>
+      this.net.sendAttack("ability")
+    );
 
     // --- HUD -----------------------------------------------------------------
     this.statusText = this.add
@@ -44,19 +59,17 @@ export default class ArenaScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(500);
 
-    // When the server welcomes us, update the HUD with our team color.
     this.net.on("welcome", (msg) => {
       const label = msg.team === "red" ? "RED" : "BLUE";
-      this.statusText.setText(`You are ${label}  —  move: WASD / drag left side`);
+      this.statusText.setText(`You are ${label}  —  move: left side   attack: A / B`);
       this.statusText.setColor(msg.team === "red" ? "#ff6b8b" : "#9bd9ff");
     });
 
-    // Announce ourselves to the server.
     this.net.join();
   }
 
   update() {
-    // 1) Read our input and send it to the server.
+    // 1) Read movement input and send it.
     let dx = 0;
     let dy = 0;
     if (this.cursors.left.isDown || this.wasd.left.isDown) dx -= 1;
@@ -70,30 +83,49 @@ export default class ArenaScene extends Phaser.Scene {
     }
     if (this.net.localId) this.net.sendInput(dx, dy);
 
-    // 2) Sync the on-screen sprites to the server's roster.
+    // 2) Sync sprites + projectiles to the server's snapshot.
     this.syncPlayers();
+    this.syncProjectiles();
   }
 
   syncPlayers() {
     const seen = new Set();
-
     for (const p of this.net.players) {
       seen.add(p.id);
       let sprite = this.sprites.get(p.id);
       if (!sprite) {
-        // A player we haven't drawn yet — create them.
         sprite = new Player(this, p.x, p.y, p.team);
         this.sprites.set(p.id, sprite);
       }
       sprite.setTarget(p.x, p.y);
       sprite.smoothFollow();
+      sprite.setHp(p.hp);
+      sprite.setAlive(p.alive);
     }
-
-    // Remove sprites for players who have left.
     for (const [id, sprite] of this.sprites) {
       if (!seen.has(id)) {
         sprite.destroy();
         this.sprites.delete(id);
+      }
+    }
+  }
+
+  syncProjectiles() {
+    const seen = new Set();
+    for (const b of this.net.projectiles) {
+      seen.add(b.id);
+      let dot = this.bolts.get(b.id);
+      if (!dot) {
+        const spec = COMBAT[b.kind] || COMBAT.basic;
+        dot = this.add.circle(b.x, b.y, spec.radius, spec.color).setDepth(50);
+        this.bolts.set(b.id, dot);
+      }
+      dot.setPosition(b.x, b.y);
+    }
+    for (const [id, dot] of this.bolts) {
+      if (!seen.has(id)) {
+        dot.destroy();
+        this.bolts.delete(id);
       }
     }
   }

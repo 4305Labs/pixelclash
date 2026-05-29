@@ -5,7 +5,13 @@ import { buildInlinedHtml } from "./helpers.mjs";
 console.log("Building game bundle once for all tests...");
 buildInlinedHtml();
 
-const tests = ["./m3.movement.mjs", "./m4.server.mjs", "./m4.render.mjs"];
+const tests = [
+  "./m3.movement.mjs",
+  "./m4.server.mjs",
+  "./m4.render.mjs",
+  "./m5.combat.mjs",
+  "./m5.render.mjs",
+];
 
 let failed = false;
 for (const t of tests) {
