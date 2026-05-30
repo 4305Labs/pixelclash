@@ -38,12 +38,24 @@ export default class Player extends Phaser.GameObjects.Container {
       .setOrigin(0.5)
       .setVisible(false);
 
-    this.add([this.aura, this.bodySprite, this.hpBg, this.hpFill, this.botLabel]);
+    // A small level badge under the hero, shown once it's past level 1.
+    this.levelLabel = scene.add
+      .text(0, 20, "", { fontFamily: "monospace", fontSize: "10px", color: "#ffec27", stroke: "#000000", strokeThickness: 3 })
+      .setOrigin(0.5)
+      .setVisible(false);
+
+    this.add([this.aura, this.bodySprite, this.hpBg, this.hpFill, this.botLabel, this.levelLabel]);
     scene.add.existing(this);
   }
 
   setBot(isBot) {
     this.botLabel.setVisible(!!isBot);
+  }
+
+  // Show "L<n>" once a hero has leveled up (hidden at level 1 to cut clutter).
+  setLevel(level) {
+    if (level > 1) this.levelLabel.setText(`L${level}`).setVisible(true);
+    else this.levelLabel.setVisible(false);
   }
 
   // Toggle the power-buff aura.

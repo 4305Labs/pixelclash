@@ -9,7 +9,10 @@ const state = (me) => ({
   phase: "playing",
   winner: null,
   score: { blue: 0, red: 0 },
-  players: [{ id: "p1", team: "blue", x: 120, y: 300, hp: 100, alive: true, ...me }],
+  players: [
+    { id: "p1", team: "blue", x: 120, y: 300, hp: 100, alive: true, ...me },
+    { id: "p2", team: "red", x: 680, y: 300, hp: 100, alive: true, level: 1, maxHp: 100 },
+  ],
   projectiles: [],
   minions: [],
   pickups: [],
@@ -36,6 +39,18 @@ try {
   assert(/Lv 3/.test(text), "HUD shows the hero level");
   assert(/120g/.test(text), "HUD shows the gold");
   assert(text.includes(PROGRESS.shop[0].name), "HUD shows the next upgrade to buy");
+
+  // In-world level badges: shown for a leveled hero (p1 = Lv 3), hidden at
+  // level 1 (p2).
+  const badges = await page.evaluate(() => {
+    const s = window.PIXELCLASH.game.scene.getScene("ArenaScene");
+    return {
+      leveled: { vis: s.sprites.get("p1").levelLabel.visible, text: s.sprites.get("p1").levelLabel.text },
+      one: s.sprites.get("p2").levelLabel.visible,
+    };
+  });
+  assert(badges.leveled.vis && /L3/.test(badges.leveled.text), "a leveled hero shows an L<n> badge");
+  assert(!badges.one, "a level-1 hero shows no badge");
 
   // Fully upgraded -> no buy prompt.
   await page.evaluate((s) => window.PIXELCLASH.net._receive(s), state({ level: 6, gold: 999, buys: PROGRESS.shopMaxStacks }));

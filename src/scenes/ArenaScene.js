@@ -562,6 +562,7 @@ export default class ArenaScene extends Phaser.Scene {
 
       if (p.cls) sprite.setClass(p.cls);
       sprite.setBot(p.bot);
+      sprite.setLevel(p.level || 1);
       sprite.setHp(p.hp, p.maxHp);
       sprite.setAlive(p.alive);
       sprite.setPowered(p.powered);
