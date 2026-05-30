@@ -108,24 +108,38 @@ function makeMinionTexture(scene, key, color) {
   paintGrid(scene, key, { rows: MINION_ROWS, palette, pixel: 2 });
 }
 
-// Draws a team base: a chunky "crystal" — an outlined diamond with a bright
-// core, in the team color. `key` names the texture; `color` is the team color.
+// Draws a team base: a faceted gem crystal. We build it procedurally (the shape
+// is symmetric, so a grid would be fiddly): an outlined diamond, split into a
+// lit LEFT facet and a shadowed RIGHT facet for a cut-gemstone look, plus a
+// bright core and a small white sparkle. Size is unchanged (radius*2) so hit
+// detection and layout are identical to before.
 function makeBaseTexture(scene, key, color) {
   const g = scene.make.graphics({ x: 0, y: 0 }, false);
   const r = BASE.radius;
   const size = r * 2;
-  const cx = r;
-  const cy = r;
+  const lit = color;
+  const dark = shade(color, 0.55);
 
-  // Black diamond outline.
+  // Outline, then the two facets (left half lit, right half shadowed), then a
+  // smaller bright core, drawn as nested diamonds.
   g.fillStyle(COLORS.outline, 1);
-  g.fillPoints(diamond(cx, cy, r), true);
-  // Colored body, slightly smaller.
-  g.fillStyle(color, 1);
-  g.fillPoints(diamond(cx, cy, r - 2), true);
-  // Bright white core so it reads as a power crystal.
+  g.fillPoints(diamond(r, r, r), true);
+
+  // Left facet (lit): a triangle from top to bottom down the centre, to the
+  // left point. Right facet (shadowed): the mirror.
+  const top = { x: r, y: r - (r - 2) };
+  const bot = { x: r, y: r + (r - 2) };
+  const left = { x: r - (r - 2), y: r };
+  const right = { x: r + (r - 2), y: r };
+  g.fillStyle(lit, 1);
+  g.fillPoints([top, bot, left], true);
+  g.fillStyle(dark, 1);
+  g.fillPoints([top, bot, right], true);
+
+  // Bright core + a sparkle up-left.
   g.fillStyle(COLORS.white, 1);
-  g.fillPoints(diamond(cx, cy, r * 0.4), true);
+  g.fillPoints(diamond(r, r, r * 0.34), true);
+  g.fillRect(r - Math.round(r * 0.45), r - Math.round(r * 0.45), 2, 2);
 
   g.generateTexture(key, size, size);
   g.destroy();
@@ -141,40 +155,60 @@ function diamond(cx, cy, r) {
   ];
 }
 
-// Draws a guard tower: a chunky stone fort (square) with a team-colored turret
-// disc on top and a bright aperture, so it reads as a defensive structure —
-// clearly different from the diamond base.
+// Draws a guard tower: a stone turret with battlements. An outlined stone base,
+// a lit top edge and shadowed sides for height, crenellations along the top, a
+// team-coloured cannon disc, and a bright muzzle. Size unchanged (radius*2).
 function makeTowerTexture(scene, key, color) {
   const g = scene.make.graphics({ x: 0, y: 0 }, false);
   const s = TOWER.radius * 2;
   const c = TOWER.radius;
-  // Stone fort: black-outlined square.
+  const stone = COLORS.wall;
+
+  // Stone body: black-outlined square with lit/shadowed edges.
   g.fillStyle(COLORS.outline, 1);
   g.fillRect(0, 0, s, s);
-  g.fillStyle(COLORS.wall, 1);
+  g.fillStyle(stone, 1);
   g.fillRect(2, 2, s - 4, s - 4);
-  // Team-colored turret disc.
+  g.fillStyle(shade(stone, 1.3), 1); // lit top
+  g.fillRect(2, 2, s - 4, 3);
+  g.fillStyle(shade(stone, 0.65), 1); // shadowed bottom + right
+  g.fillRect(2, s - 5, s - 4, 3);
+  g.fillRect(s - 5, 2, 3, s - 4);
+
+  // Crenellations: three dark notches along the very top.
   g.fillStyle(COLORS.outline, 1);
-  g.fillCircle(c, c, c - 4);
+  for (let i = 0; i < 3; i++) g.fillRect(4 + i * ((s - 8) / 3) + 2, 0, 4, 3);
+
+  // Team cannon disc + bright muzzle.
+  g.fillStyle(COLORS.outline, 1);
+  g.fillCircle(c, c + 1, c - 5);
   g.fillStyle(color, 1);
-  g.fillCircle(c, c, c - 6);
-  // Bright aperture in the middle.
+  g.fillCircle(c, c + 1, c - 7);
+  g.fillStyle(shade(color, 1.4), 1); // highlight glint
+  g.fillCircle(c - 2, c - 1, 2);
   g.fillStyle(COLORS.white, 1);
-  g.fillCircle(c, c, (c - 6) * 0.4);
+  g.fillCircle(c, c + 1, (c - 7) * 0.35);
+
   g.generateTexture(key, s, s);
   g.destroy();
 }
 
-// Draws a pickup orb: a round, outlined disc with a symbol. A green disc with a
-// white cross = heal; an orange disc with a white "bolt" wedge = power.
+// Draws a pickup orb: an outlined gem-disc with shading (shadowed lower body, a
+// bright upper-left highlight) and a white symbol — a plus for heal (green), a
+// lightning bolt for power (orange). Size unchanged (radius*2).
 function makePickupTexture(scene, key, kind) {
   const g = scene.make.graphics({ x: 0, y: 0 }, false);
   const r = PICKUP.radius;
   const s = r * 2;
+  const body = kind === "heal" ? 0x00e436 : 0xffa300;
   g.fillStyle(COLORS.outline, 1);
   g.fillCircle(r, r, r);
-  g.fillStyle(kind === "heal" ? 0x00e436 : 0xffa300, 1);
+  g.fillStyle(shade(body, 0.7), 1); // shadowed base
   g.fillCircle(r, r, r - 2);
+  g.fillStyle(body, 1); // lit body, nudged up-left
+  g.fillCircle(r - 1, r - 1, r - 4);
+  g.fillStyle(shade(body, 1.5), 1); // glossy highlight
+  g.fillCircle(r - 3, r - 3, Math.max(1, r * 0.18));
   g.fillStyle(COLORS.white, 1);
   if (kind === "heal") {
     // A plus sign.
