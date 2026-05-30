@@ -17,6 +17,11 @@ const SOUNDS = {
   hit: (a) => a.blip({ type: "square", freq: 200, freqEnd: 120, dur: 0.09, gain: 0.14 }),
   death: (a) => a.blip({ type: "sawtooth", freq: 300, freqEnd: 70, dur: 0.35, gain: 0.16 }),
   base: (a) => a.blip({ type: "square", freq: 140, freqEnd: 50, dur: 0.5, gain: 0.2 }),
+  // A bright two-note rising chime when you grab a pickup.
+  pickup: (a) =>
+    [523, 784].forEach((f, i) =>
+      a.blip({ type: "sine", freq: f, dur: 0.1, gain: 0.12, delay: i * 0.07 })
+    ),
   // A little 3-note victory arpeggio (C–E–G), each note delayed after the last.
   win: (a) =>
     [523, 659, 784].forEach((f, i) =>

@@ -28,7 +28,7 @@ try {
 
     let threw = false;
     try {
-      ["shoot", "hit", "death", "base", "win"].forEach((n) => a.play(n));
+      ["shoot", "hit", "death", "base", "win", "pickup"].forEach((n) => a.play(n));
     } catch (e) {
       threw = String(e);
     }

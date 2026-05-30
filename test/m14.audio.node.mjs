@@ -17,7 +17,7 @@ try {
   assert(a.ctx === null, "no AudioContext is created in Node (guarded)");
 
   // Playing any effect with no audio context is a safe no-op.
-  for (const name of ["shoot", "hit", "death", "base", "win", "nope"]) a.play(name);
+  for (const name of ["shoot", "hit", "death", "base", "win", "pickup", "nope"]) a.play(name);
   assert(true, "playing every effect (and an unknown one) does not throw");
 
   // Mute toggles and persists.

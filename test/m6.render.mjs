@@ -49,6 +49,7 @@ try {
       tick: 2,
       phase: "over",
       winner: "blue",
+      score: { blue: 5, red: 3 },
       players: [{ id: "p1", team: "blue", x: 120, y: 300, hp: 100, alive: true }],
       projectiles: [],
       bases: [
@@ -67,6 +68,7 @@ try {
   assert(banner.visible === true, "win banner shows at game over");
   assert(banner.text.includes("BLUE WINS"), "banner names the winner");
   assert(banner.text.includes("You win"), "banner tells this (blue) player they won");
+  assert(/BLUE 5 . 3 RED/.test(banner.text), "banner shows the final score");
 
   const realErrors = errors.filter((e) => !/websocket|ws:\/\//i.test(e));
   assert(realErrors.length === 0, "no unexpected errors: " + JSON.stringify(realErrors));

@@ -404,8 +404,13 @@ export default class ArenaScene extends Phaser.Scene {
     if (this.net.phase === "over" && this.net.winner) {
       const iWon = this.net.team && this.net.team === this.net.winner;
       const who = this.net.winner === "blue" ? "BLUE" : "RED";
+      const s = this.net.score || { blue: 0, red: 0 };
       this.gameOverText
-        .setText(`${who} WINS!\n` + (iWon ? "You win! 🎉" : "You lose…"))
+        .setText(
+          `${who} WINS!\n` +
+            (iWon ? "You win! 🎉" : "You lose…") +
+            `\nFinal score  BLUE ${s.blue} – ${s.red} RED`
+        )
         .setColor(this.net.winner === "blue" ? "#9bd9ff" : "#ff6b8b")
         .setVisible(true);
       // Play the victory jingle once when the match ends.
@@ -482,6 +487,15 @@ export default class ArenaScene extends Phaser.Scene {
         this.spawnDamageNumber(sprite.x, sprite.y, dmg);
         this.audio.play("hit");
       }
+
+      // Local pickup cue: our HP jumped up while alive (heal), or our power
+      // buff just turned on. (Not on respawn, which is a dead -> alive change.)
+      if (p.id === this.net.localId) {
+        const healed = p.alive && sprite.lastAlive && p.hp > sprite.lastHp;
+        const justPowered = p.powered && !sprite.lastPowered;
+        if (healed || justPowered) this.audio.play("pickup");
+      }
+      sprite.lastPowered = p.powered;
       sprite.lastHp = p.hp;
 
       // Detect a knockout (alive -> dead) for the death sound.
