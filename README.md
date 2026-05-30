@@ -70,8 +70,8 @@ To stop either server: click its Terminal and press `Ctrl + C`.
 | Ability (Power Shot) | `K` | Tap the **B** button |
 | Dash | `L` or `Shift` | Tap the **C** button |
 | Mute / unmute sound | `M` | Tap **[M] sound** (top-left) |
-| Pick a hero class (in the lobby) | `1` / `2` / `3` | — |
-| Buy shop upgrades (with gold) | `Z` / `X` / `C` (or `B` for next) | — |
+| Pick a hero class (in the lobby) | `1` / `2` / `3` | Tap a class button |
+| Buy shop upgrades (with gold) | `Z` / `X` / `C` (or `B` for next) | Tap an item button (right edge) |
 
 The first tap or key press dismisses the **"Tap to play"** start gate — this
 also unlocks sound (mobile browsers stay silent until you interact).

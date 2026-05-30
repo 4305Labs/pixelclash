@@ -240,6 +240,29 @@ export default class ArenaScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(500);
 
+    // --- Touch buttons for class + shop (keyboard still works) ---------------
+    // Class picker: a row of tappable buttons in the lobby (centered, where the
+    // world is frozen so there's no movement-joystick conflict).
+    this.classButtons = CLASS_ORDER.map((cls, i) => {
+      const w = 110;
+      const x = GAME_WIDTH / 2 - 175 + i * 120;
+      const b = this.makeTapButton(x, GAME_HEIGHT / 2 + 116, w, 30, CLASSES[cls].name, () =>
+        this.net.sendClass(cls)
+      );
+      b.cls = cls;
+      return b;
+    });
+
+    // Shop: tappable item buttons on the RIGHT edge (the joystick only reacts to
+    // the left half, so these never start movement). One per shop item.
+    this.shopButtons = PROGRESS.shop.slice(0, 3).map((item, i) => {
+      const b = this.makeTapButton(GAME_WIDTH - 150, 180 + i * 34, 138, 28, "", () =>
+        this.net.sendBuy(item.id)
+      );
+      b.item = item;
+      return b;
+    });
+
     // Win/lose banner (hidden until a base falls).
     this.gameOverText = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "", {
@@ -416,15 +439,20 @@ export default class ArenaScene extends Phaser.Scene {
       this.lobbyText.setVisible(false);
     }
 
-    // The class picker shows alongside the lobby (waiting/countdown).
-    if (phase === "waiting" || phase === "countdown") {
+    // The class picker (text hint + tappable buttons) shows in the lobby.
+    const picking = phase === "waiting" || phase === "countdown";
+    if (picking) {
       const pick = CLASS_ORDER.map((c, i) => {
         const tag = `[${i + 1}] ${CLASSES[c].name}`;
         return c === this.net.cls ? `‹${tag}›` : ` ${tag} `;
       }).join("  ");
-      this.classText.setText(`Choose your hero:\n${pick}`).setVisible(true);
+      this.classText.setText(`Choose your hero (tap or 1/2/3):\n${pick}`).setVisible(true);
     } else {
       this.classText.setVisible(false);
+    }
+    for (const b of this.classButtons) {
+      b.setVisible(picking);
+      if (picking) b.setColor(b.cls === this.net.cls ? "#ffec27" : "#fff1e8");
     }
   }
 
@@ -466,6 +494,52 @@ export default class ArenaScene extends Phaser.Scene {
     return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
   }
 
+  // A small tappable UI button (a panel + centered label). Stops the tap from
+  // reaching the movement joystick, so it works anywhere on screen. Returns a
+  // handle with show/label/enable helpers (and `tap()` for tests). Starts hidden.
+  makeTapButton(x, y, w, h, label, onTap) {
+    const bg = this.add
+      .rectangle(x, y, w, h, 0x29366f, 0.92)
+      .setOrigin(0, 0.5)
+      .setScrollFactor(0)
+      .setDepth(2001)
+      .setStrokeStyle(1, 0x4a5680)
+      .setInteractive({ useHandCursor: true });
+    const txt = this.add
+      .text(x + w / 2, y, label, { fontFamily: "monospace", fontSize: "13px", color: "#fff1e8" })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(2002);
+    bg.on("pointerdown", (pointer, lx, ly, event) => {
+      if (event) event.stopPropagation();
+      onTap();
+    });
+    const btn = {
+      bg,
+      txt,
+      setVisible(v) {
+        bg.setVisible(v);
+        txt.setVisible(v);
+        return btn;
+      },
+      setLabel(s) {
+        txt.setText(s);
+        return btn;
+      },
+      setColor(c) {
+        txt.setColor(c);
+        return btn;
+      },
+      setEnabled(e) {
+        bg.setFillStyle(0x29366f, e ? 0.92 : 0.5);
+        txt.setColor(e ? "#ffec27" : "#9a9aa0");
+        return btn;
+      },
+      tap: onTap, // for tests
+    };
+    return btn.setVisible(false);
+  }
+
   // Bottom-left progression line for the local hero: level, gold, and the shop
   // (each item on its own key — Z/X/C), or "maxed" once fully upgraded.
   updateShopHud() {
@@ -476,8 +550,10 @@ export default class ArenaScene extends Phaser.Scene {
       return;
     }
     let line = `Lv ${me.level || 1}   ${me.gold || 0}g`;
+    const maxed = (me.buys || 0) >= PROGRESS.shopMaxStacks;
+    const shopOpen = this.net.phase === "playing" && !maxed;
     if (this.net.phase === "playing") {
-      if ((me.buys || 0) >= PROGRESS.shopMaxStacks) {
+      if (maxed) {
         line += "   upgrades maxed";
       } else {
         const shop = PROGRESS.shop
@@ -488,6 +564,15 @@ export default class ArenaScene extends Phaser.Scene {
       }
     }
     this.shopText.setText(line).setColor("#fff1e8");
+
+    // Tappable shop buttons (right edge): labelled, dimmed when unaffordable.
+    this.shopButtons.forEach((b, i) => {
+      b.setVisible(shopOpen);
+      if (shopOpen) {
+        b.setLabel(`[${keys[i]}] ${b.item.name}  ${b.item.cost}`);
+        b.setEnabled((me.gold || 0) >= b.item.cost);
+      }
+    });
   }
 
   // The corner kill feed: most recent knockouts on top, colored by the team

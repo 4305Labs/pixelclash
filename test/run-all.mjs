@@ -48,6 +48,7 @@ const tests = [
   "./m26.record.node.mjs",
   "./m27.progress.mjs",
   "./m27.progress.render.mjs",
+  "./m28.touch.render.mjs",
 ];
 
 let failed = false;
