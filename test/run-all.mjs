@@ -45,6 +45,7 @@ const tests = [
   "./m24.timer.render.mjs",
   "./m25.bots.mjs",
   "./m25.bots.render.mjs",
+  "./m26.record.node.mjs",
 ];
 
 let failed = false;

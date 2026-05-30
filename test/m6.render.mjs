@@ -69,6 +69,7 @@ try {
   assert(banner.text.includes("BLUE WINS"), "banner names the winner");
   assert(banner.text.includes("You win"), "banner tells this (blue) player they won");
   assert(/BLUE 5 . 3 RED/.test(banner.text), "banner shows the final score");
+  assert(/Your record\s+1W/.test(banner.text), "banner shows the player's win/loss record");
 
   const realErrors = errors.filter((e) => !/websocket|ws:\/\//i.test(e));
   assert(realErrors.length === 0, "no unexpected errors: " + JSON.stringify(realErrors));

@@ -26,6 +26,7 @@ import Minion from "../entities/Minion.js";
 import Tower from "../entities/Tower.js";
 import VirtualJoystick from "../ui/VirtualJoystick.js";
 import ActionButton from "../ui/ActionButton.js";
+import { loadRecord, bumpRecord, safeStorage } from "../record.js";
 
 // How firmly the local player is pulled toward the server's truth, per second.
 // Equilibrium error while moving ≈ PLAYER_SPEED / RECONCILE_RATE pixels.
@@ -44,6 +45,9 @@ export default class ArenaScene extends Phaser.Scene {
     this.net = this.registry.get("net");
     this.audio = this.registry.get("audio");
     this.wonPlayed = false; // so the win jingle plays once per match, not per frame
+    this.resultRecorded = false; // so a match counts once in the win/loss record
+    this.recordStorage = safeStorage();
+    this.record = loadRecord(this.recordStorage); // { w, l, d } across matches
     this.sprites = new Map(); // player id -> Player display object
     this.bolts = new Map(); // projectile id -> circle
     this.minionSprites = new Map(); // minion id -> Minion display object
@@ -405,11 +409,20 @@ export default class ArenaScene extends Phaser.Scene {
       const winner = this.net.winner;
       const draw = winner === "draw";
       const iWon = !draw && this.net.team && this.net.team === winner;
+
+      // Tally this result once per match (W/L from our team's point of view).
+      if (!this.resultRecorded && this.net.team) {
+        const outcome = draw ? "d" : iWon ? "w" : "l";
+        this.record = bumpRecord(this.recordStorage, outcome);
+        this.resultRecorded = true;
+      }
+
       const who = draw ? "DRAW!" : `${winner === "blue" ? "BLUE" : "RED"} WINS!`;
       const line2 = draw ? "Time! It's a draw." : iWon ? "You win! 🎉" : "You lose…";
       const s = this.net.score || { blue: 0, red: 0 };
+      const rec = `Your record  ${this.record.w}W ${this.record.l}L${this.record.d ? ` ${this.record.d}D` : ""}`;
       this.gameOverText
-        .setText(`${who}\n${line2}\nFinal score  BLUE ${s.blue} – ${s.red} RED`)
+        .setText(`${who}\n${line2}\nFinal score  BLUE ${s.blue} – ${s.red} RED\n${rec}`)
         .setColor(draw ? "#fff1e8" : winner === "blue" ? "#9bd9ff" : "#ff6b8b")
         .setVisible(true);
       // Play the victory jingle once when the match ends.
@@ -420,6 +433,7 @@ export default class ArenaScene extends Phaser.Scene {
     } else {
       this.gameOverText.setVisible(false);
       this.wonPlayed = false; // re-arm for the next match
+      this.resultRecorded = false;
     }
   }
 
