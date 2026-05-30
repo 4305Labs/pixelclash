@@ -50,6 +50,7 @@ const tests = [
   "./m27.progress.render.mjs",
   "./m28.touch.render.mjs",
   "./m29.integration.mjs",
+  "./m30.snapshot.mjs",
 ];
 
 let failed = false;

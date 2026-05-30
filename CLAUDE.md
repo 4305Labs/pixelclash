@@ -55,6 +55,11 @@ respawnIn,powered), projectiles[], minions[], pickups[], towers[], bases[]
 - **Tests:** each feature ships a `test/mNN.<name>.mjs` (server, pure Node) and
   often a `.render.mjs` (headless via `openGame` + injected snapshots), wired into
   `test/run-all.mjs`. Keep beginner-readable comments; define jargon once.
+- **Whole-system safety nets:** `m29.integration` runs a full bots-enabled match
+  through the real `step()` loop checking invariants every tick; `m30.snapshot`
+  deep-checks every snapshot for NaN/undefined and a JSON round-trip, and asserts
+  the client reads every top-level field. Run/extend these after cross-system
+  changes — they catch shape/contract bugs the isolated unit tests miss.
 - Headless tests run with no audio/localStorage device — keep new browser APIs
   guarded (see `audio.js`/`record.js` `safeStorage`).
 
