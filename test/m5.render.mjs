@@ -55,12 +55,18 @@ try {
   const view = await page.evaluate(() => {
     const s = window.PIXELCLASH.game.scene.getScene("ArenaScene");
     const red = [...s.sprites.values()].find((sp) => sp.team === "red");
-    return { redHpWidth: red.hpFill.width, fullWidth: red.hpFill.width, bolts: s.bolts.size };
+    return {
+      redHpWidth: red.hpFill.width,
+      fullWidth: red.hpFill.width,
+      bolts: s.bolts.size,
+      sparks: s.sparkCount || 0,
+    };
   });
   console.log("view:", JSON.stringify(view));
   // 40 HP of 100 => bar should be 40% of full width.
   assert(Math.abs(view.redHpWidth - BAR_W * 0.4) < 0.5, "health bar reflects 40% HP");
   assert(view.bolts === 1, "projectile is drawn");
+  assert(view.sparks >= 1, "a muzzle-flash spark fires when a bolt appears");
 
   const realErrors = errors.filter((e) => !/websocket|ws:\/\//i.test(e));
   assert(realErrors.length === 0, "no unexpected errors: " + JSON.stringify(realErrors));

@@ -739,6 +739,21 @@ export default class ArenaScene extends Phaser.Scene {
     });
   }
 
+  // A quick muzzle-flash spark: a bright dot that pops bigger and fades out,
+  // shown where a bolt is first fired. Cleans itself up on tween complete.
+  spawnSpark(x, y, color) {
+    const spark = this.add.circle(x, y, 7, color, 0.9).setDepth(60);
+    this.sparkCount = (this.sparkCount || 0) + 1; // total sparks (for tests)
+    this.tweens.add({
+      targets: spark,
+      scale: 2.2,
+      alpha: 0,
+      duration: 180,
+      ease: "Quad.out",
+      onComplete: () => spark.destroy(),
+    });
+  }
+
   // Client-side prediction for the local player.
   predictLocal(sprite, serverP, dt) {
     const input = this.lastInput || { dx: 0, dy: 0 };
@@ -861,6 +876,7 @@ export default class ArenaScene extends Phaser.Scene {
         dot.baseRadius = radius;
         dot.bornAt = this.time.now;
         this.bolts.set(b.id, dot);
+        this.spawnSpark(b.x, b.y, color); // muzzle flash at the shot's origin
       }
       dot.setPosition(b.x, b.y);
       // A subtle energetic pulse (±12% radius) so bolts read as "live" energy.
