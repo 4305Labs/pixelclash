@@ -700,6 +700,9 @@ export default class GameServer {
     // 3b) Pick-ups: grant to anyone standing on them; respawn taken ones.
     this.stepPickups();
 
+    // 3c) Healing fountains: regen heroes standing near their own base.
+    this.stepFountains(dt);
+
     // 4) Move projectiles; expire; check hits on players, minions, towers, bases.
     const survivors = [];
     for (const b of this.projectiles) {
@@ -797,6 +800,20 @@ export default class GameServer {
           pk.respawnAt = this.timeMs + PICKUP.respawnMs;
           break;
         }
+      }
+    }
+  }
+
+  // Regen any living hero standing within healRadius of its OWN base, up to its
+  // (leveled) max HP. Small radius, so you can't heal and fight at once.
+  stepFountains(dt) {
+    const r2 = BASE.healRadius * BASE.healRadius;
+    for (const p of this.players.values()) {
+      if (!p.alive) continue;
+      const base = this.bases.get(p.team);
+      if (!base) continue;
+      if ((p.x - base.x) ** 2 + (p.y - base.y) ** 2 <= r2) {
+        p.hp = Math.min(this.effectiveMaxHp(p), p.hp + BASE.healPerSec * dt);
       }
     }
   }

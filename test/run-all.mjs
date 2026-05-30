@@ -51,6 +51,8 @@ const tests = [
   "./m28.touch.render.mjs",
   "./m29.integration.mjs",
   "./m30.snapshot.mjs",
+  "./m31.fountain.mjs",
+  "./m31.fountain.render.mjs",
 ];
 
 let failed = false;

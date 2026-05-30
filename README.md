@@ -108,6 +108,10 @@ both teams, but contested). Grab a green **heal** orb to restore HP, or an
 orange **power** orb to boost your attack damage for a few seconds (you'll glow).
 Taken orbs reappear on a timer.
 
+**Healing fountain:** stand on your **own base** (the faint green ring) to regen
+HP quickly. Retreating home when low is a real option — but you can't heal and
+fight at the front at the same time.
+
 **Scoreboard, clock & respawns:** a team kill scoreboard and a match clock sit at
 the top of the screen, recent knockouts scroll by in a corner kill feed, and when
 you're knocked out a "Respawning in N…" countdown tells you how long until you're

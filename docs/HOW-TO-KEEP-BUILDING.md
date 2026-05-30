@@ -22,6 +22,8 @@ Change a value, save, refresh. Examples:
 | Harder-hitting basic attack | `COMBAT.basic.dmg` | `12` |
 | Faster ability cooldown | `COMBAT.ability.cd` | `1500` (=1.5s) |
 | Tougher bases (longer matches) | `BASE.maxHp` | `400` |
+| Stronger base healing fountain | `BASE.healPerSec` | `50` |
+| Bigger fountain area | `BASE.healRadius` | `100` |
 | Quicker respawns | `COMBAT.respawnMs` | `1000` |
 | Longer/shorter time limit | `MATCH.maxDurationMs` | `300000` (=5 min) |
 | Different team colors | `COLORS.blueTeam` / `redTeam` | any `0xRRGGBB` hex |

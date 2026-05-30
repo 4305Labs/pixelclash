@@ -14,6 +14,9 @@ export default class Base extends Phaser.GameObjects.Container {
     super(scene, x, y);
     this.team = team;
 
+    // A faint green disc marking the healing-fountain area around the base.
+    this.fountain = scene.add.circle(0, 0, BASE.healRadius, 0x00e436, 0.08);
+
     this.crystal = scene.add.sprite(0, 0, team === "red" ? "base_red" : "base_blue");
 
     // A translucent ring shown while the base is shielded (its tower still up).
@@ -25,7 +28,7 @@ export default class Base extends Phaser.GameObjects.Container {
       .rectangle(-BAR_W / 2, BAR_Y, BAR_W, 5, 0x00e436)
       .setOrigin(0, 0.5);
 
-    this.add([this.crystal, this.shield, this.hpBg, this.hpFill]);
+    this.add([this.fountain, this.crystal, this.shield, this.hpBg, this.hpFill]);
     scene.add.existing(this);
   }
 

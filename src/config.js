@@ -153,6 +153,13 @@ export const PICKUP_SPOTS = [
 export const BASE = {
   maxHp: 250, // ~31 basic hits, or fewer with the ability — short matches
   radius: 24, // hit radius and half the on-screen size
+
+  // Healing fountain: while a living hero stands near its OWN base, it regens
+  // HP fast. This rewards retreating home when low (and gives the bots' "run
+  // for base" behaviour a real payoff) without making you immortal — the radius
+  // is small, so you can't heal and fight at the same time.
+  healRadius: 70, // how close to your base you must be to regen (px)
+  healPerSec: 35, // HP restored per second inside the fountain
 };
 
 // Each team's base sits behind its spawn, near its edge of the arena.
