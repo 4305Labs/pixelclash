@@ -79,12 +79,15 @@ export const COMBAT = {
 // `basic`/`ability` specs (dmg, cd, speed, ttl). "soldier" is the balanced
 // default and is intentionally identical to the base COMBAT stats.
 export const DEFAULT_CLASS = "soldier";
-export const CLASS_ORDER = ["scout", "soldier", "tank"]; // selection order (keys 1/2/3)
+// Selection order (keys 1–6, or the lobby buttons). Six distinct heroes; speed
+// is shared so client prediction stays simple — they differ in HP and attacks.
+export const CLASS_ORDER = ["scout", "soldier", "tank", "ranger", "mage", "brawler"];
 export const CLASSES = {
   scout: {
     name: "Scout",
     maxHp: 70, // fragile
     scale: 0.85, // drawn a touch smaller
+    emblem: 0xfff1e8, // visor/emblem accent (drawn on the sprite)
     basic: { dmg: 6, cd: 250, speed: 480, ttl: 1200 }, // rapid, light
     ability: { dmg: 18, cd: 1800, speed: 640, ttl: 1200 },
   },
@@ -92,6 +95,7 @@ export const CLASSES = {
     name: "Soldier",
     maxHp: COMBAT.maxHp, // balanced — same as the base stats
     scale: 1,
+    emblem: 0xfff1e8,
     basic: COMBAT.basic,
     ability: COMBAT.ability,
   },
@@ -99,8 +103,36 @@ export const CLASSES = {
     name: "Tank",
     maxHp: 170, // beefy
     scale: 1.25, // drawn bigger
+    emblem: 0xffec27,
     basic: { dmg: 13, cd: 650, speed: 360, ttl: 1500 }, // slow, heavy
     ability: { dmg: 45, cd: 3200, speed: 460, ttl: 1400 },
+  },
+  ranger: {
+    name: "Ranger",
+    maxHp: 85, // glassy
+    scale: 0.9,
+    emblem: 0x00e436, // green
+    // Long range (high ttl), fast bolts, modest damage — pokes from afar.
+    basic: { dmg: 7, cd: 380, speed: 560, ttl: 2000 },
+    ability: { dmg: 26, cd: 2200, speed: 700, ttl: 2200 },
+  },
+  mage: {
+    name: "Mage",
+    maxHp: 90,
+    scale: 0.95,
+    emblem: 0xff77a8, // pink
+    // Weak basic, but a huge slow-cooldown nuke — burst caster.
+    basic: { dmg: 9, cd: 600, speed: 420, ttl: 1300 },
+    ability: { dmg: 60, cd: 4200, speed: 480, ttl: 1500 },
+  },
+  brawler: {
+    name: "Brawler",
+    maxHp: 140, // durable bruiser
+    scale: 1.1,
+    emblem: 0xffa300, // orange
+    // Short-range (low ttl) but rapid, hard-hitting — a dive bruiser.
+    basic: { dmg: 12, cd: 320, speed: 360, ttl: 800 },
+    ability: { dmg: 34, cd: 2400, speed: 420, ttl: 900 },
   },
 };
 

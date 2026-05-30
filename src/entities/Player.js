@@ -89,12 +89,15 @@ export default class Player extends Phaser.GameObjects.Container {
     this.hpFill.setFillStyle(color);
   }
 
-  // Resize the body to match the hero class (tank bigger, scout smaller). We
-  // record it as the BASE scale; animate() multiplies bob/squash/pop on top.
+  // Switch to the class's sprite and size (tank bigger, scout smaller). We
+  // record the size as the BASE scale; animate() multiplies bob/squash/pop on
+  // top. Texture keys are "hero_<cls>_<team>" (see textures.js).
   setClass(cls) {
     if (cls === this.cls || !CLASSES[cls]) return;
     this.cls = cls;
     this.baseScale = SPRITE_SCALE * CLASSES[cls].scale;
+    const key = `hero_${cls}_${this.team === "red" ? "red" : "blue"}`;
+    if (this.scene.textures.exists(key)) this.bodySprite.setTexture(key);
   }
 
   // Mark an attack so animate() plays a quick scale "pop".

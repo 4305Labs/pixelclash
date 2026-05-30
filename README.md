@@ -70,7 +70,7 @@ To stop either server: click its Terminal and press `Ctrl + C`.
 | Ability (Power Shot) | `K` | Tap the **B** button |
 | Dash | `L` or `Shift` | Tap the **C** button |
 | Mute / unmute sound | `M` | Tap **[M] sound** (top-left) |
-| Pick a hero class (in the lobby) | `1` / `2` / `3` | Tap a class button |
+| Pick a hero class (in the lobby) | `1`–`6` | Tap a class button |
 | Buy shop upgrades (with gold) | `Z` / `X` / `C` (or `B` for next) | Tap an item button (right edge) |
 
 The first tap or key press dismisses the **"Tap to play"** start gate — this
@@ -86,10 +86,16 @@ max HP and attack damage — and gold buys permanent upgrades from a small shop:
 **Damage**, **Max HP**, and **Attack Speed** (keys `Z` / `X` / `C`). Your level,
 gold, and the shop show in the bottom-left.
 
-**Hero classes:** in the lobby, press `1`/`2`/`3` to pick your hero — **Scout**
-(fast-firing but fragile), **Soldier** (balanced all-rounder), or **Tank**
-(beefy, slow, heavy hits). Each has its own health and attack profile, and tanks
-are drawn bigger. You can change pick until the match starts.
+**Hero classes:** in the lobby, press `1`–`6` (or tap a button) to pick one of
+six heroes, each with its own sprite, health, and attack profile:
+- **Scout** — fast-firing but fragile
+- **Soldier** — balanced all-rounder
+- **Tank** — beefy, slow, heavy hits (drawn bigger)
+- **Ranger** — long-range poke, glassy
+- **Mage** — weak basics but a huge burst nuke
+- **Brawler** — short-range dive bruiser, rapid and tough
+
+You can change pick until the match starts.
 
 **Lane minions:** once a match starts, both sides periodically send out a small
 wave of AI minions that march down the middle toward the enemy base, fighting

@@ -37,10 +37,10 @@ try {
       count: s.classButtons.length,
     };
   });
-  assert(v.count === 3 && v.classVis.every(Boolean), "class buttons show in the lobby");
+  assert(v.count === 6 && v.classVis.every(Boolean), "all six class buttons show in the lobby");
   assert(v.shopVis.every((x) => !x), "shop buttons are hidden in the lobby");
 
-  // Tapping a class button selects it.
+  // Tapping a class button selects that hero (button index 2 = tank).
   await page.evaluate(() => window.PIXELCLASH.game.scene.getScene("ArenaScene").classButtons[2].tap());
   const cls = await page.evaluate(() => window.PIXELCLASH.net.cls);
   assert(cls === "tank", "tapping a class button picks that class");

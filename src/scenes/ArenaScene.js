@@ -211,11 +211,11 @@ export default class ArenaScene extends Phaser.Scene {
       .setDepth(2000)
       .setVisible(false);
 
-    // Number keys pick a class (the server ignores it during live play).
+    // Number keys 1–6 pick a class (the server ignores it during live play).
+    const NUM_KEYS = ["ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX"];
     CLASS_ORDER.forEach((cls, i) => {
-      this.input.keyboard.on(`keydown-${["ONE", "TWO", "THREE"][i]}`, () => {
-        this.net.sendClass(cls);
-      });
+      if (!NUM_KEYS[i]) return;
+      this.input.keyboard.on(`keydown-${NUM_KEYS[i]}`, () => this.net.sendClass(cls));
     });
 
     // Z/X/C buy a specific shop upgrade; B buys the next one in the list.
@@ -241,12 +241,18 @@ export default class ArenaScene extends Phaser.Scene {
       .setDepth(500);
 
     // --- Touch buttons for class + shop (keyboard still works) ---------------
-    // Class picker: a row of tappable buttons in the lobby (centered, where the
-    // world is frozen so there's no movement-joystick conflict).
+    // Class picker: tappable buttons in the lobby, laid out in two rows of three
+    // (centered, where the world is frozen so there's no joystick conflict).
+    const COLS = 3;
+    const BW = 150;
+    const GAP = 12;
+    const rowW = COLS * BW + (COLS - 1) * GAP;
     this.classButtons = CLASS_ORDER.map((cls, i) => {
-      const w = 110;
-      const x = GAME_WIDTH / 2 - 175 + i * 120;
-      const b = this.makeTapButton(x, GAME_HEIGHT / 2 + 116, w, 30, CLASSES[cls].name, () =>
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+      const x = GAME_WIDTH / 2 - rowW / 2 + col * (BW + GAP);
+      const y = GAME_HEIGHT / 2 + 104 + row * 38;
+      const b = this.makeTapButton(x, y, BW, 32, `${i + 1} ${CLASSES[cls].name}`, () =>
         this.net.sendClass(cls)
       );
       b.cls = cls;
@@ -467,14 +473,12 @@ export default class ArenaScene extends Phaser.Scene {
       this.lobbyText.setVisible(false);
     }
 
-    // The class picker (text hint + tappable buttons) shows in the lobby.
+    // The class picker (text hint + tappable buttons) shows in the lobby. The
+    // buttons carry the names/keys; the text just confirms the current pick.
     const picking = phase === "waiting" || phase === "countdown";
     if (picking) {
-      const pick = CLASS_ORDER.map((c, i) => {
-        const tag = `[${i + 1}] ${CLASSES[c].name}`;
-        return c === this.net.cls ? `‹${tag}›` : ` ${tag} `;
-      }).join("  ");
-      this.classText.setText(`Choose your hero (tap or 1/2/3):\n${pick}`).setVisible(true);
+      const cur = CLASSES[this.net.cls] ? CLASSES[this.net.cls].name : "Soldier";
+      this.classText.setText(`Choose your hero (tap or 1–6)\nSelected: ${cur}`).setVisible(true);
     } else {
       this.classText.setVisible(false);
     }

@@ -41,6 +41,16 @@ try {
   await flush();
   assert(p1.cls === "tank", "an unknown class is ignored");
 
+  // All six heroes are pickable and apply their own max HP.
+  assert(CLASSES.ranger && CLASSES.mage && CLASSES.brawler, "the three new heroes exist");
+  for (const cls of ["ranger", "mage", "brawler", "scout"]) {
+    blue.sendClass(cls);
+    await flush();
+    assert(p1.cls === cls && p1.hp === CLASSES[cls].maxHp, `picking ${cls} applies its HP`);
+  }
+  blue.sendClass("tank"); // settle back to tank for the rest of the test
+  await flush();
+
   // --- Class is locked during live play -------------------------------------
   server.timeMs = server.startAt;
   server.step(1 / 30);

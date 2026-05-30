@@ -39,16 +39,26 @@ try {
   await page.waitForTimeout(100);
   let v = await page.evaluate(() => {
     const s = window.PIXELCLASH.game.scene.getScene("ArenaScene");
-    return { visible: s.classText.visible, text: s.classText.text };
+    return {
+      visible: s.classText.visible,
+      text: s.classText.text,
+      labels: s.classButtons.map((b) => b.txt.text).join(" | "),
+      count: s.classButtons.length,
+    };
   });
   assert(v.visible, "the class picker shows in the lobby");
-  assert(/Scout/.test(v.text) && /Soldier/.test(v.text) && /Tank/.test(v.text), "it lists all classes");
+  assert(v.count === 6, "there are six hero buttons");
+  assert(
+    /Scout/.test(v.labels) && /Soldier/.test(v.labels) && /Tank/.test(v.labels) &&
+      /Ranger/.test(v.labels) && /Mage/.test(v.labels) && /Brawler/.test(v.labels),
+    "the buttons list all six heroes"
+  );
 
-  // Pick tank -> the picker marks it as selected.
-  await page.evaluate(() => window.PIXELCLASH.net.sendClass("tank"));
+  // Pick mage -> the picker text confirms it.
+  await page.evaluate(() => window.PIXELCLASH.net.sendClass("mage"));
   await page.waitForTimeout(60);
   v = await page.evaluate(() => window.PIXELCLASH.game.scene.getScene("ArenaScene").classText.text);
-  assert(/‹\[3\] Tank›/.test(v), "the picker marks the chosen class");
+  assert(/Selected: Mage/.test(v), "the picker confirms the chosen hero");
 
   // In play, a tank is drawn bigger and the picker hides.
   await page.evaluate((s) => window.PIXELCLASH.net._receive(s), playing([

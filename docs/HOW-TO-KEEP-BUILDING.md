@@ -149,24 +149,28 @@ buys. A fresh level-1 hero with no buys is exactly the base stats.
 
 ## 5. Hero classes (already done ✅)
 
-Players pick a hero in the lobby (keys `1`/`2`/`3`): **Scout** (fast, fragile),
-**Soldier** (balanced), or **Tank** (slow, beefy). Tune them in `src/config.js`
-→ `CLASSES`. Each entry sets `maxHp`, an on-screen `scale`, and its own
-`basic`/`ability` stats (`dmg`, `cd`, `speed`, `ttl`):
+Players pick one of **six heroes** in the lobby (keys `1`–`6`, or tap a button):
+**Scout** (fast, fragile), **Soldier** (balanced), **Tank** (slow, beefy),
+**Ranger** (long-range, glassy), **Mage** (burst nuke), **Brawler** (short-range
+bruiser). Tune them in `src/config.js` → `CLASSES`. Each entry sets `maxHp`, an
+on-screen `scale`, an `emblem` accent colour, and its own `basic`/`ability`
+stats (`dmg`, `cd`, `speed`, `ttl`):
 
 | You want… | Change this | Try |
 |---|---|---|
 | A beefier tank | `CLASSES.tank.maxHp` | `220` |
 | A faster-firing scout | `CLASSES.scout.basic.cd` | `180` |
-| A harder-hitting tank ult | `CLASSES.tank.ability.dmg` | `60` |
+| A longer-range ranger | `CLASSES.ranger.basic.ttl` | `2400` |
 
-All classes move at the same speed, so the shared movement/prediction code
+All heroes move at the same speed, so the shared movement/prediction code
 (`sim.js`) doesn't change. The server applies a player's class in `freshPlayer`,
 `tryAttack` (per-class damage), and respawn/heal (per-class max HP); the client
-draws the picker (`ArenaScene.updateLobby`) and the per-class size
-(`Player.setClass`). "soldier" is intentionally identical to the base `COMBAT`
-stats, so it's the safe default. Adding a 4th class? Add it to `CLASSES` and
-`CLASS_ORDER`, then extend the lobby key handling (it currently maps keys 1–3).
+draws the picker (`ArenaScene.updateLobby`), the per-class size + **sprite**
+(`Player.setClass` → `hero_<cls>_<team>` textures), and each hero's grid lives in
+`textures.js` (`HERO_HEADS` per class on a shared `HERO_BODY`). "soldier" matches
+the base `COMBAT` stats, so it's the safe default. Adding a 7th hero? Add it to
+`CLASSES` + `CLASS_ORDER`, give it a `HERO_HEADS` entry, and (if you go past 6)
+extend the lobby number-key list.
 
 ---
 

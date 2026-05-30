@@ -10,7 +10,7 @@
 // any game logic — just replace these makers.
 // ===========================================================================
 
-import { COLORS, PLAYER_SIZE, BASE, MINION, TOWER, PICKUP } from "./config.js";
+import { COLORS, PLAYER_SIZE, BASE, MINION, TOWER, PICKUP, CLASSES, CLASS_ORDER } from "./config.js";
 
 // Multiply a 0xRRGGBB colour's brightness by `f` (｢<1｣ darker, ｢>1｣ lighter),
 // clamped to 0–255. Used to derive shadow/highlight shades from a team colour.
@@ -45,18 +45,14 @@ function paintGrid(scene, key, { rows, palette, pixel = 1 }) {
   g.destroy();
 }
 
-// A 16×16 helmeted fighter, front-facing: outlined helmet with a white visor,
-// a team-coloured body with a bright chest emblem and side shading, and little
-// boots. `b` is the team colour; `d`/`l` are auto-derived shadow/highlight.
-const HERO_ROWS = [
-  ".....oooooo.....",
-  "....obbbbbbo....",
-  "...obbbbbbbbo...",
-  "...obbvvvvbbo...",
-  "...obbbbbbbbo...",
+// Heroes share one 16-wide torso/legs (11 rows) and get a distinct 5-row HEAD
+// per class, so the six picks read as different characters (helmet, goggles,
+// hood, wizard hat, headband…) while the body stays clean. "v" is the class
+// emblem accent. paintGrid validates every row is 16 wide, so a miscount throws.
+const HERO_BODY = [
   "...obdbbbbdbo...",
   "..obbbbbbbbbbo..",
-  "..obbbllllbbbo..",
+  "..obbbvvvvbbbo..",
   "..obbbbbbbbbbo..",
   "..oddddddddddo..",
   "...obbbbbbbbo...",
@@ -67,18 +63,67 @@ const HERO_ROWS = [
   "................",
 ];
 
-// Draws one 16×16 character sprite into `key`, tinted with `bodyColor`.
-function makeCharacterTexture(scene, key, bodyColor) {
+// Each head is 5 rows × 16 cols. Together with HERO_BODY that's a 16×16 sprite.
+const HERO_HEADS = {
+  soldier: [
+    ".....oooooo.....",
+    "....obbbbbbo....",
+    "...obbbbbbbbo...",
+    "...obbwwwwbbo...",
+    "...obbbbbbbbo...",
+  ],
+  scout: [
+    "......oooo......",
+    ".....obbbbo.....",
+    ".....obwwbo.....",
+    ".....obbbbo.....",
+    "......obbo......",
+  ],
+  tank: [
+    ".....oooooo.....",
+    "....obbbbbbo....",
+    "...obbbbbbbbo...",
+    "...owwbbbbwwo...",
+    "...obbbbbbbbo...",
+  ],
+  ranger: [
+    ".......oo.......",
+    "......obbo......",
+    ".....obddbo.....",
+    "....obddddbo....",
+    "...obddddddbo...",
+  ],
+  mage: [
+    ".......oo.......",
+    "......ovvo......",
+    ".....ovvvvo.....",
+    "....obbbbbbo....",
+    "...obbbwwbbbo...",
+  ],
+  brawler: [
+    "....oooooooo....",
+    "...ovvvvvvvvo...",
+    "...obbbbbbbbo...",
+    "...obwbbbbwbo...",
+    "...obbbbbbbbo...",
+  ],
+};
+
+// Draws one 16×16 hero sprite for a class into `key`, tinted with the team
+// `bodyColor` and a class `emblemColor`.
+function makeCharacterTexture(scene, key, cls, bodyColor, emblemColor) {
   const palette = {
     ".": null,
     o: COLORS.outline,
     b: bodyColor,
     d: shade(bodyColor, 0.6), // shadow
-    l: shade(bodyColor, 1.4), // highlight / emblem
-    v: COLORS.white, // visor
+    l: shade(bodyColor, 1.4), // highlight (unused by some heads — harmless)
+    v: emblemColor, // class emblem accent
+    w: COLORS.white, // visor / eyes
     f: 0x3a3a4a, // boots
   };
-  paintGrid(scene, key, { rows: HERO_ROWS, palette, pixel: 1 });
+  const rows = [...(HERO_HEADS[cls] || HERO_HEADS.soldier), ...HERO_BODY];
+  paintGrid(scene, key, { rows, palette, pixel: 1 });
 }
 
 // A 10×10 one-eyed lane minion (painted at pixel=2 → 20×20), in a lighter team
@@ -275,8 +320,15 @@ function makeWallTexture(scene, key) {
 export function generateTextures(scene) {
   makeFloorTexture(scene, "floor");
   makeWallTexture(scene, "wall");
-  makeCharacterTexture(scene, "player_blue", COLORS.blueTeam);
-  makeCharacterTexture(scene, "player_red", COLORS.redTeam);
+  // One hero sprite per class × team, keyed "hero_<cls>_<team>". Plus the legacy
+  // "player_<team>" keys (= soldier) so anything not class-aware still works.
+  for (const team of ["blue", "red"]) {
+    const color = team === "red" ? COLORS.redTeam : COLORS.blueTeam;
+    for (const cls of CLASS_ORDER) {
+      makeCharacterTexture(scene, `hero_${cls}_${team}`, cls, color, CLASSES[cls].emblem);
+    }
+    makeCharacterTexture(scene, `player_${team}`, "soldier", color, CLASSES.soldier.emblem);
+  }
   makeBaseTexture(scene, "base_blue", COLORS.blueTeam);
   makeBaseTexture(scene, "base_red", COLORS.redTeam);
   makeMinionTexture(scene, "minion_blue", COLORS.minionBlue);
