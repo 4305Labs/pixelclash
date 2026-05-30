@@ -67,6 +67,7 @@ To stop either server: click its Terminal and press `Ctrl + C`.
 | Ability (Power Shot) | `K` | Tap the **B** button |
 | Dash | `L` or `Shift` | Tap the **C** button |
 | Mute / unmute sound | `M` | Tap **[M] sound** (top-left) |
+| Pick a hero class (in the lobby) | `1` / `2` / `3` | — |
 
 The first tap or key press dismisses the **"Tap to play"** start gate — this
 also unlocks sound (mobile browsers stay silent until you interact).
@@ -74,6 +75,11 @@ also unlocks sound (mobile browsers stay silent until you interact).
 Attacks **auto-aim** at the nearest enemy — an enemy hero, an enemy **minion**,
 or their base. Reduce the enemy **base** (the diamond crystal) to 0 HP to win.
 After a win, the match auto-resets in 5 seconds.
+
+**Hero classes:** in the lobby, press `1`/`2`/`3` to pick your hero — **Scout**
+(fast-firing but fragile), **Soldier** (balanced all-rounder), or **Tank**
+(beefy, slow, heavy hits). Each has its own health and attack profile, and tanks
+are drawn bigger. You can change pick until the match starts.
 
 **Lane minions:** once a match starts, both sides periodically send out a small
 wave of AI minions that march down the middle toward the enemy base, fighting
@@ -109,15 +115,15 @@ that address in the phone's browser to join the battle with touch controls.
 Once you've played locally, you can host the game online for free so anyone can
 join from anywhere. It's two steps — host the server, point the page at it —
 and it's written up plainly in
-[docs/HOW-TO-KEEP-BUILDING.md → *Put it online*](docs/HOW-TO-KEEP-BUILDING.md#8-put-it-online-so-friends-can-play).
+[docs/HOW-TO-KEEP-BUILDING.md → *Put it online*](docs/HOW-TO-KEEP-BUILDING.md#9-put-it-online-so-friends-can-play).
 
 ---
 
 ## A look at it
 
-| Lane minions clash | The arena (with walls) | Waiting in the lobby | On a phone |
+| Lane minions clash | The arena (with walls) | Choosing a hero | On a phone |
 |---|---|---|---|
-| ![Minions](docs/screenshot-minions.png) | ![Match](docs/screenshot-map.png) | ![Lobby](docs/screenshot-lobby.png) | ![Mobile](docs/screenshot-mobile.png) |
+| ![Minions](docs/screenshot-minions.png) | ![Match](docs/screenshot-map.png) | ![Classes](docs/screenshot-classes.png) | ![Mobile](docs/screenshot-mobile.png) |
 
 ---
 

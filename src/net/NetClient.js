@@ -5,11 +5,14 @@
 // can test it in plain Node.
 // ===========================================================================
 
+import { DEFAULT_CLASS } from "../config.js";
+
 export default class NetClient {
   constructor(conn) {
     this.conn = conn;
     this.localId = null; // our own player's id, set by the server's "welcome"
     this.team = null;
+    this.cls = DEFAULT_CLASS; // our chosen hero class (for the lobby UI)
     this.players = []; // latest roster: [{ id, team, x, y, hp, alive }]
     this.projectiles = []; // bolts in flight: [{ id, team, kind, x, y }]
     this.minions = []; // lane minions: [{ id, team, x, y, hp, alive }]
@@ -50,6 +53,12 @@ export default class NetClient {
   // Ask the server to dash along our facing direction.
   sendDash() {
     this.conn.send({ t: "dash" });
+  }
+
+  // Pick a hero class (only takes effect outside live play, server-enforced).
+  sendClass(cls) {
+    this.cls = cls;
+    this.conn.send({ t: "class", cls });
   }
 
   on(event, cb) {

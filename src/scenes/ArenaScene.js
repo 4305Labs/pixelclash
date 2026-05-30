@@ -5,7 +5,18 @@
 // ===========================================================================
 
 import Phaser from "phaser";
-import { GAME_WIDTH, GAME_HEIGHT, COLORS, COMBAT, DASH, WALLS, BUTTONS, TOWER } from "../config.js";
+import {
+  GAME_WIDTH,
+  GAME_HEIGHT,
+  COLORS,
+  COMBAT,
+  DASH,
+  WALLS,
+  BUTTONS,
+  TOWER,
+  CLASSES,
+  CLASS_ORDER,
+} from "../config.js";
 import { generateTextures } from "../textures.js";
 import { stepPosition } from "../sim.js";
 import Player from "../entities/Player.js";
@@ -159,6 +170,28 @@ export default class ArenaScene extends Phaser.Scene {
       .setScrollFactor(0)
       .setDepth(2000)
       .setVisible(false);
+
+    // Hero-class picker, shown under the lobby banner. Press 1/2/3 to choose.
+    this.classText = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 80, "", {
+        fontFamily: "monospace",
+        fontSize: "18px",
+        color: "#fff1e8",
+        align: "center",
+        stroke: "#000000",
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(2000)
+      .setVisible(false);
+
+    // Number keys pick a class (the server ignores it during live play).
+    CLASS_ORDER.forEach((cls, i) => {
+      this.input.keyboard.on(`keydown-${["ONE", "TWO", "THREE"][i]}`, () => {
+        this.net.sendClass(cls);
+      });
+    });
 
     // Win/lose banner (hidden until a base falls).
     this.gameOverText = this.add
@@ -333,6 +366,17 @@ export default class ArenaScene extends Phaser.Scene {
     } else {
       this.lobbyText.setVisible(false);
     }
+
+    // The class picker shows alongside the lobby (waiting/countdown).
+    if (phase === "waiting" || phase === "countdown") {
+      const pick = CLASS_ORDER.map((c, i) => {
+        const tag = `[${i + 1}] ${CLASSES[c].name}`;
+        return c === this.net.cls ? `‹${tag}›` : ` ${tag} `;
+      }).join("  ");
+      this.classText.setText(`Choose your hero:\n${pick}`).setVisible(true);
+    } else {
+      this.classText.setVisible(false);
+    }
   }
 
   updateGameOver() {
@@ -402,7 +446,8 @@ export default class ArenaScene extends Phaser.Scene {
       if (sprite.lastAlive && !p.alive) this.audio.play("death");
       sprite.lastAlive = p.alive;
 
-      sprite.setHp(p.hp);
+      if (p.cls) sprite.setClass(p.cls);
+      sprite.setHp(p.hp, p.maxHp);
       sprite.setAlive(p.alive);
       sprite.setPowered(p.powered);
     }

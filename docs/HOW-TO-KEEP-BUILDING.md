@@ -127,7 +127,30 @@ a powered hero (`Player.setPowered`). New `kind`s are easy: add a case to
 
 ---
 
-## 5. Go from 1v1 to 3v3
+## 5. Hero classes (already done ✅)
+
+Players pick a hero in the lobby (keys `1`/`2`/`3`): **Scout** (fast, fragile),
+**Soldier** (balanced), or **Tank** (slow, beefy). Tune them in `src/config.js`
+→ `CLASSES`. Each entry sets `maxHp`, an on-screen `scale`, and its own
+`basic`/`ability` stats (`dmg`, `cd`, `speed`, `ttl`):
+
+| You want… | Change this | Try |
+|---|---|---|
+| A beefier tank | `CLASSES.tank.maxHp` | `220` |
+| A faster-firing scout | `CLASSES.scout.basic.cd` | `180` |
+| A harder-hitting tank ult | `CLASSES.tank.ability.dmg` | `60` |
+
+All classes move at the same speed, so the shared movement/prediction code
+(`sim.js`) doesn't change. The server applies a player's class in `freshPlayer`,
+`tryAttack` (per-class damage), and respawn/heal (per-class max HP); the client
+draws the picker (`ArenaScene.updateLobby`) and the per-class size
+(`Player.setClass`). "soldier" is intentionally identical to the base `COMBAT`
+stats, so it's the safe default. Adding a 4th class? Add it to `CLASSES` and
+`CLASS_ORDER`, then extend the lobby key handling (it currently maps keys 1–3).
+
+---
+
+## 6. Go from 1v1 to 3v3
 
 Good news: the server already supports any number of players (it alternates
 teams as people join), friendly fire is already off, and bolts already pick the
@@ -145,7 +168,7 @@ The networking itself does **not** need to change to add more players.
 
 ---
 
-## 6. Replace the code-drawn art with real pixel art
+## 7. Replace the code-drawn art with real pixel art
 
 Right now sprites are drawn in `src/textures.js`. To use real art instead:
 
@@ -163,7 +186,7 @@ browser) and **LibreSprite** (free, desktop). Free art packs: **Kenney**
 
 ---
 
-## 7. Movement feel (client-side prediction — already done ✅)
+## 8. Movement feel (client-side prediction — already done ✅)
 
 Your own player now moves the **instant** you press a key, instead of waiting
 for the server to reply. This is "client-side prediction": the browser predicts
@@ -183,7 +206,7 @@ Other players are still drawn by gliding toward their latest reported position
 
 ---
 
-## 8. Put it online so friends can play
+## 9. Put it online so friends can play
 
 To play with someone **not** on your Wi-Fi, two things need a home on the
 internet: the **game server** (`server.js`, a long-running Node process) and the

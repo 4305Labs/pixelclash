@@ -24,6 +24,8 @@ import {
   TOWER_POS,
   PICKUP,
   PICKUP_SPOTS,
+  CLASSES,
+  DEFAULT_CLASS,
 } from "../config.js";
 import { stepPosition, normalizeInput, resolveMove, pointInWall } from "../sim.js";
 
@@ -144,18 +146,19 @@ export default class GameServer {
     }
   }
 
-  freshPlayer(id, team, spawnIndex) {
+  freshPlayer(id, team, spawnIndex, cls = DEFAULT_CLASS) {
     const list = SPAWNS[team];
     const spawn = list[spawnIndex % list.length];
     return {
       id,
       team,
       spawnIndex,
+      cls, // hero class key (scout | soldier | tank)
       x: spawn.x,
       y: spawn.y,
       input: { dx: 0, dy: 0 },
       face: { x: team === "blue" ? 1 : -1, y: 0 },
-      hp: COMBAT.maxHp,
+      hp: CLASSES[cls].maxHp,
       alive: true,
       deadUntil: 0,
       cd: { basic: 0, ability: 0, dash: 0 },
@@ -181,7 +184,20 @@ export default class GameServer {
       this.tryAttack(p, msg.kind === "ability" ? "ability" : "basic");
     } else if (msg.t === "dash") {
       this.tryDash(p);
+    } else if (msg.t === "class") {
+      this.setClass(p, msg.cls);
     }
+  }
+
+  // Choose a hero class. Only allowed outside live play (in the lobby, the
+  // countdown, or on the game-over screen), so you can't swap mid-fight. Picks
+  // up the new class's full HP immediately.
+  setClass(player, cls) {
+    if (this.phase === "playing") return;
+    if (!CLASSES[cls] || player.cls === cls) return;
+    player.cls = cls;
+    player.hp = CLASSES[cls].maxHp;
+    this.broadcast();
   }
 
   tryDash(player) {
@@ -204,7 +220,7 @@ export default class GameServer {
 
   tryAttack(player, kind) {
     if (this.phase !== "playing" || !player.alive) return;
-    const spec = COMBAT[kind];
+    const spec = CLASSES[player.cls][kind]; // per-class attack stats
     if (this.timeMs < player.cd[kind]) return; // cooling down
     player.cd[kind] = this.timeMs + spec.cd;
 
@@ -584,7 +600,7 @@ export default class GameServer {
 
   grantPickup(player, pk) {
     if (pk.kind === "heal") {
-      player.hp = Math.min(COMBAT.maxHp, player.hp + PICKUP.heal);
+      player.hp = Math.min(CLASSES[player.cls].maxHp, player.hp + PICKUP.heal);
     } else if (pk.kind === "power") {
       player.powerUntil = this.timeMs + PICKUP.powerMs;
     }
@@ -612,7 +628,7 @@ export default class GameServer {
     const spawn = list[p.spawnIndex % list.length];
     p.x = spawn.x;
     p.y = spawn.y;
-    p.hp = COMBAT.maxHp;
+    p.hp = CLASSES[p.cls].maxHp;
     p.alive = true;
     p.input = { dx: 0, dy: 0 };
   }
@@ -624,7 +640,7 @@ export default class GameServer {
     this.resetPickups();
     this.score = { blue: 0, red: 0 };
     for (const p of this.players.values()) {
-      const fresh = this.freshPlayer(p.id, p.team, p.spawnIndex);
+      const fresh = this.freshPlayer(p.id, p.team, p.spawnIndex, p.cls);
       Object.assign(p, fresh);
     }
     this.projectiles = [];
@@ -658,6 +674,8 @@ export default class GameServer {
         y: Math.round(p.y),
         hp: p.hp,
         alive: p.alive,
+        cls: p.cls, // hero class (for per-class look)
+        maxHp: CLASSES[p.cls].maxHp, // so the client scales the health bar
         // Seconds until this player respawns (0 if alive) — for the HUD timer.
         respawnIn: p.alive ? 0 : Math.max(0, Math.ceil((p.deadUntil - this.timeMs) / 1000)),
         powered: this.timeMs < p.powerUntil, // power buff active (for the aura)

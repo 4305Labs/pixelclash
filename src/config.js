@@ -73,6 +73,37 @@ export const COMBAT = {
   hitPad: 14, // extra hit radius so bolts connect with a player's body
 };
 
+// --- Hero classes -----------------------------------------------------------
+// Three picks with different HP and attack profiles (movement speed is the same
+// for all, so the prediction stays simple). Each class overrides maxHp and the
+// `basic`/`ability` specs (dmg, cd, speed, ttl). "soldier" is the balanced
+// default and is intentionally identical to the base COMBAT stats.
+export const DEFAULT_CLASS = "soldier";
+export const CLASS_ORDER = ["scout", "soldier", "tank"]; // selection order (keys 1/2/3)
+export const CLASSES = {
+  scout: {
+    name: "Scout",
+    maxHp: 70, // fragile
+    scale: 0.85, // drawn a touch smaller
+    basic: { dmg: 6, cd: 250, speed: 480, ttl: 1200 }, // rapid, light
+    ability: { dmg: 18, cd: 1800, speed: 640, ttl: 1200 },
+  },
+  soldier: {
+    name: "Soldier",
+    maxHp: COMBAT.maxHp, // balanced — same as the base stats
+    scale: 1,
+    basic: COMBAT.basic,
+    ability: COMBAT.ability,
+  },
+  tank: {
+    name: "Tank",
+    maxHp: 170, // beefy
+    scale: 1.25, // drawn bigger
+    basic: { dmg: 13, cd: 650, speed: 360, ttl: 1500 }, // slow, heavy
+    ability: { dmg: 45, cd: 3200, speed: 460, ttl: 1400 },
+  },
+};
+
 // --- Lane minions -----------------------------------------------------------
 // Periodic waves of weak AI fighters that march from each base toward the enemy
 // base. They attack the nearest enemy minion/player in their way (melee), and

@@ -37,6 +37,8 @@ const tests = [
   "./m20.scoreboard.render.mjs",
   "./m21.pickups.mjs",
   "./m21.pickups.render.mjs",
+  "./m22.classes.mjs",
+  "./m22.classes.render.mjs",
 ];
 
 let failed = false;

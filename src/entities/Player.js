@@ -8,7 +8,7 @@
 // ===========================================================================
 
 import Phaser from "phaser";
-import { SPRITE_SCALE, PLAYER_SIZE, COMBAT } from "../config.js";
+import { SPRITE_SCALE, PLAYER_SIZE, COMBAT, CLASSES } from "../config.js";
 
 const BAR_W = PLAYER_SIZE * SPRITE_SCALE; // health bar width matches the body
 const BAR_Y = -(PLAYER_SIZE * SPRITE_SCALE) / 2 - 8; // sit just above the head
@@ -51,12 +51,19 @@ export default class Player extends Phaser.GameObjects.Container {
     this.y += (this.targetY - this.y) * 0.3;
   }
 
-  setHp(hp) {
-    const frac = Math.max(0, hp) / COMBAT.maxHp;
+  setHp(hp, maxHp = COMBAT.maxHp) {
+    const frac = Math.max(0, hp) / maxHp;
     this.hpFill.width = BAR_W * frac;
     // Green when healthy, yellow when hurt, red when nearly dead.
     const color = frac > 0.5 ? 0x00e436 : frac > 0.25 ? 0xffec27 : 0xff004d;
     this.hpFill.setFillStyle(color);
+  }
+
+  // Resize the body to match the hero class (tank bigger, scout smaller).
+  setClass(cls) {
+    if (cls === this.cls || !CLASSES[cls]) return;
+    this.cls = cls;
+    this.bodySprite.setScale(SPRITE_SCALE * CLASSES[cls].scale);
   }
 
   // Flash white briefly to show a hit landed. `hit` is a flag the tests read.
