@@ -38,7 +38,7 @@ try {
   );
   assert(/Lv 3/.test(text), "HUD shows the hero level");
   assert(/120g/.test(text), "HUD shows the gold");
-  assert(text.includes(PROGRESS.shop[0].name), "HUD shows the next upgrade to buy");
+  assert(text.includes(PROGRESS.shop[0].name) && /\[Z\]/.test(text), "HUD lists the shop items with buy keys");
 
   // In-world level badges: shown for a leveled hero (p1 = Lv 3), hidden at
   // level 1 (p2).
@@ -58,7 +58,7 @@ try {
   text = await page.evaluate(
     () => window.PIXELCLASH.game.scene.getScene("ArenaScene").shopText.text
   );
-  assert(/Lv 6/.test(text) && !/\[B\]/.test(text), "no buy prompt once fully upgraded");
+  assert(/Lv 6/.test(text) && /maxed/.test(text) && !/\[Z\]/.test(text), "no buy options once fully upgraded");
 
   const realErrors = errors.filter((e) => !/websocket|ws:\/\//i.test(e));
   assert(realErrors.length === 0, "no unexpected errors: " + JSON.stringify(realErrors));

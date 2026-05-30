@@ -63,9 +63,10 @@ export default class NetClient {
     this.conn.send({ t: "class", cls });
   }
 
-  // Spend gold on the next shop upgrade.
-  sendBuy() {
-    this.conn.send({ t: "buy" });
+  // Spend gold on a shop upgrade. Pass an item id to buy that one; omit it to
+  // buy the next in the list.
+  sendBuy(itemId) {
+    this.conn.send({ t: "buy", itemId });
   }
 
   on(event, cb) {

@@ -267,6 +267,7 @@ export default class GameServer {
       buys: 0, // shop upgrades purchased
       bonusHp: 0, // from shop "Max HP" buys
       bonusDmg: 0, // from shop "Damage" buys (a multiplier addend)
+      bonusCdr: 0, // from shop "Atk Speed" buys (cooldown reduction)
     };
   }
 
@@ -285,6 +286,12 @@ export default class GameServer {
     return 1 + (this.levelOf(p) - 1) * PROGRESS.dmgPerLevel + p.bonusDmg;
   }
 
+  // A hero's cooldown multiplier from "Atk Speed" buys (floored so it can't go
+  // silly). 1 = normal; lower = faster attacks.
+  effectiveCdMult(p) {
+    return Math.max(0.4, 1 - p.bonusCdr);
+  }
+
   // Pay a hero for a last hit (minion | hero | tower).
   awardKill(player, kind) {
     const r = PROGRESS.reward[kind];
@@ -293,15 +300,20 @@ export default class GameServer {
     player.gold += r.gold;
   }
 
-  // Spend gold on the next shop upgrade (cycles through the list, capped).
-  tryBuy(player) {
+  // Spend gold on a shop upgrade. With `itemId`, buy that specific item;
+  // without one, buy the next in the list (the legacy "B" cycle, also used by
+  // bots). Capped at shopMaxStacks total.
+  tryBuy(player, itemId) {
     if (this.phase !== "playing") return;
     if (player.buys >= PROGRESS.shopMaxStacks) return;
-    const item = PROGRESS.shop[player.buys % PROGRESS.shop.length];
-    if (player.gold < item.cost) return;
+    const item = itemId
+      ? PROGRESS.shop.find((s) => s.id === itemId)
+      : PROGRESS.shop[player.buys % PROGRESS.shop.length];
+    if (!item || player.gold < item.cost) return;
     player.gold -= item.cost;
     player.bonusHp += item.hp || 0;
     player.bonusDmg += item.dmg || 0;
+    player.bonusCdr += item.cdr || 0;
     player.buys++;
   }
 
@@ -327,7 +339,7 @@ export default class GameServer {
     } else if (msg.t === "class") {
       this.setClass(p, msg.cls);
     } else if (msg.t === "buy") {
-      this.tryBuy(p);
+      this.tryBuy(p, msg.itemId);
     }
   }
 
@@ -364,7 +376,7 @@ export default class GameServer {
     if (this.phase !== "playing" || !player.alive) return;
     const spec = CLASSES[player.cls][kind]; // per-class attack stats
     if (this.timeMs < player.cd[kind]) return; // cooling down
-    player.cd[kind] = this.timeMs + spec.cd;
+    player.cd[kind] = this.timeMs + spec.cd * this.effectiveCdMult(player);
 
     // Aim at the nearest enemy target (a living enemy player OR the enemy base).
     const target = this.nearestTarget(player) || {

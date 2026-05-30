@@ -108,6 +108,31 @@ try {
   for (let i = 0; i < PROGRESS.shopMaxStacks + 3; i++) server.tryBuy(p1);
   assert(p1.buys === PROGRESS.shopMaxStacks, "buying is capped at the max stacks");
 
+  // --- Buy a specific item by id, incl. attack speed ------------------------
+  p1.gold = 1000;
+  p1.buys = 0;
+  p1.bonusHp = 0;
+  p1.bonusDmg = 0;
+  p1.bonusCdr = 0;
+  const hpItem = PROGRESS.shop.find((s) => s.id === "hp");
+  server.tryBuy(p1, "hp");
+  assert(p1.bonusHp === hpItem.hp, "buying by id picks that specific item");
+  const atkItem = PROGRESS.shop.find((s) => s.id === "atk");
+  server.tryBuy(p1, "atk");
+  assert(p1.bonusCdr === atkItem.cdr, "an attack-speed buy adds cooldown reduction");
+  assert(server.effectiveCdMult(p1) < 1, "attack speed shortens cooldowns");
+  server.projectiles = [];
+  p1.cd.basic = 0;
+  p1.x = 400;
+  p1.y = 300;
+  p2.x = 500;
+  p2.y = 300;
+  p2.alive = true;
+  const t0 = server.timeMs;
+  server.tryAttack(p1, "basic");
+  const expectedCd = t0 + CLASSES.soldier.basic.cd * server.effectiveCdMult(p1);
+  assert(Math.abs(p1.cd.basic - expectedCd) < 1e-6, "the fired attack's cooldown reflects attack speed");
+
   // --- Passive trickle ------------------------------------------------------
   p1.xp = 0;
   p1.gold = 0;

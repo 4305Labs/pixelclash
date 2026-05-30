@@ -218,8 +218,14 @@ export default class ArenaScene extends Phaser.Scene {
       });
     });
 
-    // B buys the next shop upgrade with gold.
+    // Z/X/C buy a specific shop upgrade; B buys the next one in the list.
     this.input.keyboard.on("keydown-B", () => this.net.sendBuy());
+    ["Z", "X", "C"].forEach((k, i) => {
+      this.input.keyboard.on(`keydown-${k}`, () => {
+        const item = PROGRESS.shop[i];
+        if (item) this.net.sendBuy(item.id);
+      });
+    });
 
     // Level / gold / shop line, bottom-left (clear of the action buttons).
     this.shopText = this.add
@@ -460,23 +466,28 @@ export default class ArenaScene extends Phaser.Scene {
     return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
   }
 
-  // Bottom-left progression line for the local hero: level, gold, and the next
-  // shop upgrade you can buy with B (brightened when you can afford it).
+  // Bottom-left progression line for the local hero: level, gold, and the shop
+  // (each item on its own key — Z/X/C), or "maxed" once fully upgraded.
   updateShopHud() {
+    const keys = ["Z", "X", "C"];
     const me = this.net.players.find((p) => p.id === this.net.localId);
     if (!me) {
       this.shopText.setText("");
       return;
     }
-    const buys = me.buys || 0;
     let line = `Lv ${me.level || 1}   ${me.gold || 0}g`;
-    let color = "#fff1e8";
-    if (this.net.phase === "playing" && buys < PROGRESS.shopMaxStacks) {
-      const item = PROGRESS.shop[buys % PROGRESS.shop.length];
-      line += `   [B] ${item.name} (${item.cost})`;
-      color = (me.gold || 0) >= item.cost ? "#ffec27" : "#c2c3c7";
+    if (this.net.phase === "playing") {
+      if ((me.buys || 0) >= PROGRESS.shopMaxStacks) {
+        line += "   upgrades maxed";
+      } else {
+        const shop = PROGRESS.shop
+          .slice(0, keys.length)
+          .map((it, i) => `[${keys[i]}] ${it.name} ${it.cost}`)
+          .join("   ");
+        line += `   ${shop}`;
+      }
     }
-    this.shopText.setText(line).setColor(color);
+    this.shopText.setText(line).setColor("#fff1e8");
   }
 
   // The corner kill feed: most recent knockouts on top, colored by the team

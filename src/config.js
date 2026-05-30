@@ -203,13 +203,16 @@ export const PROGRESS = {
     hero: { xp: 65, gold: 50 },
     tower: { xp: 80, gold: 60 },
   },
-  // The shop: cycle through these with gold (press B). Bonuses are permanent
-  // and stack up to `shopMaxStacks` total buys.
+  // The shop: buy any of these with gold (keys Z / X / C, or B for the next
+  // one). Bonuses are permanent and stack up to `shopMaxStacks` total buys.
+  // `dmg` adds to the damage multiplier, `hp` to max HP, `cdr` cuts attack
+  // cooldowns (faster attacks).
   shop: [
     { id: "dmg", name: "Damage +15%", cost: 70, dmg: 0.15 },
     { id: "hp", name: "Max HP +25", cost: 80, hp: 25 },
+    { id: "atk", name: "Atk Speed +12%", cost: 90, cdr: 0.12 },
   ],
-  shopMaxStacks: 4,
+  shopMaxStacks: 6,
 };
 
 // --- Kill feed --------------------------------------------------------------
