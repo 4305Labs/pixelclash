@@ -181,9 +181,11 @@ export default class GameServer {
     if (bot) this.removeBot(bot.id);
   }
 
-  // Simple bot brain: head for the nearest enemy (hero, minion, tower, or an
-  // exposed base — same picker the auto-aim uses), hold at firing range, and
-  // shoot on cooldown with the occasional ability.
+  // Bot brain: head for the nearest enemy (hero, minion, tower, or an exposed
+  // base — the same picker the auto-aim uses) and hold at firing range; but when
+  // low on HP, retreat toward home while still kiting shots back. Attacks
+  // auto-aim the nearest enemy regardless of which way we're moving, and the odd
+  // dash closes the gap (or covers the escape).
   stepBots() {
     for (const p of this.players.values()) {
       if (!p.bot || !p.alive) continue;
@@ -193,18 +195,31 @@ export default class GameServer {
         p.input.dy = 0;
         continue;
       }
-      const dx = target.x - p.x;
-      const dy = target.y - p.y;
-      const dist = Math.hypot(dx, dy) || 1;
-      if (dist > BOT_STANDOFF) {
-        p.input.dx = dx / dist;
-        p.input.dy = dy / dist;
+      const low = p.hp < CLASSES[p.cls].maxHp * 0.3;
+      let mx, my; // desired move direction
+      if (low) {
+        const home = this.bases.get(p.team); // run for our base
+        mx = home.x - p.x;
+        my = home.y - p.y;
+      } else {
+        const dx = target.x - p.x;
+        const dy = target.y - p.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        mx = dist > BOT_STANDOFF ? dx : 0; // close in, or hold to shoot
+        my = dist > BOT_STANDOFF ? dy : 0;
+      }
+      const len = Math.hypot(mx, my);
+      if (len > 0.01) {
+        p.input.dx = mx / len;
+        p.input.dy = my / len;
+        p.face = { x: p.input.dx, y: p.input.dy }; // so a dash goes where we're headed
       } else {
         p.input.dx = 0;
         p.input.dy = 0;
       }
-      this.tryAttack(p, "basic"); // auto-aims the same target; cooldown-gated
-      if (Math.random() < 0.03) this.tryAttack(p, "ability");
+      this.tryAttack(p, "basic");
+      if (!low && Math.random() < 0.03) this.tryAttack(p, "ability");
+      if (Math.random() < 0.04) this.tryDash(p);
     }
   }
 

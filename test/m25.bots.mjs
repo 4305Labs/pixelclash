@@ -5,6 +5,7 @@
 import GameServer from "../src/net/GameServer.js";
 import NetClient from "../src/net/NetClient.js";
 import { createLocalPair } from "../src/net/LocalConnection.js";
+import { CLASSES } from "../src/config.js";
 import { assert } from "./helpers.mjs";
 
 const flush = () => new Promise((r) => setTimeout(r, 10));
@@ -49,6 +50,29 @@ try {
     bot.x !== bx0 || server.projectiles.some((b) => String(b.ownerId).startsWith("bot")),
     "the bot acts — it moves and/or shoots"
   );
+
+  // --- AI: advance when healthy, retreat when low ---------------------------
+  // Isolate the decision: clear the lane so the human is the bot's only target.
+  server.minions = [];
+  server.towers.clear();
+  const human = server.players.get("p1"); // blue; bot is red (home base on the right)
+  human.alive = true;
+
+  bot.hp = CLASSES[bot.cls].maxHp; // healthy
+  bot.x = 500;
+  bot.y = 300;
+  human.x = 200; // distant enemy to the left
+  human.y = 300;
+  server.stepBots();
+  assert(bot.input.dx < 0, "a healthy bot advances toward a distant enemy");
+
+  bot.hp = 1; // nearly dead
+  bot.x = 500;
+  bot.y = 300;
+  human.x = 450; // enemy right next to it
+  human.y = 300;
+  server.stepBots();
+  assert(bot.input.dx > 0, "a low-HP bot retreats toward its own base");
 
   // --- A second human takes the bot's place ---------------------------------
   connect(server); // human -> red, replacing the bot
