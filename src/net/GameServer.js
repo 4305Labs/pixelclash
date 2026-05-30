@@ -680,8 +680,12 @@ export default class GameServer {
       p.xp += PROGRESS.passiveXpPerSec * dt;
       p.gold += PROGRESS.passiveGoldPerSec * dt;
       const { dx, dy } = p.input;
-      // Remember facing (for aim fallback) when there's real input.
-      if (Math.hypot(dx, dy) > 0.01) p.face = normalizeInput(dx, dy);
+      // Remember facing (for the aim fallback and dash) when there's real
+      // input. `face` is always {x,y}; normalizeInput returns {dx,dy}, so map it.
+      if (Math.hypot(dx, dy) > 0.01) {
+        const n = normalizeInput(dx, dy);
+        p.face = { x: n.dx, y: n.dy };
+      }
       const next = stepPosition(p.x, p.y, dx, dy, dt);
       p.x = next.x;
       p.y = next.y;

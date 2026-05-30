@@ -49,6 +49,7 @@ const tests = [
   "./m27.progress.mjs",
   "./m27.progress.render.mjs",
   "./m28.touch.render.mjs",
+  "./m29.integration.mjs",
 ];
 
 let failed = false;
