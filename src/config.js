@@ -260,21 +260,35 @@ export const PROGRESS = {
 export const KILLFEED = { ms: 6000, max: 5 };
 
 // --- Map / obstacles --------------------------------------------------------
-// A few solid walls that block movement, dash, and projectiles. Each is an
-// axis-aligned rectangle given as its top-left corner plus width/height, in
-// world pixels. The layout is mirror-symmetric about the center so neither
-// team gets an advantage, and it deliberately leaves the center row (y≈300,
-// where the bases line up) and a vertical gap through the middle open so
-// players can still path across.
+// Solid walls that block movement, dash, and projectiles. Each is an axis-
+// aligned rectangle (top-left corner + width/height, world px). The layout is
+// mirror-symmetric so neither team is favoured, and carves the arena into
+// THREE routes:
+//   • the CENTER LANE — a clear horizontal corridor (y≈250–350) where the bases,
+//     towers, and minion waves live. It MUST stay clear so minions can march.
+//   • a TOP route and a BOTTOM route ("the jungle") — flanking paths separated
+//     from the lane by divider walls, holding the heal pickups as objectives.
+// The two long lane dividers each have THREE openings — a central gap (between
+// the pillars) and a near-base gap at each end — so heroes can rotate between
+// the lane and the jungle. Keep WALLS[0]/[1] as the central pillars (the wall
+// tests and the minion center-corridor depend on them).
 export const WALLS = [
-  // Two central pillars on the mid-line, with a gap between them.
-  { x: 392, y: 80, w: 16, h: 150 },
-  { x: 392, y: 370, w: 16, h: 150 },
-  // Cover blocks flanking the center, clear of the spawn rows (y=150/300/450).
-  { x: 230, y: 225, w: 80, h: 16 },
-  { x: 490, y: 225, w: 80, h: 16 },
-  { x: 230, y: 359, w: 80, h: 16 },
-  { x: 490, y: 359, w: 80, h: 16 },
+  // Two central pillars on the mid-line, with a gap between them (the lane).
+  { x: 392, y: 80, w: 16, h: 150 }, // WALLS[0] — top pillar
+  { x: 392, y: 370, w: 16, h: 150 }, // WALLS[1] — bottom pillar
+  // Top lane divider: left + right segments, leaving a central gap (x≈360–440)
+  // and near-base gaps (x<150, x>650). Sits above the center corridor.
+  { x: 150, y: 224, w: 210, h: 14 },
+  { x: 440, y: 224, w: 210, h: 14 },
+  // Bottom lane divider (mirror of the top).
+  { x: 150, y: 364, w: 210, h: 14 },
+  { x: 440, y: 364, w: 210, h: 14 },
+  // Jungle cover blocks in the top + bottom routes (small, for cover & flavour;
+  // clear of the spawn rows y=150/450 and the pickup spots).
+  { x: 250, y: 110, w: 70, h: 14 },
+  { x: 480, y: 110, w: 70, h: 14 },
+  { x: 250, y: 476, w: 70, h: 14 },
+  { x: 480, y: 476, w: 70, h: 14 },
 ];
 
 export const MATCH = {
