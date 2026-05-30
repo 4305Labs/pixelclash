@@ -63,6 +63,17 @@ try {
     );
   }
 
+  // The portrait viewport should trigger the "rotate to landscape" hint.
+  const rotateShown = await page.evaluate(
+    () => window.PIXELCLASH.game.scene.getScene("ArenaScene").rotateBg.visible
+  );
+  assert(rotateShown, "the rotate-to-landscape hint shows on a portrait screen");
+
+  // Suppress it so the docs screenshot shows the gameplay, not the banner.
+  await page.evaluate(() => {
+    window.PIXELCLASH.game.scene.getScene("ArenaScene").suppressRotateHint = true;
+  });
+  await page.waitForTimeout(60);
   await page.screenshot({ path: "docs/screenshot-mobile.png" });
   console.log("saved docs/screenshot-mobile.png");
 

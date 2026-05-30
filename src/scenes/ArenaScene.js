@@ -278,6 +278,28 @@ export default class ArenaScene extends Phaser.Scene {
       .setDepth(2000)
       .setVisible(false);
 
+    // Portrait hint: the arena is landscape-native, so on a portrait phone it
+    // shrinks to a strip — nudge the player to rotate. Shown only in portrait
+    // (and suppressible by tests so the docs screenshot stays clean).
+    this.rotateBg = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, 46, 0x000000, 0.8)
+      .setScrollFactor(0)
+      .setDepth(2500)
+      .setVisible(false);
+    this.rotateText = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "↻  Rotate to landscape for the best view", {
+        fontFamily: "monospace",
+        fontSize: "20px",
+        color: "#ffec27",
+        align: "center",
+        stroke: "#000000",
+        strokeThickness: 4,
+      })
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(2501)
+      .setVisible(false);
+
     this.createStartGate();
     this.net.join();
   }
@@ -355,6 +377,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.updateHud();
     this.updateKillFeed();
     this.updateShopHud();
+    this.updateOrientationHint();
 
     // 3) Redraw the cooldown sweeps on the action buttons.
     this.buttons.basic.update();
@@ -487,6 +510,16 @@ export default class ArenaScene extends Phaser.Scene {
       this.wonPlayed = false; // re-arm for the next match
       this.resultRecorded = false;
     }
+  }
+
+  // Show the "rotate to landscape" banner only on a portrait viewport.
+  updateOrientationHint() {
+    const portrait =
+      !this.suppressRotateHint &&
+      typeof window !== "undefined" &&
+      window.innerWidth < window.innerHeight;
+    this.rotateBg.setVisible(portrait);
+    this.rotateText.setVisible(portrait);
   }
 
   // Format seconds as m:ss for the match clock.

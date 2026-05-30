@@ -71,6 +71,12 @@ try {
   );
   assert(shopHidden, "shop buttons hide once fully upgraded");
 
+  // On a landscape viewport the rotate hint stays hidden.
+  const rotate = await page.evaluate(
+    () => window.PIXELCLASH.game.scene.getScene("ArenaScene").rotateBg.visible
+  );
+  assert(!rotate, "the rotate hint is hidden in landscape");
+
   const realErrors = errors.filter((e) => !/websocket|ws:\/\//i.test(e));
   assert(realErrors.length === 0, "no unexpected errors: " + JSON.stringify(realErrors));
 

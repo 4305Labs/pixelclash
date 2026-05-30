@@ -118,7 +118,10 @@ back. If neither base falls before time runs out, the team ahead on kills wins
 
 While `npm run dev` is running, it also prints a `Network:` address like
 `http://192.168.1.42:5173/`. On a phone connected to the **same Wi-Fi**, open
-that address in the phone's browser to join the battle with touch controls.
+that address in the phone's browser to join the battle with touch controls —
+drag the left side to move, tap the right-side buttons to act, and tap the
+class/shop buttons too. **Hold your phone in landscape** for the best view (the
+game shows a reminder if you're in portrait).
 (If it won't connect, see the troubleshooting note in
 [docs/HOW-TO-KEEP-BUILDING.md](docs/HOW-TO-KEEP-BUILDING.md).)
 
