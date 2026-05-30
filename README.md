@@ -146,9 +146,13 @@ and it's written up plainly in
 
 ## A look at it
 
-| Full HUD & shop | Lane minions clash | The arena (with walls) | Choosing a hero | On a phone |
-|---|---|---|---|---|
-| ![HUD](docs/screenshot-match.png) | ![Minions](docs/screenshot-minions.png) | ![Match](docs/screenshot-map.png) | ![Classes](docs/screenshot-classes.png) | ![Mobile](docs/screenshot-mobile.png) |
+| The six heroes | Picking a hero | Full HUD & shop |
+|---|---|---|
+| ![Heroes](docs/screenshot-heroes.png) | ![Lobby](docs/screenshot-heroes-lobby.png) | ![HUD](docs/screenshot-match.png) |
+
+| Lane minions clash | The arena (with walls) | On a phone |
+|---|---|---|
+| ![Minions](docs/screenshot-minions.png) | ![Match](docs/screenshot-map.png) | ![Mobile](docs/screenshot-mobile.png) |
 
 ---
 
