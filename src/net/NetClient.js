@@ -21,6 +21,7 @@ export default class NetClient {
     this.bases = []; // [{ team, x, y, hp, maxHp, alive }]
     this.phase = "playing"; // "waiting" | "countdown" | "playing" | "over"
     this.score = { blue: 0, red: 0 }; // hero kills this match, per team
+    this.killFeed = []; // recent knockouts for the corner feed
     this.winner = null; // winning team when phase === "over"
     this.needed = 0; // players needed for a match to start (for the lobby text)
     this.countdown = 0; // seconds left on the "get ready" countdown, else 0
@@ -84,6 +85,7 @@ export default class NetClient {
       this.bases = msg.bases || [];
       this.phase = msg.phase || "playing";
       this.score = msg.score || { blue: 0, red: 0 };
+      this.killFeed = msg.killFeed || [];
       this.winner = msg.winner || null;
       this.needed = msg.needed || 0;
       this.countdown = msg.countdown || 0;

@@ -26,6 +26,7 @@ import {
   PICKUP_SPOTS,
   CLASSES,
   DEFAULT_CLASS,
+  KILLFEED,
 } from "../config.js";
 import { stepPosition, normalizeInput, resolveMove, pointInWall } from "../sim.js";
 
@@ -59,6 +60,8 @@ export default class GameServer {
     //   "over"      — a base fell; the win banner shows, then we reset
     this.phase = "waiting";
     this.score = { blue: 0, red: 0 }; // hero kills this match, per team
+    this.killFeed = []; // recent knockouts: { id, byTeam, victimTeam, victimCls, at }
+    this.nextKillId = 1;
     this.winner = null; // team that won, when phase === "over"
     this.resetAt = 0; // when an "over" match resets (ms on our sim clock)
     this.startAt = 0; // when a "countdown" flips to "playing" (ms)
@@ -571,6 +574,14 @@ export default class GameServer {
       player.deadUntil = this.timeMs + COMBAT.respawnMs;
       if (byTeam && byTeam !== player.team && this.score[byTeam] !== undefined) {
         this.score[byTeam]++;
+        this.killFeed.push({
+          id: this.nextKillId++,
+          byTeam,
+          victimTeam: player.team,
+          victimCls: player.cls,
+          at: this.timeMs,
+        });
+        if (this.killFeed.length > 20) this.killFeed.shift(); // keep it bounded
       }
     }
   }
@@ -639,6 +650,7 @@ export default class GameServer {
     this.resetTowers();
     this.resetPickups();
     this.score = { blue: 0, red: 0 };
+    this.killFeed = [];
     for (const p of this.players.values()) {
       const fresh = this.freshPlayer(p.id, p.team, p.spawnIndex, p.cls);
       Object.assign(p, fresh);
@@ -661,6 +673,11 @@ export default class GameServer {
       phase: this.phase,
       winner: this.winner,
       score: { blue: this.score.blue, red: this.score.red },
+      // The most recent knockouts that are still within the fade window.
+      killFeed: this.killFeed
+        .filter((k) => this.timeMs - k.at <= KILLFEED.ms)
+        .slice(-KILLFEED.max)
+        .map((k) => ({ id: k.id, byTeam: k.byTeam, victimTeam: k.victimTeam, victimCls: k.victimCls })),
       // Lobby info so the client can show "Waiting… N/NEEDED" and the countdown.
       needed: MATCH.minPerTeam * 2,
       countdown:

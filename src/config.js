@@ -184,6 +184,11 @@ export const TOWER_POS = {
   red: { x: GAME_WIDTH - 250, y: GAME_HEIGHT / 2 },
 };
 
+// --- Kill feed --------------------------------------------------------------
+// Recent knockouts shown as a fading list in the corner. `ms` is how long an
+// entry lingers; `max` is how many lines show at once.
+export const KILLFEED = { ms: 6000, max: 5 };
+
 // --- Map / obstacles --------------------------------------------------------
 // A few solid walls that block movement, dash, and projectiles. Each is an
 // axis-aligned rectangle given as its top-left corner plus width/height, in

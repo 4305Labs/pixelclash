@@ -16,6 +16,7 @@ import {
   TOWER,
   CLASSES,
   CLASS_ORDER,
+  KILLFEED,
 } from "../config.js";
 import { generateTextures } from "../textures.js";
 import { stepPosition } from "../sim.js";
@@ -134,6 +135,25 @@ export default class ArenaScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setScrollFactor(0)
       .setDepth(500);
+
+    // Kill feed: a few right-aligned lines in the top-right, newest on top.
+    this.killLines = [];
+    for (let i = 0; i < KILLFEED.max; i++) {
+      this.killLines.push(
+        this.add
+          .text(GAME_WIDTH - 12, 74 + i * 20, "", {
+            fontFamily: "monospace",
+            fontSize: "14px",
+            color: "#fff1e8",
+            stroke: "#000000",
+            strokeThickness: 3,
+          })
+          .setOrigin(1, 0)
+          .setScrollFactor(0)
+          .setDepth(500)
+          .setVisible(false)
+      );
+    }
 
     // Respawn countdown, shown centered while the local player is knocked out.
     this.respawnText = this.add
@@ -283,6 +303,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.updateLobby();
     this.updateGameOver();
     this.updateHud();
+    this.updateKillFeed();
 
     // 3) Redraw the cooldown sweeps on the action buttons.
     this.buttons.basic.update();
@@ -395,6 +416,27 @@ export default class ArenaScene extends Phaser.Scene {
     } else {
       this.gameOverText.setVisible(false);
       this.wonPlayed = false; // re-arm for the next match
+    }
+  }
+
+  // The corner kill feed: most recent knockouts on top, colored by the team
+  // that got the kill ("BLUE ⚔ Red Tank").
+  updateKillFeed() {
+    const recent = (this.net.killFeed || []).slice().reverse();
+    for (let i = 0; i < this.killLines.length; i++) {
+      const line = this.killLines[i];
+      const k = recent[i];
+      if (!k) {
+        line.setVisible(false);
+        continue;
+      }
+      const who = k.byTeam === "blue" ? "BLUE" : "RED";
+      const vt = k.victimTeam === "blue" ? "Blue" : "Red";
+      const cls = CLASSES[k.victimCls]?.name || "Hero";
+      line
+        .setText(`${who} ⚔ ${vt} ${cls}`)
+        .setColor(k.byTeam === "blue" ? "#9bd9ff" : "#ff6b8b")
+        .setVisible(true);
     }
   }
 

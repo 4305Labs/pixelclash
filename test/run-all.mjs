@@ -39,6 +39,8 @@ const tests = [
   "./m21.pickups.render.mjs",
   "./m22.classes.mjs",
   "./m22.classes.render.mjs",
+  "./m23.killfeed.mjs",
+  "./m23.killfeed.render.mjs",
 ];
 
 let failed = false;
