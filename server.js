@@ -9,7 +9,9 @@ import { WebSocketServer } from "ws";
 import GameServer from "./src/net/GameServer.js";
 import { NET } from "./src/config.js";
 
-const game = new GameServer();
+// Enable AI bots so a single player can jump straight into a match: a bot fills
+// the empty team, and is replaced the moment a second human joins.
+const game = new GameServer({ bots: true });
 game.start(NET.tickHz);
 
 // Hosting providers (Render, Railway, …) tell your app which port to listen on

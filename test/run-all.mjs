@@ -43,6 +43,8 @@ const tests = [
   "./m23.killfeed.render.mjs",
   "./m24.timer.mjs",
   "./m24.timer.render.mjs",
+  "./m25.bots.mjs",
+  "./m25.bots.render.mjs",
 ];
 
 let failed = false;

@@ -30,10 +30,15 @@ import {
 } from "../config.js";
 import { stepPosition, normalizeInput, resolveMove, pointInWall } from "../sim.js";
 
+const BOT_STANDOFF = 200; // how far a bot holds from its target to shoot
+
 export default class GameServer {
-  constructor() {
-    this.players = new Map(); // id -> player state
-    this.connections = new Map(); // id -> connection
+  // `opts.bots` enables AI bots that fill empty team slots so a lone player can
+  // play (off by default, so tests and a pure 2-human server are unaffected).
+  constructor(opts = {}) {
+    this.botsEnabled = !!opts.bots;
+    this.players = new Map(); // id -> player state (humans AND bots)
+    this.connections = new Map(); // id -> connection (humans only)
     this.projectiles = [];
     this.minions = []; // AI lane fighters: { id, team, x, y, laneY, hp, alive, cd }
     this.nextId = 1;
@@ -94,31 +99,28 @@ export default class GameServer {
   }
 
   addConnection(conn) {
-    // Pick the team with fewer players (ties go to blue) for balanced sides.
-    const team = this.countTeam("blue") <= this.countTeam("red") ? "blue" : "red";
+    // Balance humans across teams (ties go to blue).
+    const team = this.countHumans("blue") <= this.countHumans("red") ? "blue" : "red";
 
-    // If that team is already full, both teams are full — reject politely.
-    if (this.countTeam(team) >= TEAM_SIZE) {
+    // Reject only when this team is full of *humans* (bots don't take seats).
+    if (this.countHumans(team) >= TEAM_SIZE) {
       conn.send({ t: "full" });
       conn.close();
       return null;
     }
 
-    const id = "p" + this.nextId++;
-    // Give this player the first free spawn slot on their team.
-    const used = new Set(
-      [...this.players.values()].filter((p) => p.team === team).map((p) => p.spawnIndex)
-    );
-    let spawnIndex = 0;
-    while (used.has(spawnIndex)) spawnIndex++;
+    // A human takes a bot's place if one is holding the line on this team.
+    this.removeOneBot(team);
 
-    this.players.set(id, this.freshPlayer(id, team, spawnIndex));
+    const id = "p" + this.nextId++;
+    this.players.set(id, this.freshPlayer(id, team, this.freeSpawnIndex(team)));
     this.connections.set(id, conn);
 
     conn.send({ t: "welcome", id, team });
     conn.onMessage((msg) => this.onMessage(id, msg));
     conn.onClose(() => this.removeConnection(id));
 
+    this.fillBots(); // top the other team up with a bot so the match can start
     this.evaluateLobby(); // a new arrival may be enough to start the countdown
     this.broadcast();
     return id;
@@ -128,6 +130,82 @@ export default class GameServer {
     let n = 0;
     for (const p of this.players.values()) if (p.team === team) n++;
     return n;
+  }
+
+  countHumans(team) {
+    let n = 0;
+    for (const p of this.players.values()) if (p.team === team && !p.bot) n++;
+    return n;
+  }
+
+  // The first free spawn-slot index on a team (so teammates don't stack).
+  freeSpawnIndex(team) {
+    const used = new Set(
+      [...this.players.values()].filter((p) => p.team === team).map((p) => p.spawnIndex)
+    );
+    let i = 0;
+    while (used.has(i)) i++;
+    return i;
+  }
+
+  // --- AI bots ---------------------------------------------------------------
+
+  // Keep each team filled to the minimum with bots while at least one human is
+  // present; with no humans, clear the bots so an idle server is empty.
+  fillBots() {
+    if (!this.botsEnabled) return;
+    const anyHuman = [...this.players.values()].some((p) => !p.bot);
+    if (!anyHuman) {
+      for (const p of [...this.players.values()]) if (p.bot) this.removeBot(p.id);
+      return;
+    }
+    for (const team of ["blue", "red"]) {
+      while (this.countTeam(team) < MATCH.minPerTeam) this.addBot(team);
+    }
+  }
+
+  addBot(team) {
+    const id = "bot" + this.nextId++;
+    const p = this.freshPlayer(id, team, this.freeSpawnIndex(team));
+    p.bot = true;
+    this.players.set(id, p);
+  }
+
+  removeBot(id) {
+    this.players.delete(id);
+    this.projectiles = this.projectiles.filter((b) => b.ownerId !== id);
+  }
+
+  removeOneBot(team) {
+    const bot = [...this.players.values()].find((p) => p.bot && p.team === team);
+    if (bot) this.removeBot(bot.id);
+  }
+
+  // Simple bot brain: head for the nearest enemy (hero, minion, tower, or an
+  // exposed base — same picker the auto-aim uses), hold at firing range, and
+  // shoot on cooldown with the occasional ability.
+  stepBots() {
+    for (const p of this.players.values()) {
+      if (!p.bot || !p.alive) continue;
+      const target = this.nearestTarget(p);
+      if (!target) {
+        p.input.dx = 0;
+        p.input.dy = 0;
+        continue;
+      }
+      const dx = target.x - p.x;
+      const dy = target.y - p.y;
+      const dist = Math.hypot(dx, dy) || 1;
+      if (dist > BOT_STANDOFF) {
+        p.input.dx = dx / dist;
+        p.input.dy = dy / dist;
+      } else {
+        p.input.dx = 0;
+        p.input.dy = 0;
+      }
+      this.tryAttack(p, "basic"); // auto-aims the same target; cooldown-gated
+      if (Math.random() < 0.03) this.tryAttack(p, "ability");
+    }
   }
 
   // True once both teams have at least the configured minimum of players.
@@ -174,6 +252,7 @@ export default class GameServer {
     this.players.delete(id);
     this.connections.delete(id);
     this.projectiles = this.projectiles.filter((p) => p.ownerId !== id);
+    this.fillBots(); // clear bots if that was the last human; else keep teams filled
     this.evaluateLobby(); // dropping below the minimum cancels the countdown
     this.broadcast();
   }
@@ -511,6 +590,9 @@ export default class GameServer {
       return;
     }
 
+    // 0) Drive the AI bots (sets their input + fires their attacks).
+    this.stepBots();
+
     // 1) Move players; remember facing for the aim fallback.
     for (const p of this.players.values()) {
       if (!p.alive) {
@@ -720,6 +802,7 @@ export default class GameServer {
         hp: p.hp,
         alive: p.alive,
         cls: p.cls, // hero class (for per-class look)
+        bot: !!p.bot, // AI-controlled?
         maxHp: CLASSES[p.cls].maxHp, // so the client scales the health bar
         // Seconds until this player respawns (0 if alive) — for the HUD timer.
         respawnIn: p.alive ? 0 : Math.max(0, Math.ceil((p.deadUntil - this.timeMs) / 1000)),

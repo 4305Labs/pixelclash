@@ -165,6 +165,13 @@ nearest enemy or base. To make 3v3 feel right you'd typically:
 - **Maybe add lanes/obstacles:** draw walls in `ArenaScene.drawGrid()` and add
   collision checks in the server's movement step.
 
+> **AI bots (already done ✅):** the server is started with `new GameServer({
+> bots: true })` (see `server.js`), so a lone player is given a bot opponent and
+> the bot steps aside when a second human joins. Bots reuse the auto-aim picker
+> to choose targets (`GameServer.stepBots`); `BOT_STANDOFF` sets how close they
+> hold before firing. They fill up to `MATCH.minPerTeam` per team — raise that
+> (and `SPAWNS`) for bot-filled 3v3.
+
 The networking itself does **not** need to change to add more players.
 
 ---

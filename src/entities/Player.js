@@ -32,8 +32,18 @@ export default class Player extends Phaser.GameObjects.Container {
       .rectangle(-BAR_W / 2, BAR_Y, BAR_W, 3, 0x00e436)
       .setOrigin(0, 0.5);
 
-    this.add([this.aura, this.bodySprite, this.hpBg, this.hpFill]);
+    // A little "bot" tag shown above AI-controlled players.
+    this.botLabel = scene.add
+      .text(0, BAR_Y - 9, "bot", { fontFamily: "monospace", fontSize: "9px", color: "#c2c3c7" })
+      .setOrigin(0.5)
+      .setVisible(false);
+
+    this.add([this.aura, this.bodySprite, this.hpBg, this.hpFill, this.botLabel]);
     scene.add.existing(this);
+  }
+
+  setBot(isBot) {
+    this.botLabel.setVisible(!!isBot);
   }
 
   // Toggle the power-buff aura.

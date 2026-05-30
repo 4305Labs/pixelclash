@@ -53,8 +53,11 @@ It prints a `Local:` address, usually **http://localhost:5173/**.
 
 **Now open the game:**
 1. Open **http://localhost:5173/** in Chrome → you're the **BLUE** player.
-2. Open the **same address in a second tab** (or window) → that's the **RED**
-   player. Now you have a 1v1! Click a tab to control that player.
+   You'll get an **AI bot** opponent automatically, so you can start playing
+   solo right away.
+2. Want a real 1v1? Open the **same address in a second tab** (or window) →
+   that's the **RED** player, and the bot steps aside. Click a tab to control
+   that player.
 
 To stop either server: click its Terminal and press `Ctrl + C`.
 
