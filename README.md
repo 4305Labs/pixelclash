@@ -156,6 +156,7 @@ pixelclash/
 │  ├─ main.js              ← boots Phaser + the network client
 │  ├─ config.js            ← ALL the tunable numbers (speed, damage, HP, colors…)
 │  ├─ textures.js          ← draws the pixel-art sprites in code (no image files)
+│  ├─ anim.js              ← procedural animation math (bob / walk / attack pop)
 │  ├─ scenes/
 │  │  └─ ArenaScene.js     ← the playing field: input, rendering, HUD
 │  ├─ entities/

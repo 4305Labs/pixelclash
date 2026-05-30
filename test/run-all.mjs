@@ -53,6 +53,8 @@ const tests = [
   "./m30.snapshot.mjs",
   "./m31.fountain.mjs",
   "./m31.fountain.render.mjs",
+  "./m32.anim.node.mjs",
+  "./m32.anim.render.mjs",
 ];
 
 let failed = false;

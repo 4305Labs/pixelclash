@@ -195,9 +195,24 @@ The networking itself does **not** need to change to add more players.
 
 ---
 
-## 7. Replace the code-drawn art with real pixel art
+## 7. The art: hand-drawn pixel sprites + procedural animation (already done ✅)
 
-Right now sprites are drawn in `src/textures.js`. To use real art instead:
+All art is **drawn in code** — no image files. `src/textures.js` paints each
+sprite from a small palette: heroes/minions are authored as **pixel grids**
+(`paintGrid` turns rows of characters into pixels; `shade` derives team
+shadow/highlight tints), and the bases, towers, orbs, and floor/wall tiles are
+built with shaded shapes. To tweak a sprite, edit its grid or maker and refresh
+— team colours come from `COLORS` in `config.js`.
+
+Movement is brought to life by `src/anim.js` — pure, testable animation math: an
+idle breathing **bob**, a **walk hop** with squash & stretch, and an **attack
+pop**. The entities (`Player`, `Minion`) call `animate(dt)` each frame and apply
+the returned offset/scale on top of the class size. Tune the feel via the
+constants at the top of `anim.js` (`WALK_HZ`, `WALK_BOB`, `POP_MS`, …).
+
+### Want to swap in your own .png art instead?
+
+Right now sprites are drawn in `src/textures.js`. To use real image files:
 
 1. Put `.png` files in a new `public/` folder (e.g. `public/player_blue.png`).
 2. In `ArenaScene.preload()` (add one if missing), load them:

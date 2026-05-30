@@ -369,7 +369,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.syncBases();
     this.syncTowers();
     this.syncPickups();
-    this.syncMinions();
+    this.syncMinions(dt);
     this.syncPlayers(dt);
     this.syncProjectiles();
     this.updateLobby();
@@ -404,6 +404,11 @@ export default class ArenaScene extends Phaser.Scene {
       button.startCooldown(this.cooldowns[kind]);
       // Play the shoot blip only when we actually fire (alive + off cooldown).
       if (kind !== "dash") this.audio.play("shoot");
+      // Pop the local hero on an attack (the dash has its own movement burst).
+      if (kind !== "dash") {
+        const me = this.sprites.get(this.net.localId);
+        if (me) me.triggerAttack();
+      }
     }
   }
 
@@ -695,6 +700,9 @@ export default class ArenaScene extends Phaser.Scene {
       sprite.setHp(p.hp, p.maxHp);
       sprite.setAlive(p.alive);
       sprite.setPowered(p.powered);
+      // Procedural bob/walk/attack animation (movement is read from the sprite's
+      // own travel since last frame, so it works for predicted + interpolated).
+      if (p.alive) sprite.animate(dt);
     }
     for (const [id, sprite] of this.sprites) {
       if (!seen.has(id)) {
@@ -808,7 +816,7 @@ export default class ArenaScene extends Phaser.Scene {
 
   // Draw the lane minions: create on first sight, glide toward their reported
   // position, flash on damage, and clean up the dead/departed.
-  syncMinions() {
+  syncMinions(dt = 0) {
     const seen = new Set();
     for (const m of this.net.minions) {
       seen.add(m.id);
@@ -820,6 +828,7 @@ export default class ArenaScene extends Phaser.Scene {
       }
       sprite.setTarget(m.x, m.y);
       sprite.smoothFollow();
+      sprite.animate(dt);
       if (m.hp < sprite.lastHp) sprite.flashHit(); // hit feedback (no sound — too many)
       sprite.lastHp = m.hp;
       sprite.setHp(m.hp);

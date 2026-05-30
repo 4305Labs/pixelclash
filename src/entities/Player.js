@@ -9,6 +9,7 @@
 
 import Phaser from "phaser";
 import { SPRITE_SCALE, PLAYER_SIZE, COMBAT, CLASSES } from "../config.js";
+import { advancePhase, bodyPose, popScale } from "../anim.js";
 
 const BAR_W = PLAYER_SIZE * SPRITE_SCALE; // health bar width matches the body
 const BAR_Y = -(PLAYER_SIZE * SPRITE_SCALE) / 2 - 8; // sit just above the head
@@ -25,6 +26,13 @@ export default class Player extends Phaser.GameObjects.Container {
 
     const texture = team === "red" ? "player_red" : "player_blue";
     this.bodySprite = scene.add.sprite(0, 0, texture).setScale(SPRITE_SCALE);
+
+    // --- Procedural animation state ----------------------------------------
+    this.baseScale = SPRITE_SCALE; // class scale; animation multiplies on top
+    this.animPhase = 0; // walk/idle cycle position (radians)
+    this.attackAt = -Infinity; // timestamp of the last attack, for the pop
+    this.prevX = x; // last frame's position, to detect movement
+    this.prevY = y;
 
     // Health bar: a dark background and a colored fill that shrinks with HP.
     this.hpBg = scene.add.rectangle(0, BAR_Y, BAR_W + 2, 5, 0x000000, 0.6);
@@ -81,11 +89,34 @@ export default class Player extends Phaser.GameObjects.Container {
     this.hpFill.setFillStyle(color);
   }
 
-  // Resize the body to match the hero class (tank bigger, scout smaller).
+  // Resize the body to match the hero class (tank bigger, scout smaller). We
+  // record it as the BASE scale; animate() multiplies bob/squash/pop on top.
   setClass(cls) {
     if (cls === this.cls || !CLASSES[cls]) return;
     this.cls = cls;
-    this.bodySprite.setScale(SPRITE_SCALE * CLASSES[cls].scale);
+    this.baseScale = SPRITE_SCALE * CLASSES[cls].scale;
+  }
+
+  // Mark an attack so animate() plays a quick scale "pop".
+  triggerAttack() {
+    this.attackAt = this.scene.time.now;
+  }
+
+  // Per-frame procedural animation: idle breathing / walk hop with squash &
+  // stretch, plus an attack pop. `dt` is seconds since the last frame. We
+  // detect movement from how far the sprite travelled since the last frame.
+  animate(dt) {
+    const moved = Math.hypot(this.x - this.prevX, this.y - this.prevY);
+    this.prevX = this.x;
+    this.prevY = this.y;
+    const moving = moved > 0.4; // px/frame threshold — ignores tiny jitter
+
+    this.animPhase = advancePhase(this.animPhase, dt * 1000, moving);
+    const pose = bodyPose(this.animPhase, moving);
+    const pop = popScale(this.scene.time.now - this.attackAt);
+
+    this.bodySprite.y = pose.bob;
+    this.bodySprite.setScale(this.baseScale * pose.sx * pop, this.baseScale * pose.sy * pop);
   }
 
   // Flash white briefly to show a hit landed. `hit` is a flag the tests read.
