@@ -25,6 +25,7 @@ export default class NetClient {
     this.winner = null; // winning team when phase === "over"
     this.needed = 0; // players needed for a match to start (for the lobby text)
     this.countdown = 0; // seconds left on the "get ready" countdown, else 0
+    this.timeLeft = 0; // seconds left on the match clock (0 if untimed/not playing)
     this.tick = 0;
     this.connected = false;
     this._listeners = { welcome: [], state: [], full: [] };
@@ -89,6 +90,7 @@ export default class NetClient {
       this.winner = msg.winner || null;
       this.needed = msg.needed || 0;
       this.countdown = msg.countdown || 0;
+      this.timeLeft = msg.timeLeft || 0;
       this.tick = msg.tick;
       this._emit("state", msg);
     } else if (msg.t === "full") {

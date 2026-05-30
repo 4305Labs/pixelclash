@@ -65,6 +65,7 @@ export default class GameServer {
     this.winner = null; // team that won, when phase === "over"
     this.resetAt = 0; // when an "over" match resets (ms on our sim clock)
     this.startAt = 0; // when a "countdown" flips to "playing" (ms)
+    this.matchEndsAt = Infinity; // hard time limit; armed by beginPlaying
   }
 
   resetBases() {
@@ -290,6 +291,21 @@ export default class GameServer {
     this.phase = "playing";
     this.minions = [];
     this.nextWaveAt = this.timeMs + MINION.firstWaveMs;
+    this.matchEndsAt = this.timeMs + MATCH.maxDurationMs;
+  }
+
+  // The match ran out of time: the team ahead on kills wins, ties broken by
+  // base HP (healthier base = better defended), and a true tie is a draw.
+  endByTimeout() {
+    this.phase = "over";
+    this.resetAt = this.timeMs + MATCH.resetMs;
+    if (this.score.blue !== this.score.red) {
+      this.winner = this.score.blue > this.score.red ? "blue" : "red";
+    } else {
+      const b = this.bases.get("blue").hp;
+      const r = this.bases.get("red").hp;
+      this.winner = b === r ? "draw" : b > r ? "blue" : "red";
+    }
   }
 
   // Spawn one wave for each team, just in front of its base, staggered across
@@ -489,6 +505,12 @@ export default class GameServer {
       return;
     }
 
+    // Out of time? Decide the match on kills (then base HP).
+    if (this.timeMs >= this.matchEndsAt) {
+      this.endByTimeout();
+      return;
+    }
+
     // 1) Move players; remember facing for the aim fallback.
     for (const p of this.players.values()) {
       if (!p.alive) {
@@ -658,6 +680,7 @@ export default class GameServer {
     this.projectiles = [];
     this.minions = [];
     this.nextWaveAt = Infinity; // re-armed by beginPlaying on the next match
+    this.matchEndsAt = Infinity; // ...likewise the time limit
     this.winner = null;
     // Return to the lobby; if enough players are still here, evaluateLobby
     // immediately kicks off a fresh "get ready" countdown.
@@ -683,6 +706,11 @@ export default class GameServer {
       countdown:
         this.phase === "countdown"
           ? Math.max(0, Math.ceil((this.startAt - this.timeMs) / 1000))
+          : 0,
+      // Seconds left on the match clock (0 unless a timed match is in progress).
+      timeLeft:
+        this.phase === "playing" && isFinite(this.matchEndsAt)
+          ? Math.max(0, Math.ceil((this.matchEndsAt - this.timeMs) / 1000))
           : 0,
       players: [...this.players.values()].map((p) => ({
         id: p.id,

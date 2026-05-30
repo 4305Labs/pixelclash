@@ -402,16 +402,15 @@ export default class ArenaScene extends Phaser.Scene {
 
   updateGameOver() {
     if (this.net.phase === "over" && this.net.winner) {
-      const iWon = this.net.team && this.net.team === this.net.winner;
-      const who = this.net.winner === "blue" ? "BLUE" : "RED";
+      const winner = this.net.winner;
+      const draw = winner === "draw";
+      const iWon = !draw && this.net.team && this.net.team === winner;
+      const who = draw ? "DRAW!" : `${winner === "blue" ? "BLUE" : "RED"} WINS!`;
+      const line2 = draw ? "Time! It's a draw." : iWon ? "You win! 🎉" : "You lose…";
       const s = this.net.score || { blue: 0, red: 0 };
       this.gameOverText
-        .setText(
-          `${who} WINS!\n` +
-            (iWon ? "You win! 🎉" : "You lose…") +
-            `\nFinal score  BLUE ${s.blue} – ${s.red} RED`
-        )
-        .setColor(this.net.winner === "blue" ? "#9bd9ff" : "#ff6b8b")
+        .setText(`${who}\n${line2}\nFinal score  BLUE ${s.blue} – ${s.red} RED`)
+        .setColor(draw ? "#fff1e8" : winner === "blue" ? "#9bd9ff" : "#ff6b8b")
         .setVisible(true);
       // Play the victory jingle once when the match ends.
       if (!this.wonPlayed) {
@@ -422,6 +421,11 @@ export default class ArenaScene extends Phaser.Scene {
       this.gameOverText.setVisible(false);
       this.wonPlayed = false; // re-arm for the next match
     }
+  }
+
+  // Format seconds as m:ss for the match clock.
+  fmtClock(sec) {
+    return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
   }
 
   // The corner kill feed: most recent knockouts on top, colored by the team
@@ -445,10 +449,13 @@ export default class ArenaScene extends Phaser.Scene {
     }
   }
 
-  // The team scoreboard, and a respawn countdown while the local hero is down.
+  // The team scoreboard (with the match clock), and a respawn countdown while
+  // the local hero is down.
   updateHud() {
     const s = this.net.score || { blue: 0, red: 0 };
-    this.scoreText.setText(`BLUE  ${s.blue} : ${s.red}  RED`);
+    const t = this.net.timeLeft || 0;
+    const clock = this.net.phase === "playing" && t > 0 ? `   ${this.fmtClock(t)}` : "";
+    this.scoreText.setText(`BLUE  ${s.blue} : ${s.red}  RED${clock}`);
 
     const me = this.net.players.find((p) => p.id === this.net.localId);
     if (this.net.phase === "playing" && me && !me.alive) {

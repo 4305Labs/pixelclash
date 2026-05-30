@@ -217,6 +217,10 @@ export const MATCH = {
   // A short "get ready" countdown after enough players are present, before
   // the action starts. In milliseconds.
   countdownMs: 3000,
+
+  // Hard time limit for a match. If neither base falls in time, the team ahead
+  // on kills wins (ties broken by base HP, then a draw). In milliseconds.
+  maxDurationMs: 180000, // 3 minutes
 };
 
 // --- Touch UI layout --------------------------------------------------------

@@ -23,6 +23,7 @@ Change a value, save, refresh. Examples:
 | Faster ability cooldown | `COMBAT.ability.cd` | `1500` (=1.5s) |
 | Tougher bases (longer matches) | `BASE.maxHp` | `400` |
 | Quicker respawns | `COMBAT.respawnMs` | `1000` |
+| Longer/shorter time limit | `MATCH.maxDurationMs` | `300000` (=5 min) |
 | Different team colors | `COLORS.blueTeam` / `redTeam` | any `0xRRGGBB` hex |
 
 `0xRRGGBB` is how colors are written in code: `0x` then a 6-digit hex color

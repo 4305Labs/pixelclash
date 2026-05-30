@@ -98,9 +98,11 @@ both teams, but contested). Grab a green **heal** orb to restore HP, or an
 orange **power** orb to boost your attack damage for a few seconds (you'll glow).
 Taken orbs reappear on a timer.
 
-**Scoreboard & respawns:** a team kill scoreboard sits at the top of the screen,
-and when you're knocked out a "Respawning in N…" countdown tells you how long
-until you're back in the fight.
+**Scoreboard, clock & respawns:** a team kill scoreboard and a match clock sit at
+the top of the screen, recent knockouts scroll by in a corner kill feed, and when
+you're knocked out a "Respawning in N…" countdown tells you how long until you're
+back. If neither base falls before time runs out, the team ahead on kills wins
+(ties broken by base HP — or a draw).
 
 ### Play on your phone (same Wi-Fi)
 
