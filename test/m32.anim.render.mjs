@@ -59,6 +59,46 @@ try {
   );
   assert(Number.isFinite(afterPop) && afterPop > 0, "attack pop keeps the scale sane");
 
+  // --- Death tumble: a knockout flips the dead flag and spins the body -------
+  await page.evaluate(() => {
+    const s = window.PIXELCLASH.game.scene.getScene("ArenaScene");
+    window.PIXELCLASH.net._receive({
+      t: "state", tick: 9, phase: "playing", winner: null, score: { blue: 0, red: 0 },
+      players: [{ id: "p1", team: "blue", x: 320, y: 300, hp: 0, maxHp: 100, alive: false, cls: "soldier", respawnIn: 2 }],
+      projectiles: [], minions: [], pickups: [], towers: [],
+      bases: [
+        { team: "blue", x: 44, y: 300, hp: 250, maxHp: 250, alive: true, shielded: false },
+        { team: "red", x: 756, y: 300, hp: 250, maxHp: 250, alive: true, shielded: false },
+      ],
+    });
+  });
+  await page.waitForTimeout(250);
+  const dead = await page.evaluate(() => {
+    const me = window.PIXELCLASH.game.scene.getScene("ArenaScene").sprites.get("p1");
+    return { dead: me.dead, angle: me.bodySprite.angle, finite: Number.isFinite(me.bodySprite.scaleX) };
+  });
+  assert(dead.dead, "a knocked-out hero enters the dead/tumble state");
+  assert(dead.angle !== 0 && dead.finite, "the death tumble spins the body (and stays finite)");
+
+  // --- Respawn: clean upright reset ------------------------------------------
+  await page.evaluate(() => {
+    window.PIXELCLASH.net._receive({
+      t: "state", tick: 10, phase: "playing", winner: null, score: { blue: 0, red: 0 },
+      players: [{ id: "p1", team: "blue", x: 120, y: 300, hp: 100, maxHp: 100, alive: true, cls: "soldier" }],
+      projectiles: [], minions: [], pickups: [], towers: [],
+      bases: [
+        { team: "blue", x: 44, y: 300, hp: 250, maxHp: 250, alive: true, shielded: false },
+        { team: "red", x: 756, y: 300, hp: 250, maxHp: 250, alive: true, shielded: false },
+      ],
+    });
+  });
+  await page.waitForTimeout(80);
+  const revived = await page.evaluate(() => {
+    const me = window.PIXELCLASH.game.scene.getScene("ArenaScene").sprites.get("p1");
+    return { dead: me.dead, alpha: me.bodySprite.alpha };
+  });
+  assert(!revived.dead && revived.alpha === 1, "respawn resets to a clean, opaque, upright sprite");
+
   const realErrors = errors.filter((e) => !/websocket|ws:\/\//i.test(e));
   assert(realErrors.length === 0, "no unexpected errors: " + JSON.stringify(realErrors));
 

@@ -858,9 +858,14 @@ export default class ArenaScene extends Phaser.Scene {
           color = spec.color;
         }
         dot = this.add.circle(b.x, b.y, radius, color).setDepth(50);
+        dot.baseRadius = radius;
+        dot.bornAt = this.time.now;
         this.bolts.set(b.id, dot);
       }
       dot.setPosition(b.x, b.y);
+      // A subtle energetic pulse (±12% radius) so bolts read as "live" energy.
+      const pulse = 1 + 0.12 * Math.sin((this.time.now - dot.bornAt) / 60);
+      dot.setScale(pulse);
     }
     for (const [id, dot] of this.bolts) {
       if (!seen.has(id)) {

@@ -106,6 +106,7 @@ export default class Player extends Phaser.GameObjects.Container {
   // stretch, plus an attack pop. `dt` is seconds since the last frame. We
   // detect movement from how far the sprite travelled since the last frame.
   animate(dt) {
+    if (this.dead) return; // the death tumble owns the body while knocked out
     const moved = Math.hypot(this.x - this.prevX, this.y - this.prevY);
     this.prevX = this.x;
     this.prevY = this.y;
@@ -129,10 +130,33 @@ export default class Player extends Phaser.GameObjects.Container {
     });
   }
 
-  // Dead players fade out and hide their (empty) health bar.
+  // Toggle alive/dead. On a fresh knockout, play a death tumble (spin + shrink
+  // + fade); on respawn, snap back to a clean upright sprite.
   setAlive(alive) {
-    this.bodySprite.setAlpha(alive ? 1 : 0.2);
     this.hpBg.setVisible(alive);
     this.hpFill.setVisible(alive);
+
+    if (!alive && !this.dead) {
+      // Just died: tumble the body out.
+      this.dead = true;
+      this.scene.tweens.killTweensOf(this.bodySprite);
+      this.scene.tweens.add({
+        targets: this.bodySprite,
+        angle: 540, // a couple of spins
+        scaleX: this.baseScale * 0.3,
+        scaleY: this.baseScale * 0.3,
+        alpha: 0.2,
+        y: 6,
+        duration: 420,
+        ease: "Quad.in",
+      });
+    } else if (alive && this.dead) {
+      // Respawned: reset to a clean upright sprite for the live animation.
+      this.dead = false;
+      this.scene.tweens.killTweensOf(this.bodySprite);
+      this.bodySprite.setAngle(0).setAlpha(1).setScale(this.baseScale).setPosition(0, 0);
+    } else if (alive) {
+      this.bodySprite.setAlpha(1);
+    }
   }
 }
