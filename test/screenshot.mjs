@@ -23,8 +23,8 @@ await page.evaluate(() => {
       { id: 2, byTeam: "red", victimTeam: "blue", victimCls: "tank" },
     ],
     players: [
-      { id: "p1", team: "blue", x: 320, y: 300, hp: 150, maxHp: 170, alive: true, cls: "tank", powered: true },
-      { id: "p2", team: "red", x: 470, y: 250, hp: 45, maxHp: 70, alive: true, cls: "scout", bot: true },
+      { id: "p1", team: "blue", x: 320, y: 300, hp: 150, maxHp: 190, alive: true, cls: "tank", powered: true, level: 4, gold: 95, buys: 1 },
+      { id: "p2", team: "red", x: 470, y: 250, hp: 45, maxHp: 70, alive: true, cls: "scout", bot: true, level: 3, gold: 60, buys: 0 },
     ],
     projectiles: [
       { id: "b1", team: "blue", kind: "basic", x: 380, y: 290 },

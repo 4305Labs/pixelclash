@@ -5,7 +5,7 @@ ability, dash — and waves of **lane minions** march out to help you push past
 the enemy's **guard tower** and tear down their base. Destroy that base to win.
 Built to start as **1v1** and grow to **3v3**.
 
-![A live match](docs/screenshot-match.png)
+![A live match — scoreboard + clock, kill feed, minions, towers, pickups, and the level/gold shop HUD](docs/screenshot-match.png)
 
 - **Game engine:** [Phaser 3](https://phaser.io) (HTML5, runs in any browser)
 - **Dev server / bundler:** [Vite](https://vitejs.dev)
