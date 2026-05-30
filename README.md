@@ -132,9 +132,9 @@ and it's written up plainly in
 
 ## A look at it
 
-| Lane minions clash | The arena (with walls) | Choosing a hero | On a phone |
-|---|---|---|---|
-| ![Minions](docs/screenshot-minions.png) | ![Match](docs/screenshot-map.png) | ![Classes](docs/screenshot-classes.png) | ![Mobile](docs/screenshot-mobile.png) |
+| Full HUD & shop | Lane minions clash | The arena (with walls) | Choosing a hero | On a phone |
+|---|---|---|---|---|
+| ![HUD](docs/screenshot-match.png) | ![Minions](docs/screenshot-minions.png) | ![Match](docs/screenshot-map.png) | ![Classes](docs/screenshot-classes.png) | ![Mobile](docs/screenshot-mobile.png) |
 
 ---
 
