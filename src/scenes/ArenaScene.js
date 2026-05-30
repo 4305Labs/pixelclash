@@ -862,25 +862,28 @@ export default class ArenaScene extends Phaser.Scene {
   }
 
   drawGrid() {
-    const g = this.add.graphics();
-    g.fillStyle(COLORS.bg, 1);
-    g.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    g.lineStyle(1, COLORS.grid, 1);
-    const step = 40;
-    for (let x = 0; x <= GAME_WIDTH; x += step) g.lineBetween(x, 0, x, GAME_HEIGHT);
-    for (let y = 0; y <= GAME_HEIGHT; y += step) g.lineBetween(0, y, GAME_WIDTH, y);
-    g.setDepth(-10);
+    // A tiled stone-floor texture across the whole arena (replaces the old flat
+    // fill + grid lines). tileSprite repeats the 40×40 floor tile for us.
+    this.add
+      .tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, "floor")
+      .setOrigin(0, 0)
+      .setDepth(-10);
   }
 
-  // Draw the solid obstacles from config. They sit above the grid but below
-  // the players and bolts, so characters clearly pass in front of them.
+  // Draw the solid obstacles from config as tiled stone walls, with a dark
+  // outline. They sit above the floor but below players/bolts, so characters
+  // clearly pass in front of them.
   drawWalls() {
-    const g = this.add.graphics().setDepth(-5);
     for (const w of WALLS) {
-      g.fillStyle(COLORS.wall, 1);
-      g.fillRect(w.x, w.y, w.w, w.h);
-      g.lineStyle(2, COLORS.wallEdge, 1);
-      g.strokeRect(w.x, w.y, w.w, w.h);
+      this.add
+        .tileSprite(w.x, w.y, w.w, w.h, "wall")
+        .setOrigin(0, 0)
+        .setDepth(-5);
+      this.add
+        .rectangle(w.x, w.y, w.w, w.h)
+        .setOrigin(0, 0)
+        .setStrokeStyle(2, COLORS.wallEdge, 1)
+        .setDepth(-5);
     }
   }
 }

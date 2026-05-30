@@ -189,8 +189,58 @@ function makePickupTexture(scene, key, kind) {
   g.destroy();
 }
 
+// A 40×40 floor tile: the dark-blue base with a faint seam at the top/left edge
+// and a fixed scatter of slightly lighter/darker specks, so a tiled floor looks
+// like textured stone instead of a flat fill. Deterministic (no randomness), so
+// the render tests stay stable.
+function makeFloorTexture(scene, key) {
+  const S = 40;
+  const g = scene.make.graphics({ x: 0, y: 0 }, false);
+  g.fillStyle(COLORS.bg, 1);
+  g.fillRect(0, 0, S, S);
+  // Seam lines along two edges read as tile grout.
+  g.fillStyle(COLORS.grid, 1);
+  g.fillRect(0, 0, S, 1);
+  g.fillRect(0, 0, 1, S);
+  // A fixed speckle pattern: light flecks and dark pits at set cells.
+  const light = shade(COLORS.bg, 1.35);
+  const dark = shade(COLORS.bg, 0.7);
+  const flecks = [
+    [6, 9, light], [13, 5, dark], [22, 14, light], [31, 8, dark],
+    [9, 24, dark], [18, 30, light], [27, 26, dark], [35, 33, light],
+    [4, 34, light], [33, 18, dark],
+  ];
+  for (const [x, y, c] of flecks) {
+    g.fillStyle(c, 1);
+    g.fillRect(x, y, 2, 2);
+  }
+  g.generateTexture(key, S, S);
+  g.destroy();
+}
+
+// A 16×16 stone wall tile: a lit top, a shaded bottom, and a couple of darker
+// "bricks" so a tiled wall has texture and a sense of height.
+function makeWallTexture(scene, key) {
+  const S = 16;
+  const g = scene.make.graphics({ x: 0, y: 0 }, false);
+  g.fillStyle(COLORS.wall, 1);
+  g.fillRect(0, 0, S, S);
+  g.fillStyle(shade(COLORS.wall, 1.3), 1); // lit top edge
+  g.fillRect(0, 0, S, 2);
+  g.fillStyle(shade(COLORS.wall, 0.65), 1); // shaded bottom edge
+  g.fillRect(0, S - 2, S, 2);
+  g.fillStyle(shade(COLORS.wall, 0.8), 1); // brick seams
+  g.fillRect(0, 7, S, 1);
+  g.fillRect(7, 2, 1, 5);
+  g.fillRect(11, 8, 1, 6);
+  g.generateTexture(key, S, S);
+  g.destroy();
+}
+
 // Called once when the arena starts. Creates every texture the game needs.
 export function generateTextures(scene) {
+  makeFloorTexture(scene, "floor");
+  makeWallTexture(scene, "wall");
   makeCharacterTexture(scene, "player_blue", COLORS.blueTeam);
   makeCharacterTexture(scene, "player_red", COLORS.redTeam);
   makeBaseTexture(scene, "base_blue", COLORS.blueTeam);
