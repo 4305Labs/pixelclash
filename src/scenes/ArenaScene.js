@@ -17,6 +17,7 @@ import {
   CLASSES,
   CLASS_ORDER,
   KILLFEED,
+  PROGRESS,
 } from "../config.js";
 import { generateTextures } from "../textures.js";
 import { stepPosition } from "../sim.js";
@@ -217,6 +218,22 @@ export default class ArenaScene extends Phaser.Scene {
       });
     });
 
+    // B buys the next shop upgrade with gold.
+    this.input.keyboard.on("keydown-B", () => this.net.sendBuy());
+
+    // Level / gold / shop line, bottom-left (clear of the action buttons).
+    this.shopText = this.add
+      .text(12, GAME_HEIGHT - 16, "", {
+        fontFamily: "monospace",
+        fontSize: "14px",
+        color: "#fff1e8",
+        stroke: "#000000",
+        strokeThickness: 3,
+      })
+      .setOrigin(0, 1)
+      .setScrollFactor(0)
+      .setDepth(500);
+
     // Win/lose banner (hidden until a base falls).
     this.gameOverText = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "", {
@@ -308,6 +325,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.updateGameOver();
     this.updateHud();
     this.updateKillFeed();
+    this.updateShopHud();
 
     // 3) Redraw the cooldown sweeps on the action buttons.
     this.buttons.basic.update();
@@ -440,6 +458,25 @@ export default class ArenaScene extends Phaser.Scene {
   // Format seconds as m:ss for the match clock.
   fmtClock(sec) {
     return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+  }
+
+  // Bottom-left progression line for the local hero: level, gold, and the next
+  // shop upgrade you can buy with B (brightened when you can afford it).
+  updateShopHud() {
+    const me = this.net.players.find((p) => p.id === this.net.localId);
+    if (!me) {
+      this.shopText.setText("");
+      return;
+    }
+    const buys = me.buys || 0;
+    let line = `Lv ${me.level || 1}   ${me.gold || 0}g`;
+    let color = "#fff1e8";
+    if (this.net.phase === "playing" && buys < PROGRESS.shopMaxStacks) {
+      const item = PROGRESS.shop[buys % PROGRESS.shop.length];
+      line += `   [B] ${item.name} (${item.cost})`;
+      color = (me.gold || 0) >= item.cost ? "#ffec27" : "#c2c3c7";
+    }
+    this.shopText.setText(line).setColor(color);
   }
 
   // The corner kill feed: most recent knockouts on top, colored by the team

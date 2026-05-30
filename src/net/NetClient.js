@@ -63,6 +63,11 @@ export default class NetClient {
     this.conn.send({ t: "class", cls });
   }
 
+  // Spend gold on the next shop upgrade.
+  sendBuy() {
+    this.conn.send({ t: "buy" });
+  }
+
   on(event, cb) {
     if (this._listeners[event]) this._listeners[event].push(cb);
   }

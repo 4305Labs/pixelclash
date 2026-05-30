@@ -126,6 +126,23 @@ buffed bolt's damage. The client draws active orbs (`syncPickups`) and a glow on
 a powered hero (`Player.setPowered`). New `kind`s are easy: add a case to
 `grantPickup` and a texture in `textures.js`.
 
+**Progression (XP / levels / gold)** is tuned in `src/config.js` → `PROGRESS`:
+
+| You want… | Change this | Try |
+|---|---|---|
+| Faster leveling | `PROGRESS.xpPerLevel` | `80` |
+| Bigger per-level HP | `PROGRESS.hpPerLevel` | `30` |
+| Bigger per-level damage | `PROGRESS.dmgPerLevel` | `0.18` |
+| Richer last-hits | `PROGRESS.reward.minion` | `{ xp, gold }` |
+| Cheaper/new shop items | `PROGRESS.shop` | `{ id, name, cost, dmg`\|`hp }` |
+
+Heroes earn from last-hits (the killing bolt's owner is paid in `awardKill`, wired
+through `damage`/`damageMinion`/`damageTower`) plus a passive trickle. `levelOf`,
+`effectiveMaxHp`, and `effectiveDmgMult` fold level + shop buys into the stats
+used by `tryAttack`, respawn, and the snapshot. `tryBuy` spends gold (bots call it
+too); the client shows level/gold/next-item in `ArenaScene.updateShopHud` and `B`
+buys. A fresh level-1 hero with no buys is exactly the base stats.
+
 ---
 
 ## 5. Hero classes (already done ✅)

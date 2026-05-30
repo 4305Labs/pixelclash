@@ -27,6 +27,7 @@ import {
   CLASSES,
   DEFAULT_CLASS,
   KILLFEED,
+  PROGRESS,
 } from "../config.js";
 import { stepPosition, normalizeInput, resolveMove, pointInWall } from "../sim.js";
 
@@ -220,6 +221,7 @@ export default class GameServer {
       this.tryAttack(p, "basic");
       if (!low && Math.random() < 0.03) this.tryAttack(p, "ability");
       if (Math.random() < 0.04) this.tryDash(p);
+      this.tryBuy(p); // spend gold on upgrades as soon as it can afford one
     }
   }
 
@@ -260,7 +262,47 @@ export default class GameServer {
       deadUntil: 0,
       cd: { basic: 0, ability: 0, dash: 0 },
       powerUntil: 0, // attack-damage buff active while timeMs < this
+      xp: 0,
+      gold: 0,
+      buys: 0, // shop upgrades purchased
+      bonusHp: 0, // from shop "Max HP" buys
+      bonusDmg: 0, // from shop "Damage" buys (a multiplier addend)
     };
+  }
+
+  // --- Progression helpers ---------------------------------------------------
+  levelOf(p) {
+    return Math.min(PROGRESS.maxLevel, 1 + Math.floor(p.xp / PROGRESS.xpPerLevel));
+  }
+
+  // A hero's current max HP: class base + per-level growth + shop HP buys.
+  effectiveMaxHp(p) {
+    return CLASSES[p.cls].maxHp + (this.levelOf(p) - 1) * PROGRESS.hpPerLevel + p.bonusHp;
+  }
+
+  // A hero's attack-damage multiplier: per-level growth + shop damage buys.
+  effectiveDmgMult(p) {
+    return 1 + (this.levelOf(p) - 1) * PROGRESS.dmgPerLevel + p.bonusDmg;
+  }
+
+  // Pay a hero for a last hit (minion | hero | tower).
+  awardKill(player, kind) {
+    const r = PROGRESS.reward[kind];
+    if (!r) return;
+    player.xp += r.xp;
+    player.gold += r.gold;
+  }
+
+  // Spend gold on the next shop upgrade (cycles through the list, capped).
+  tryBuy(player) {
+    if (this.phase !== "playing") return;
+    if (player.buys >= PROGRESS.shopMaxStacks) return;
+    const item = PROGRESS.shop[player.buys % PROGRESS.shop.length];
+    if (player.gold < item.cost) return;
+    player.gold -= item.cost;
+    player.bonusHp += item.hp || 0;
+    player.bonusDmg += item.dmg || 0;
+    player.buys++;
   }
 
   removeConnection(id) {
@@ -284,6 +326,8 @@ export default class GameServer {
       this.tryDash(p);
     } else if (msg.t === "class") {
       this.setClass(p, msg.cls);
+    } else if (msg.t === "buy") {
+      this.tryBuy(p);
     }
   }
 
@@ -333,9 +377,10 @@ export default class GameServer {
     ax /= len;
     ay /= len;
 
-    // A power pickup boosts this attack's damage while the buff is active.
+    // Damage scales with the hero's level + shop buys, and a power pickup.
     const powered = this.timeMs < player.powerUntil;
-    const dmg = Math.round(spec.dmg * (powered ? PICKUP.powerMult : 1));
+    const mult = this.effectiveDmgMult(player) * (powered ? PICKUP.powerMult : 1);
+    const dmg = Math.round(spec.dmg * mult);
 
     this.projectiles.push({
       id: "b" + this.nextProjId++,
@@ -513,9 +558,12 @@ export default class GameServer {
     return null;
   }
 
-  damageMinion(m, amount) {
+  damageMinion(m, amount, attacker) {
     m.hp = Math.max(0, m.hp - amount);
-    if (m.hp === 0) m.alive = false;
+    if (m.hp === 0) {
+      m.alive = false;
+      if (attacker && attacker.team !== m.team) this.awardKill(attacker, "minion");
+    }
   }
 
   // --- Defensive towers ------------------------------------------------------
@@ -577,9 +625,12 @@ export default class GameServer {
     return null;
   }
 
-  damageTower(tw, amount) {
+  damageTower(tw, amount, attacker) {
     tw.hp = Math.max(0, tw.hp - amount);
-    if (tw.hp === 0) tw.alive = false; // destroying a tower doesn't end the match
+    if (tw.hp === 0) {
+      tw.alive = false; // destroying a tower doesn't end the match
+      if (attacker && attacker.team !== tw.team) this.awardKill(attacker, "tower");
+    }
   }
 
   step(dt) {
@@ -608,12 +659,14 @@ export default class GameServer {
     // 0) Drive the AI bots (sets their input + fires their attacks).
     this.stepBots();
 
-    // 1) Move players; remember facing for the aim fallback.
+    // 1) Move players; remember facing; trickle in passive XP/gold.
     for (const p of this.players.values()) {
       if (!p.alive) {
         if (this.timeMs >= p.deadUntil) this.respawn(p);
         continue;
       }
+      p.xp += PROGRESS.passiveXpPerSec * dt;
+      p.gold += PROGRESS.passiveGoldPerSec * dt;
       const { dx, dy } = p.input;
       // Remember facing (for aim fallback) when there's real input.
       if (Math.hypot(dx, dy) > 0.01) p.face = normalizeInput(dx, dy);
@@ -640,19 +693,22 @@ export default class GameServer {
       if (this.timeMs >= b.dieAt || offscreen) continue;
       if (pointInWall(b.x, b.y)) continue; // a wall swallows the bolt
 
+      // The owning hero (if any) earns the last-hit reward; tower bolts have a
+      // non-player ownerId, so `owner` is undefined and pays nothing.
+      const owner = this.players.get(b.ownerId);
       const victim = this.hitPlayer(b);
       if (victim) {
-        this.damage(victim, b.dmg, b.team); // credit the firing team for a kill
+        this.damage(victim, b.dmg, b.team, owner); // credit the firing team + hero
         continue;
       }
       const mob = this.hitMinion(b);
       if (mob) {
-        this.damageMinion(mob, b.dmg);
+        this.damageMinion(mob, b.dmg, owner);
         continue;
       }
       const tower = this.hitTower(b);
       if (tower) {
-        this.damageTower(tower, b.dmg);
+        this.damageTower(tower, b.dmg, owner);
         continue;
       }
       const base = this.hitBase(b);
@@ -684,8 +740,8 @@ export default class GameServer {
   }
 
   // `byTeam` (optional) is the team that dealt the blow, used to credit a kill
-  // to the scoreboard when this knocks the player out.
-  damage(player, amount, byTeam) {
+  // to the scoreboard; `attacker` (optional) is the killing hero, paid XP/gold.
+  damage(player, amount, byTeam, attacker) {
     if (!player.alive) return;
     player.hp = Math.max(0, player.hp - amount);
     if (player.hp === 0) {
@@ -702,6 +758,7 @@ export default class GameServer {
         });
         if (this.killFeed.length > 20) this.killFeed.shift(); // keep it bounded
       }
+      if (attacker && attacker.team !== player.team) this.awardKill(attacker, "hero");
     }
   }
 
@@ -730,7 +787,7 @@ export default class GameServer {
 
   grantPickup(player, pk) {
     if (pk.kind === "heal") {
-      player.hp = Math.min(CLASSES[player.cls].maxHp, player.hp + PICKUP.heal);
+      player.hp = Math.min(this.effectiveMaxHp(player), player.hp + PICKUP.heal);
     } else if (pk.kind === "power") {
       player.powerUntil = this.timeMs + PICKUP.powerMs;
     }
@@ -758,7 +815,7 @@ export default class GameServer {
     const spawn = list[p.spawnIndex % list.length];
     p.x = spawn.x;
     p.y = spawn.y;
-    p.hp = CLASSES[p.cls].maxHp;
+    p.hp = this.effectiveMaxHp(p); // respawn with your leveled-up HP
     p.alive = true;
     p.input = { dx: 0, dy: 0 };
   }
@@ -818,7 +875,10 @@ export default class GameServer {
         alive: p.alive,
         cls: p.cls, // hero class (for per-class look)
         bot: !!p.bot, // AI-controlled?
-        maxHp: CLASSES[p.cls].maxHp, // so the client scales the health bar
+        maxHp: this.effectiveMaxHp(p), // class base + level + shop HP buys
+        level: this.levelOf(p),
+        gold: Math.floor(p.gold),
+        buys: p.buys, // shop upgrades bought (so the client knows the next one)
         // Seconds until this player respawns (0 if alive) — for the HUD timer.
         respawnIn: p.alive ? 0 : Math.max(0, Math.ceil((p.deadUntil - this.timeMs) / 1000)),
         powered: this.timeMs < p.powerUntil, // power buff active (for the aura)

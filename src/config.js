@@ -184,6 +184,34 @@ export const TOWER_POS = {
   red: { x: GAME_WIDTH - 250, y: GAME_HEIGHT / 2 },
 };
 
+// --- Progression: XP / levels / gold ----------------------------------------
+// Heroes earn XP and gold by last-hitting minions, towers, and enemy heroes
+// (plus a slow passive trickle). XP auto-levels you up (more max HP and attack
+// damage); gold buys permanent upgrades from a tiny shop (press B). A fresh,
+// level-1 hero with no upgrades is exactly the base stats, so nothing changes
+// until you actually earn something.
+export const PROGRESS = {
+  maxLevel: 6,
+  xpPerLevel: 120, // cumulative XP per level step
+  hpPerLevel: 20, // +max HP per level above 1
+  dmgPerLevel: 0.12, // +12% attack damage per level above 1
+  passiveXpPerSec: 4, // slow trickle so even a passive player grows
+  passiveGoldPerSec: 2,
+  // What last-hitting each thing pays the killer.
+  reward: {
+    minion: { xp: 18, gold: 14 },
+    hero: { xp: 65, gold: 50 },
+    tower: { xp: 80, gold: 60 },
+  },
+  // The shop: cycle through these with gold (press B). Bonuses are permanent
+  // and stack up to `shopMaxStacks` total buys.
+  shop: [
+    { id: "dmg", name: "Damage +15%", cost: 70, dmg: 0.15 },
+    { id: "hp", name: "Max HP +25", cost: 80, hp: 25 },
+  ],
+  shopMaxStacks: 4,
+};
+
 // --- Kill feed --------------------------------------------------------------
 // Recent knockouts shown as a fading list in the corner. `ms` is how long an
 // entry lingers; `max` is how many lines show at once.

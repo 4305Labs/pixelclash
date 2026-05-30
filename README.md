@@ -71,6 +71,7 @@ To stop either server: click its Terminal and press `Ctrl + C`.
 | Dash | `L` or `Shift` | Tap the **C** button |
 | Mute / unmute sound | `M` | Tap **[M] sound** (top-left) |
 | Pick a hero class (in the lobby) | `1` / `2` / `3` | — |
+| Buy a shop upgrade (with gold) | `B` | — |
 
 The first tap or key press dismisses the **"Tap to play"** start gate — this
 also unlocks sound (mobile browsers stay silent until you interact).
@@ -78,6 +79,11 @@ also unlocks sound (mobile browsers stay silent until you interact).
 Attacks **auto-aim** at the nearest enemy — an enemy hero, an enemy **minion**,
 or their base. Reduce the enemy **base** (the diamond crystal) to 0 HP to win.
 After a win, the match auto-resets in 5 seconds.
+
+**Level up & gold:** last-hitting minions, towers, and enemy heroes (plus a slow
+passive trickle) earns **XP** and **gold**. XP levels you up automatically — more
+max HP and attack damage — and gold buys permanent upgrades from a tiny shop
+(press `B`). Your level, gold, and next upgrade show in the bottom-left.
 
 **Hero classes:** in the lobby, press `1`/`2`/`3` to pick your hero — **Scout**
 (fast-firing but fragile), **Soldier** (balanced all-rounder), or **Tank**
