@@ -4,8 +4,16 @@
 > human) can pick this project up cold and keep building safely.
 > **Update this file after every major change** (see *Update protocol* at the end).
 >
-> **Last updated:** commit `9ad2bb0` — "docs: regenerate map screenshot with jungle decor"
+> **Last updated:** commit `fb623db` — "Add HANDOVER.md (living handover doc)"
 > **Status:** all tests green (50 test groups), live two-browser test green, build OK.
+>
+> ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
+> **`claude/pixel-moba-game-WobPa`** (PR #1 → `main`). `main` is the empty root
+> commit and does NOT have the game. First thing on a new machine:
+> ```bash
+> git fetch origin && git checkout claude/pixel-moba-game-WobPa
+> ```
+> Keep developing on this branch unless told otherwise.
 
 ---
 
@@ -158,11 +166,16 @@ Candidate next features (each self-contained):
 - **Per-hero unique abilities** (behaviorally different, not just stat deltas).
 - **Recall/teleport home**; **lifesteal shop item**; **balance pass** via bot-vs-bot.
 
-## 8. Branch / PR
+## 8. Branch / PR — IMPORTANT
 
-- Develop on **`claude/pixel-moba-game-WobPa`**. PR **#1** → `main`.
-- Don't push to other branches without explicit permission.
-- Repo: `4305labs/pixelclash`.
+- **All work is on `claude/pixel-moba-game-WobPa`.** This is the ONLY branch with
+  the game. `main` is just the empty root commit (PR #1 targets it) — never
+  develop on `main`, and don't push to other branches without explicit permission.
+- On any fresh checkout / new tool (e.g. ChatGPT Codex), start with:
+  ```bash
+  git fetch origin && git checkout claude/pixel-moba-game-WobPa
+  ```
+- Repo: `4305labs/pixelclash`. PR: **#1**.
 
 ## 9. Player-facing docs to keep in sync
 
