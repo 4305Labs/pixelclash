@@ -316,22 +316,59 @@ function makePickupTexture(scene, key, kind) {
 // top/left edge (tile grout) and a fixed scatter of slightly lighter/darker
 // specks, so a tiled floor looks like textured ground instead of a flat fill.
 // Deterministic (no randomness), so the render tests stay stable.
-function makeFloorTexture(scene, key, baseColor = COLORS.bg) {
+function makeFloorTexture(scene, key, baseColor = COLORS.bg, style = "stone") {
   const S = 40;
   const g = scene.make.graphics({ x: 0, y: 0 }, false);
   g.fillStyle(baseColor, 1);
   g.fillRect(0, 0, S, S);
-  // Seam lines along two edges read as tile grout.
-  g.fillStyle(shade(baseColor, 1.25), 1);
-  g.fillRect(0, 0, S, 1);
-  g.fillRect(0, 0, 1, S);
-  // A fixed speckle pattern: light flecks and dark pits at set cells.
   const light = shade(baseColor, 1.35);
   const dark = shade(baseColor, 0.7);
+
+  if (style === "moss") {
+    // Jungle ground: scattered moss tufts (lighter green clumps) and a few
+    // darker soil pits, so the off-lane floor reads as living undergrowth.
+    const tuft = shade(baseColor, 1.5);
+    const tips = shade(baseColor, 1.9);
+    const soil = shade(baseColor, 0.6);
+    // Each tuft: a 3×2 clump with a brighter top edge (light hits from above).
+    const tufts = [
+      [5, 7], [17, 4], [30, 9], [9, 19], [24, 22], [34, 28], [13, 31], [3, 27],
+      [27, 34], [20, 14],
+    ];
+    for (const [x, y] of tufts) {
+      g.fillStyle(tuft, 1);
+      g.fillRect(x, y, 3, 2);
+      g.fillStyle(tips, 1);
+      g.fillRect(x, y, 3, 1);
+    }
+    // Bare soil pits between the tufts.
+    for (const [x, y] of [[12, 12], [33, 16], [7, 35], [23, 6]]) {
+      g.fillStyle(soil, 1);
+      g.fillRect(x, y, 2, 2);
+    }
+    g.generateTexture(key, S, S);
+    g.destroy();
+    return;
+  }
+
+  // Stone road: a cobble grid (four big blocks) with dark grout seams, a lit
+  // top edge per block for relief, plus a hairline crack and a few pits.
+  const seam = shade(baseColor, 0.55);
+  g.fillStyle(seam, 1);
+  g.fillRect(0, 19, S, 2); // horizontal grout
+  g.fillRect(19, 0, 2, S); // vertical grout
+  g.fillStyle(shade(baseColor, 1.2), 1); // lit top edge of each cobble row
+  g.fillRect(0, 0, S, 1);
+  g.fillRect(0, 21, S, 1);
+  // A hairline crack across the lower-left cobble.
+  g.fillStyle(dark, 1);
+  for (const [x, y] of [[4, 26], [5, 27], [6, 28], [7, 28], [8, 29], [9, 30]]) {
+    g.fillRect(x, y, 1, 1);
+  }
+  // Sparse pits and flecks give the stone grain.
   const flecks = [
-    [6, 9, light], [13, 5, dark], [22, 14, light], [31, 8, dark],
-    [9, 24, dark], [18, 30, light], [27, 26, dark], [35, 33, light],
-    [4, 34, light], [33, 18, dark],
+    [6, 9, light], [13, 5, dark], [27, 8, dark], [33, 12, light],
+    [26, 27, dark], [34, 31, light], [12, 33, light], [30, 35, dark],
   ];
   for (const [x, y, c] of flecks) {
     g.fillStyle(c, 1);
@@ -401,8 +438,8 @@ function makeDecorTexture(scene, key, kind) {
 
 // Called once when the arena starts. Creates every texture the game needs.
 export function generateTextures(scene) {
-  makeFloorTexture(scene, "floor");
-  makeFloorTexture(scene, "floor_jungle", COLORS.jungle);
+  makeFloorTexture(scene, "floor", COLORS.bg, "stone");
+  makeFloorTexture(scene, "floor_jungle", COLORS.jungle, "moss");
   makeWallTexture(scene, "wall");
   // One hero sprite per class × team, keyed "hero_<cls>_<team>". Plus the legacy
   // "player_<team>" keys (= soldier) so anything not class-aware still works.
