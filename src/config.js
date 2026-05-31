@@ -46,6 +46,20 @@ export const DECOR_SPOTS = [
   { kind: "bush", x: 330, y: 425 }, { kind: "rock", x: 470, y: 425 },
 ];
 
+// --- Bushes (stealth zones) -------------------------------------------------
+// Leafy patches you can stand IN to go hidden: while a hero is inside a bush it
+// can't be seen or targeted by enemies (towers/minions/bots/camps/auto-aim and
+// enemy heroes), UNLESS it just attacked (a brief reveal) or an enemy shares the
+// bush. Great for ambushing at the jungle camps. Rectangles (top-left + w/h),
+// rotationally symmetric. `BUSH.revealMs` is how long attacking reveals you.
+export const BUSH = { revealMs: 1200 };
+export const BUSH_ZONES = [
+  { x: 150, y: 150, w: 110, h: 70 }, // top-left jungle (by camp_top)
+  { x: 540, y: 150, w: 110, h: 70 }, // top-right jungle
+  { x: 150, y: GAME_HEIGHT - 220, w: 110, h: 70 }, // bottom-left
+  { x: 540, y: GAME_HEIGHT - 220, w: 110, h: 70 }, // bottom-right (by camp_bot)
+];
+
 // How fast a player moves, in pixels per second.
 export const PLAYER_SPEED = 220;
 

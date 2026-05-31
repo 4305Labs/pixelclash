@@ -20,6 +20,7 @@ import {
   PROGRESS,
   LANE_BAND,
   DECOR_SPOTS,
+  BUSH_ZONES,
 } from "../config.js";
 import { generateTextures } from "../textures.js";
 import { stepPosition } from "../sim.js";
@@ -710,6 +711,11 @@ export default class ArenaScene extends Phaser.Scene {
       sprite.setHp(p.hp, p.maxHp);
       sprite.setAlive(p.alive);
       sprite.setPowered(p.powered);
+      // Stealth: a hero standing in a bush. Fade OUR own hidden hero (so we know
+      // we're stealthed) but FULLY hide a hidden enemy (the honest client
+      // respects the bush). `hidden` is a global flag, so the local id decides
+      // which treatment to apply.
+      sprite.setHidden(p.hidden, p.id === this.net.localId);
       // Procedural bob/walk/attack animation (movement is read from the sprite's
       // own travel since last frame, so it works for predicted + interpolated).
       if (p.alive) sprite.animate(dt);
@@ -947,6 +953,14 @@ export default class ArenaScene extends Phaser.Scene {
   drawDecor() {
     this.decor = DECOR_SPOTS.map((d) =>
       this.add.image(d.x, d.y, d.kind === "rock" ? "decor_rock" : "decor_bush").setDepth(-7)
+    );
+    // Bush stealth zones: translucent leafy patches drawn ABOVE units (depth
+    // 100) so a hero standing in one is partly obscured by the foliage.
+    this.bushZones = BUSH_ZONES.map((z) =>
+      this.add
+        .rectangle(z.x, z.y, z.w, z.h, 0x2a8a3a, 0.42)
+        .setOrigin(0, 0)
+        .setDepth(100)
     );
   }
 

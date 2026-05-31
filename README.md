@@ -122,6 +122,11 @@ fight at the front at the same time.
 who get close, but clear it and you bag **gold + XP and a short attack-damage
 buff** — a real reason to leave the lane. Camps respawn on a timer.
 
+**Bushes (stealth):** stand in a leafy bush patch to go **hidden** — enemies
+(and their towers, minions, and the camps) can't see or target you. Attacking
+briefly reveals you, and an enemy stepping into your bush spots you. Bushes sit
+right by the jungle camps, so they're perfect for an ambush.
+
 **Scoreboard, clock & respawns:** a team kill scoreboard and a match clock sit at
 the top of the screen, recent knockouts scroll by in a corner kill feed, and when
 you're knocked out a "Respawning in N…" countdown tells you how long until you're

@@ -162,4 +162,18 @@ export default class Player extends Phaser.GameObjects.Container {
       this.bodySprite.setAlpha(1);
     }
   }
+
+  // Stealth in a bush. `isLocal` = this is our own hero: fade it so we know we're
+  // hidden but keep it visible. Otherwise it's a hidden enemy: hide it entirely.
+  // Call AFTER setAlive (which resets alpha each living frame). No-op when not
+  // hidden so normal rendering resumes.
+  setHidden(hidden, isLocal) {
+    if (hidden) {
+      this.setVisible(true);
+      if (isLocal) this.bodySprite.setAlpha(0.4);
+      else this.setVisible(false); // a hidden enemy isn't drawn at all
+    } else {
+      this.setVisible(true);
+    }
+  }
 }

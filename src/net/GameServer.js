@@ -26,6 +26,8 @@ import {
   PICKUP_SPOTS,
   CAMP,
   CAMP_SPOTS,
+  BUSH,
+  BUSH_ZONES,
   CLASSES,
   DEFAULT_CLASS,
   KILLFEED,
@@ -278,6 +280,7 @@ export default class GameServer {
       deadUntil: 0,
       cd: { basic: 0, ability: 0, dash: 0 },
       powerUntil: 0, // attack-damage buff active while timeMs < this
+      revealUntil: 0, // briefly visible (even in a bush) after attacking
       xp: 0,
       gold: 0,
       buys: 0, // shop upgrades purchased
@@ -285,6 +288,30 @@ export default class GameServer {
       bonusDmg: 0, // from shop "Damage" buys (a multiplier addend)
       bonusCdr: 0, // from shop "Atk Speed" buys (cooldown reduction)
     };
+  }
+
+  // --- Bush / stealth helpers ------------------------------------------------
+
+  // Is the point (x,y) inside any bush zone?
+  static inAnyBush(x, y) {
+    for (const z of BUSH_ZONES) {
+      if (x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h) return true;
+    }
+    return false;
+  }
+
+  // Is `p` currently HIDDEN (can't be seen/targeted by enemies)? True when the
+  // hero is alive, standing in a bush, NOT recently revealed by attacking, and
+  // no ENEMY hero shares a bush nearby (enemies in your bush spot you).
+  isHidden(p) {
+    if (!p.alive) return false;
+    if (!GameServer.inAnyBush(p.x, p.y)) return false;
+    if (this.timeMs < p.revealUntil) return false;
+    for (const o of this.players.values()) {
+      if (o.team === p.team || !o.alive) continue;
+      if (GameServer.inAnyBush(o.x, o.y)) return false; // an enemy is in the brush too
+    }
+    return true;
   }
 
   // --- Progression helpers ---------------------------------------------------
@@ -393,6 +420,7 @@ export default class GameServer {
     const spec = CLASSES[player.cls][kind]; // per-class attack stats
     if (this.timeMs < player.cd[kind]) return; // cooling down
     player.cd[kind] = this.timeMs + spec.cd * this.effectiveCdMult(player);
+    player.revealUntil = this.timeMs + BUSH.revealMs; // attacking reveals you
 
     // Aim at the nearest enemy target (a living enemy player OR the enemy base).
     const target = this.nearestTarget(player) || {
@@ -436,7 +464,7 @@ export default class GameServer {
       }
     };
     for (const o of this.players.values()) {
-      if (o.team !== player.team && o.alive) consider(o.x, o.y);
+      if (o.team !== player.team && o.alive && !this.isHidden(o)) consider(o.x, o.y);
     }
     for (const m of this.minions) {
       if (m.team !== player.team && m.alive) consider(m.x, m.y);
@@ -544,7 +572,8 @@ export default class GameServer {
       if (o.team !== m.team && o.alive) consider(o.x, o.y, () => this.damageMinion(o, MINION.dmg));
     }
     for (const p of this.players.values()) {
-      if (p.team !== m.team && p.alive) consider(p.x, p.y, () => this.damage(p, MINION.dmg, m.team));
+      if (p.team !== m.team && p.alive && !this.isHidden(p))
+        consider(p.x, p.y, () => this.damage(p, MINION.dmg, m.team));
     }
     for (const tw of this.towers.values()) {
       if (tw.team !== m.team && tw.alive) consider(tw.x, tw.y, () => this.damageTower(tw, MINION.dmg));
@@ -639,7 +668,7 @@ export default class GameServer {
       }
     };
     for (const p of this.players.values()) {
-      if (p.team !== src.team && p.alive) consider(p.x, p.y);
+      if (p.team !== src.team && p.alive && !this.isHidden(p)) consider(p.x, p.y);
     }
     for (const mob of this.minions) {
       if (mob.team !== src.team && mob.alive) consider(mob.x, mob.y);
@@ -772,6 +801,7 @@ export default class GameServer {
     const reach = COMBAT.hitPad + PLAYER_HALF;
     for (const p of this.players.values()) {
       if (p.team === b.team || !p.alive) continue;
+      if (this.isHidden(p)) continue; // a hidden hero can't be hit by enemy bolts
       if ((p.x - b.x) ** 2 + (p.y - b.y) ** 2 <= reach * reach) return p;
     }
     return null;
@@ -866,7 +896,7 @@ export default class GameServer {
       let victim = null;
       let bestD = r2;
       for (const p of this.players.values()) {
-        if (!p.alive) continue;
+        if (!p.alive || this.isHidden(p)) continue; // can't bite a hidden hero
         const d = (p.x - c.x) ** 2 + (p.y - c.y) ** 2;
         if (d <= bestD) {
           bestD = d;
@@ -1001,6 +1031,7 @@ export default class GameServer {
         // Seconds until this player respawns (0 if alive) — for the HUD timer.
         respawnIn: p.alive ? 0 : Math.max(0, Math.ceil((p.deadUntil - this.timeMs) / 1000)),
         powered: this.timeMs < p.powerUntil, // power buff active (for the aura)
+        hidden: this.isHidden(p), // in a bush, unseen by enemies (client hides it)
       })),
       projectiles: this.projectiles.map((b) => ({
         id: b.id,

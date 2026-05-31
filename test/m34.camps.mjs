@@ -42,8 +42,11 @@ try {
   p2.x = 680; p2.y = 300;
 
   // --- A camp bites a hero standing in range --------------------------------
+  // The camp sits in a bush, so a hero is hidden there until they reveal (e.g.
+  // by attacking the camp). Reveal p1 so we test the bite, not the stealth.
   p1.x = camp.x; p1.y = camp.y; // stand on the camp
   p1.hp = 100;
+  p1.revealUntil = server.timeMs + 9999;
   server.step(DT);
   assert(p1.hp === 100 - CAMP.dmg, "a camp bites a hero in range");
   assert(camp.cd > server.timeMs, "the camp goes on its bite cooldown");

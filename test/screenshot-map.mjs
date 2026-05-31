@@ -11,7 +11,7 @@ await page.evaluate(() => {
     players: [
       { id: "p1", team: "blue", x: 360, y: 300, hp: 100, alive: true },
       { id: "p2", team: "red", x: 470, y: 240, hp: 100, alive: true },
-      { id: "p3", team: "blue", x: 250, y: 200, hp: 70, alive: true },
+      { id: "p3", team: "blue", x: 205, y: 185, hp: 70, alive: true }, // lurking in the top-left bush
     ],
     projectiles: [{ id: "b1", team: "blue", kind: "basic", x: 430, y: 270 }],
     camps: [

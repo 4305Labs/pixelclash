@@ -58,6 +58,8 @@ const tests = [
   "./m33.terrain.render.mjs",
   "./m34.camps.mjs",
   "./m34.camps.render.mjs",
+  "./m35.bush.mjs",
+  "./m35.bush.render.mjs",
 ];
 
 let failed = false;

@@ -85,7 +85,7 @@ Current top-level fields: `t, tick, phase, winner, score, killFeed, needed,
 countdown, timeLeft, players[], projectiles[], minions[], pickups[], camps[],
 towers[], bases[]`.
 Per-player: `id, team, x, y, hp, maxHp, alive, cls, bot, level, gold, buys,
-respawnIn, powered`. Per-base adds `shielded`.
+respawnIn, powered, hidden`. Per-base adds `shielded`.
 
 ## 4. Feature map (where to look)
 
@@ -99,6 +99,7 @@ respawnIn, powered`. Per-base adds `shielded`.
 | Map pickups + power buff | `stepPickups`, `grantPickup` | `syncPickups` | `PICKUP`, `PICKUP_SPOTS` |
 | Healing fountain | `stepFountains` | `Base` fountain ring | `BASE.heal*` |
 | Jungle camps (neutral) | `stepCamps`, `damageCamp`, `hitCamp` | `syncCamps`, `Camp` | `CAMP`, `CAMP_SPOTS` |
+| Bush stealth | `isHidden` gates all enemy targeting | `Player.setHidden`, `drawDecor` zones | `BUSH`, `BUSH_ZONES` |
 | Hero classes (×6) | per-class in `freshPlayer`/`tryAttack`/respawn | `Player.setClass`, lobby picker | `CLASSES`, `CLASS_ORDER` |
 | Progression (XP/gold/shop) | `awardKill`, `levelOf`, `effective*`, `tryBuy` | `updateShopHud`, level badges | `PROGRESS` |
 | Match lifecycle + timer | `evaluateLobby`, `beginPlaying`, `endByTimeout` | `updateLobby`, `updateGameOver` | `MATCH` |

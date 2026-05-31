@@ -137,6 +137,16 @@ hurts a camp; the killing hero gets gold/xp + a power buff). Drawn by
 pillars (x≈392–408) and cover blocks, or bolts get absorbed by the wall before
 reaching the camp.
 
+**Bushes (stealth)** are `BUSH_ZONES` rectangles + `BUSH.revealMs` in config. A
+hero inside a bush is hidden — `GameServer.isHidden(p)` gates every enemy
+targeting path (`hitPlayer`, `nearestTarget`, `nearestEnemyUnit`, `minionTarget`,
+camp bites) — unless it attacked within `revealMs` or an enemy shares a bush.
+The snapshot adds a per-player `hidden`; the client draws translucent zones
+(`drawDecor`) and fades the local hidden hero / fully hides a hidden enemy
+(`Player.setHidden`). ⚠️ Known limitation: `hidden` is a global flag, so a
+hidden enemy's position still reaches every client (an honest client hides it);
+true fog-of-war would need per-recipient snapshots.
+
 **Progression (XP / levels / gold)** is tuned in `src/config.js` → `PROGRESS`:
 
 | You want… | Change this | Try |
