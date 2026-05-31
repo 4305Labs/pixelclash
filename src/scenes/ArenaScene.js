@@ -945,6 +945,20 @@ export default class ArenaScene extends Phaser.Scene {
         .setOrigin(0, 0)
         .setDepth(-9)
     );
+    // A stone "courtyard" at each base spanning all three lanes, so the lanes
+    // visibly fan out FROM the nexus instead of being detached parallel strips.
+    // It runs from each edge out to roughly the lane-entry x, top lane to bottom.
+    const rows = LANES.map((l) => l.row);
+    const yTop = Math.min(...rows) - LANE_BAND_HALF;
+    const yBot = Math.max(...rows) + LANE_BAND_HALF;
+    const courtW = 175; // ~ lane-entry x; covers base + the fan-out
+    this.baseCourts = [
+      this.add.tileSprite(0, yTop, courtW, yBot - yTop, "floor").setOrigin(0, 0).setDepth(-9),
+      this.add
+        .tileSprite(GAME_WIDTH - courtW, yTop, courtW, yBot - yTop, "floor")
+        .setOrigin(0, 0)
+        .setDepth(-9),
+    ];
   }
 
   // Scatter non-colliding decor (bushes/rocks) on the jungle floor. Above the

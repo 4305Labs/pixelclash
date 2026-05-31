@@ -279,14 +279,19 @@ export const TOWER = {
 };
 
 // Three horizontal lanes: top, mid, bottom. Each is a row (y) that minions
-// march along and a tower guards. (Increment A wires the towers; the per-lane
-// minion waves arrive in Increment B.) Rows verified clear of the walls so a
+// march along and a tower guards. Rows verified clear of the walls so a
 // tower/minion at (towerX, row) isn't stuck in a wall.
 export const LANES = [
   { id: "top", row: 110 },
   { id: "mid", row: GAME_HEIGHT / 2 }, // 300
   { id: "bot", row: GAME_HEIGHT - 110 }, // 490
 ];
+
+// Minions spawn at the nexus (base row, y=300) and first walk OUT to their
+// lane's entry — a point just inside the map on that lane's row — before
+// marching across it. This is what makes the lanes fan out from each base.
+// `LANE_ENTRY_X` is how far in from each team's edge the entry sits.
+export const LANE_ENTRY_X = 120;
 
 // Each team's towers sit at this x (mirrored), one per lane on the lane row.
 export const TOWER_X = { blue: 250, red: GAME_WIDTH - 250 };

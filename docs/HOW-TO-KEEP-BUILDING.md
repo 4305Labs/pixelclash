@@ -78,9 +78,13 @@ about them lives in `src/config.js` → `MINION`:
 | Faster minions | `speed` | `130` |
 
 The brain is `GameServer.stepMinions()` (spawning, target choice, and melee);
-`spawnWave()` places each wave just in front of its base, staggered across the
-open center lane. Minions reuse the same wall-sliding movement (`resolveMove`)
-as players, and are drawn by `src/entities/Minion.js`.
+`spawnWave()` spawns a column per lane AT the nexus (base row), each with a
+`waypoint` out to its lane's entry (`LANE_ENTRY_X` in from the edge, on the lane
+row). `stepMinions` walks a minion to its waypoint first (no combat), clears it,
+then it marches/fights down the lane — so the three lanes **fan out from each
+base**. Minions reuse the wall-sliding movement (`resolveMove`) and are drawn by
+`src/entities/Minion.js`. The stone "courtyard" at each base (in
+`ArenaScene.drawGrid`) is the matching visual that links the lanes to the nexus.
 
 > Minions only spawn during a live match (after the countdown), so the lobby
 > stays calm. If you want lane creeps to feel central, raise `perWave` and lower

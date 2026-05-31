@@ -23,6 +23,7 @@ import {
   TOWER,
   TOWER_X,
   LANES,
+  LANE_ENTRY_X,
   PICKUP,
   PICKUP_SPOTS,
   CAMP,
@@ -524,16 +525,20 @@ export default class GameServer {
       const base = this.bases.get(team);
       if (!base || !base.alive) continue;
       const dir = team === "blue" ? 1 : -1; // blue pushes right, red pushes left
-      // A small column of minions in EACH lane, marching along that lane's row.
+      const entryX = team === "blue" ? LANE_ENTRY_X : GAME_WIDTH - LANE_ENTRY_X;
+      // A small column of minions per lane. They spawn AT the nexus (base row)
+      // and first walk out to their lane's entry waypoint, so the lanes fan out
+      // from the base instead of being parallel strips.
       for (const ln of LANES) {
         for (let i = 0; i < MINION.perWave; i++) {
           this.minions.push({
             id: "m" + this.nextMinionId++,
             team,
             lane: ln.id,
-            x: base.x + dir * (MINION.spawnAhead + i * 14), // staggered behind each other
-            y: ln.row,
-            laneY: ln.row, // the row this minion tries to hold while marching
+            x: base.x + dir * (MINION.spawnAhead + i * 14), // staggered, by the base
+            y: base.y, // start on the nexus row
+            laneY: ln.row, // the row to hold once on the lane
+            waypoint: { x: entryX, y: ln.row }, // walk here first, then march across
             hp: MINION.maxHp,
             alive: true,
             cd: 0,
@@ -550,6 +555,16 @@ export default class GameServer {
     }
     for (const m of this.minions) {
       if (!m.alive) continue;
+      // While walking out to the lane entry, just head there (no combat) — clear
+      // the waypoint once reached so it then marches/fights normally.
+      if (m.waypoint) {
+        if (Math.hypot(m.waypoint.x - m.x, m.waypoint.y - m.y) <= 16) {
+          m.waypoint = null;
+        } else {
+          this.moveMinion(m, m.waypoint.x, m.waypoint.y, dt);
+          continue;
+        }
+      }
       const target = this.minionTarget(m);
       if (!target) continue;
       const dist = Math.hypot(target.x - m.x, target.y - m.y);

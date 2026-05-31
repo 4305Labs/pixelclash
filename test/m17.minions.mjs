@@ -54,6 +54,25 @@ try {
       `blue has a ${ln.id}-lane column`
     );
   }
+  // Minions spawn at the NEXUS (base row) and head to a lane-entry waypoint, so
+  // the lanes fan out from the base rather than starting as parallel strips.
+  // (They've already taken one step toward the waypoint, so allow a little
+  // y-drift off the exact nexus row.)
+  assert(
+    server.minions.every((m) => Math.abs(m.y - server.bases.get(m.team).y) <= MINION.speed * DT + 1),
+    "minions spawn on (and start from) the nexus row"
+  );
+  // The side-lane minions still have a waypoint to their lane row (the mid-lane
+  // ones spawn already on the nexus row, so they may have cleared theirs).
+  for (const lane of ["top", "bot"]) {
+    const row = LANES.find((l) => l.id === lane).row;
+    assert(
+      server.minions
+        .filter((m) => m.lane === lane)
+        .every((m) => m.waypoint && m.waypoint.y === row),
+      `${lane}-lane minions have a waypoint out to their lane row`
+    );
+  }
   // They appear just in front of their base, on the side facing the enemy.
   // (Staggered behind each other, and they take their first step on the spawn
   // tick, so allow slack for the column depth.)
