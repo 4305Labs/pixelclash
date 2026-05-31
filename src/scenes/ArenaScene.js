@@ -959,6 +959,31 @@ export default class ArenaScene extends Phaser.Scene {
         .setOrigin(0, 0)
         .setDepth(-9),
     ];
+
+    // A faint team tint over each base courtyard, so each end reads as that
+    // team's territory (blue on the left, red on the right).
+    this.add
+      .rectangle(0, yTop, courtW, yBot - yTop, COLORS.blueTeam, 0.12)
+      .setOrigin(0, 0)
+      .setDepth(-8);
+    this.add
+      .rectangle(GAME_WIDTH - courtW, yTop, courtW, yBot - yTop, COLORS.redTeam, 0.12)
+      .setOrigin(0, 0)
+      .setDepth(-8);
+
+    // Curbs: a darker edge line along the top and bottom of each lane band, so
+    // the lanes read as deliberate paved roads, not just lighter floor.
+    this.laneCurbs = [];
+    for (const ln of LANES) {
+      for (const edgeY of [ln.row - LANE_BAND_HALF, ln.row + LANE_BAND_HALF - 2]) {
+        this.laneCurbs.push(
+          this.add
+            .rectangle(0, edgeY, GAME_WIDTH, 2, COLORS.wallEdge, 0.85)
+            .setOrigin(0, 0)
+            .setDepth(-8)
+        );
+      }
+    }
   }
 
   // Scatter non-colliding decor (bushes/rocks) on the jungle floor. Above the
