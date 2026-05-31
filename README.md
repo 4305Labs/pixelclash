@@ -97,17 +97,17 @@ six heroes, each with its own sprite, health, and attack profile:
 
 You can change pick until the match starts.
 
-**Lane minions:** once a match starts, both sides periodically send out a small
-wave of AI minions that march down the middle toward the enemy base, fighting
-whatever they meet. They're weak on their own, but they soak up fire and chip
-the base — push alongside your wave to break through.
+**Three lanes:** the arena has **top, mid, and bottom** lanes. Once a match
+starts, both sides send a wave of AI minions down **every lane**, marching toward
+the enemy base and fighting whatever they meet. They're weak alone, but they soak
+fire and chip the base — push a lane alongside your wave to break through.
 
-**Guard towers:** each team has one defensive tower standing in the lane between
-its base and the center. A tower auto-zaps the nearest enemy in range (orange
-bolts), so diving in alone is dangerous — let your minions soak the tower while
-you whittle it down. **A base is shielded (a glowing ring) and can't be touched
-until its own tower is destroyed**, so the tower is the gate to victory: break
-the tower, then raze the exposed base to win.
+**Guard towers:** each team has a defensive tower on **every lane** (six in
+total) between its base and the center. A tower auto-zaps the nearest enemy in
+range (orange bolts), so diving in alone is dangerous — let your minions soak the
+tower while you whittle it down. **A base is shielded (a glowing ring) and can't
+be touched until ALL of its towers are destroyed**, so the towers are the gate to
+victory: break a team's towers, then raze the exposed base to win.
 
 **Map pickups:** orbs sit at fixed spots down the center of the arena (fair to
 both teams, but contested). Grab a green **heal** orb to restore HP, or an

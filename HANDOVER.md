@@ -94,8 +94,9 @@ respawnIn, powered, hidden`. Per-base adds `shielded`.
 | Movement/prediction | `step()` move loop | `predictLocal`, `sim.js` | `PLAYER_SPEED` |
 | Combat (basic/ability/dash) | `tryAttack`, `tryDash` | `doAction` | `COMBAT`, `DASH` |
 | Bases + win/shield | `damageBase`, `baseVulnerable` | `Base` (shield ring) | `BASE`, `BASE_POS` |
-| Lane minions | `stepMinions`, `spawnWave`, `moveMinion` | `syncMinions`, `Minion` | `MINION` |
-| Guard towers | `stepTowers`, `nearestEnemyUnit` | `syncTowers`, `Tower` | `TOWER`, `TOWER_POS` |
+| 3 lanes (top/mid/bot) | per-lane in `spawnWave`/`resetTowers` | lane geometry | `LANES`, `TOWER_X` |
+| Lane minions (per lane) | `stepMinions`, `spawnWave`, `moveMinion` | `syncMinions`, `Minion` | `MINION` |
+| Guard towers (6, array) | `stepTowers`, `nearestEnemyUnit`, `baseVulnerable` (all towers) | `syncTowers` (team+lane key), `Tower` | `TOWER`, `TOWER_X` |
 | Map pickups + power buff | `stepPickups`, `grantPickup` | `syncPickups` | `PICKUP`, `PICKUP_SPOTS` |
 | Healing fountain | `stepFountains` | `Base` fountain ring | `BASE.heal*` |
 | Jungle camps (neutral) | `stepCamps`, `damageCamp`, `hitCamp` | `syncCamps`, `Camp` | `CAMP`, `CAMP_SPOTS` |
@@ -129,9 +130,17 @@ respawnIn, powered, hidden`. Per-base adds `shielded`.
 - **Texture dimensions are load-bearing**: bases/towers/pickups size from config
   radii and feed hit detection. Keep a sprite's texture the same size when
   reskinning, or update the matching radius.
-- **Map invariants**: keep the center lane (y≈238–364) clear so minions march;
-  `WALLS[0]/[1]` are the central pillars that `m13.walls` and the minion corridor
-  depend on; `LANE_BAND` must match the divider walls; decor stays off-lane.
+- **Map invariants**: each `LANES` row (top=110, mid=300, bot=490) must stay
+  clear of walls full-width so minions march it (verify with a wall-overlap
+  script before moving a row). `WALLS[0]/[1]` are the two central pillars (now
+  shortened to sit BETWEEN the lanes) — `m13.walls` reads `WALLS[0]` and shoots
+  at its computed mid-row, so keep it a pillar at x≈392. `TOWER_X` spots and
+  `BUSH_ZONES` must stay wall-free; `LANE_BAND` (the jungle-floor band) is purely
+  cosmetic and independent of `LANES`.
+- **Towers are an ARRAY** `[{team,lane,...}]` (not a Map) — 3 per team. Use
+  `find(t=>t.team===x && t.lane===y)`, not `.get(team)`. `baseVulnerable(team)`
+  is true only when ALL of a team's towers are dead. Client keys tower sprites
+  by `team_lane`.
 
 ### Gotchas that have bitten us
 - Several systems are **armed only by `beginPlaying()`** (minion `nextWaveAt`,

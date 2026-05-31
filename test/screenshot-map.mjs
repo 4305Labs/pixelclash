@@ -14,6 +14,15 @@ await page.evaluate(() => {
       { id: "p3", team: "blue", x: 205, y: 185, hp: 70, alive: true }, // lurking in the top-left bush
     ],
     projectiles: [{ id: "b1", team: "blue", kind: "basic", x: 430, y: 270 }],
+    minions: [
+      // A few minions advancing in each lane (blue pushing right).
+      { id: "mt1", team: "blue", x: 330, y: 110, hp: 40, alive: true },
+      { id: "mt2", team: "red", x: 470, y: 110, hp: 32, alive: true },
+      { id: "mm1", team: "blue", x: 340, y: 300, hp: 40, alive: true },
+      { id: "mm2", team: "red", x: 460, y: 300, hp: 24, alive: true },
+      { id: "mb1", team: "blue", x: 330, y: 490, hp: 40, alive: true },
+      { id: "mb2", team: "red", x: 470, y: 490, hp: 40, alive: true },
+    ],
     camps: [
       { id: "camp_top", x: 200, y: 185, hp: 120, maxHp: 120, alive: true },
       { id: "camp_bot", x: 600, y: 415, hp: 78, maxHp: 120, alive: true },

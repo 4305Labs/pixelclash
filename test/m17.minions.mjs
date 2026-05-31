@@ -5,7 +5,7 @@
 import GameServer from "../src/net/GameServer.js";
 import NetClient from "../src/net/NetClient.js";
 import { createLocalPair } from "../src/net/LocalConnection.js";
-import { MINION, BASE, COMBAT } from "../src/config.js";
+import { MINION, BASE, COMBAT, LANES } from "../src/config.js";
 import { assert } from "./helpers.mjs";
 
 const DT = 1 / 30;
@@ -39,19 +39,30 @@ try {
   assert(server.minions.length === 0, "no minions before the first wave is due");
   server.timeMs = server.nextWaveAt;
   server.step(DT);
-  assert(server.minions.length === MINION.perWave * 2, "first wave: perWave minions per team");
+  // A wave spawns perWave minions per LANE per team (3 lanes).
+  const perTeam = MINION.perWave * LANES.length;
+  assert(server.minions.length === perTeam * 2, "first wave: perWave minions per lane per team");
   assert(
-    server.minions.filter((m) => m.team === "blue").length === MINION.perWave &&
-      server.minions.filter((m) => m.team === "red").length === MINION.perWave,
+    server.minions.filter((m) => m.team === "blue").length === perTeam &&
+      server.minions.filter((m) => m.team === "red").length === perTeam,
     "the wave is split evenly between the teams"
   );
+  // Each lane has its own column of minions.
+  for (const ln of LANES) {
+    assert(
+      server.minions.filter((m) => m.team === "blue" && m.lane === ln.id).length === MINION.perWave,
+      `blue has a ${ln.id}-lane column`
+    );
+  }
   // They appear just in front of their base, on the side facing the enemy.
-  // (They also take their first step on the spawn tick, so allow a little slack.)
+  // (Staggered behind each other, and they take their first step on the spawn
+  // tick, so allow slack for the column depth.)
+  const aheadMax = MINION.spawnAhead + (MINION.perWave - 1) * 14 + 8;
   assert(
     server.minions.every((m) => {
       const b = server.bases.get(m.team);
       const ahead = m.team === "blue" ? m.x - b.x : b.x - m.x;
-      return ahead > 0 && ahead <= MINION.spawnAhead + 5;
+      return ahead > 0 && ahead <= aheadMax;
     }),
     "minions appear just in front of their own base"
   );

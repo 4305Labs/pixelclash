@@ -520,24 +520,25 @@ export default class GameServer {
   // Spawn one wave for each team, just in front of its base, staggered across
   // the open center lane so they march through the gap between the pillars.
   spawnWave() {
-    const cy = GAME_HEIGHT / 2;
     for (const team of ["blue", "red"]) {
       const base = this.bases.get(team);
       if (!base || !base.alive) continue;
       const dir = team === "blue" ? 1 : -1; // blue pushes right, red pushes left
-      const startX = base.x + dir * MINION.spawnAhead;
-      for (let i = 0; i < MINION.perWave; i++) {
-        const laneY = cy + (i - (MINION.perWave - 1) / 2) * MINION.laneGap;
-        this.minions.push({
-          id: "m" + this.nextMinionId++,
-          team,
-          x: startX,
-          y: laneY,
-          laneY,
-          hp: MINION.maxHp,
-          alive: true,
-          cd: 0,
-        });
+      // A small column of minions in EACH lane, marching along that lane's row.
+      for (const ln of LANES) {
+        for (let i = 0; i < MINION.perWave; i++) {
+          this.minions.push({
+            id: "m" + this.nextMinionId++,
+            team,
+            lane: ln.id,
+            x: base.x + dir * (MINION.spawnAhead + i * 14), // staggered behind each other
+            y: ln.row,
+            laneY: ln.row, // the row this minion tries to hold while marching
+            hp: MINION.maxHp,
+            alive: true,
+            cd: 0,
+          });
+        }
       }
     }
   }

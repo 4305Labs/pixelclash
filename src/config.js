@@ -348,9 +348,11 @@ export const KILLFEED = { ms: 6000, max: 5 };
 // the lane and the jungle. Keep WALLS[0]/[1] as the central pillars (the wall
 // tests and the minion center-corridor depend on them).
 export const WALLS = [
-  // Two central pillars on the mid-line, with a gap between them (the lane).
-  { x: 392, y: 80, w: 16, h: 150 }, // WALLS[0] — top pillar
-  { x: 392, y: 370, w: 16, h: 150 }, // WALLS[1] — bottom pillar
+  // Two central pillars flanking the mid lane's gap. Shortened so they sit
+  // BETWEEN the lane rows (top=110, mid=300, bot=490) and don't block the side
+  // lanes — they only choke the mid lane's edges.
+  { x: 392, y: 145, w: 16, h: 90 }, // WALLS[0] — upper pillar (between top & mid)
+  { x: 392, y: 365, w: 16, h: 90 }, // WALLS[1] — lower pillar (between mid & bot)
   // Top lane divider: left + right segments, leaving a central gap (x≈360–440)
   // and near-base gaps (x<150, x>650). Sits above the center corridor.
   { x: 150, y: 224, w: 210, h: 14 },
