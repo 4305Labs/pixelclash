@@ -24,26 +24,26 @@ export const COLORS = {
   jungle: 0x1a3326, // mossy dark-green ground for the jungle (off-lane) routes
 };
 
-// The center lane is a horizontal band; the jungle floor fills everything
-// outside it (top + bottom routes). Tuned to sit between the lane divider walls
-// (y≈238 and y≈364), so the ground matches the wall layout.
-export const LANE_BAND = { top: 238, bottom: 364 };
+// Each lane is drawn as a stone "road" band centred on its row, this tall (px);
+// the mossy jungle floor fills the gaps between the lanes. See `LANES` below for
+// the row of each lane. Half-height ±62 around row → bands of 124px.
+export const LANE_BAND_HALF = 62;
 
-// Non-colliding decor props scattered on the jungle floor (top + bottom routes)
-// so they don't feel empty. Purely visual — fixed positions (mirror-symmetric)
-// so render tests stay deterministic. Kept clear of the spawn rows (y=150/450)
-// and the flank heal-orbs (x≈400, y=60/540).
+// Non-colliding decor props scattered on the mossy JUNGLE strips between the
+// lanes (the gaps around y≈205 and y≈395) so the jungle doesn't feel empty.
+// Purely visual — fixed positions (mirror-symmetric) so render tests stay
+// deterministic. Kept off the stone lane bands.
 export const DECOR_SPOTS = [
-  // Top jungle.
-  { kind: "bush", x: 70, y: 70 }, { kind: "rock", x: 730, y: 70 },
-  { kind: "rock", x: 210, y: 80 }, { kind: "bush", x: 590, y: 80 },
-  { kind: "bush", x: 120, y: 205 }, { kind: "rock", x: 680, y: 205 },
-  { kind: "rock", x: 330, y: 175 }, { kind: "bush", x: 470, y: 175 },
-  // Bottom jungle (mirror).
-  { kind: "rock", x: 70, y: 530 }, { kind: "bush", x: 730, y: 530 },
-  { kind: "bush", x: 210, y: 520 }, { kind: "rock", x: 590, y: 520 },
-  { kind: "rock", x: 120, y: 395 }, { kind: "bush", x: 680, y: 395 },
-  { kind: "bush", x: 330, y: 425 }, { kind: "rock", x: 470, y: 425 },
+  // Upper jungle strip (between the top and mid lanes, y≈185–225).
+  { kind: "bush", x: 70, y: 205 }, { kind: "rock", x: 730, y: 205 },
+  { kind: "rock", x: 200, y: 195 }, { kind: "bush", x: 600, y: 195 },
+  { kind: "bush", x: 330, y: 210 }, { kind: "rock", x: 470, y: 210 },
+  { kind: "rock", x: 130, y: 215 }, { kind: "bush", x: 670, y: 215 },
+  // Lower jungle strip (between the mid and bot lanes, y≈375–415) — mirror.
+  { kind: "rock", x: 70, y: 395 }, { kind: "bush", x: 730, y: 395 },
+  { kind: "bush", x: 200, y: 405 }, { kind: "rock", x: 600, y: 405 },
+  { kind: "rock", x: 330, y: 390 }, { kind: "bush", x: 470, y: 390 },
+  { kind: "bush", x: 130, y: 385 }, { kind: "rock", x: 670, y: 385 },
 ];
 
 // --- Bushes (stealth zones) -------------------------------------------------

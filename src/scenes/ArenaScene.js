@@ -18,7 +18,8 @@ import {
   CLASS_ORDER,
   KILLFEED,
   PROGRESS,
-  LANE_BAND,
+  LANES,
+  LANE_BAND_HALF,
   DECOR_SPOTS,
   BUSH_ZONES,
 } from "../config.js";
@@ -929,24 +930,21 @@ export default class ArenaScene extends Phaser.Scene {
   }
 
   drawGrid() {
-    // Stone-floor tiles across the whole arena (the center lane), then mossy
-    // jungle floor strips above and below the lane band so the three routes read
-    // as different ground. tileSprite repeats the 40×40 tiles for us.
-    this.laneFloor = this.add
-      .tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, "floor")
+    // Mossy jungle floor across the WHOLE arena, then a stone "road" band per
+    // lane on top — so each of the three lanes reads as a paved lane through the
+    // jungle (the gaps between lanes stay jungle). tileSprite repeats the 40×40
+    // tiles for us.
+    this.jungleFloor = this.add
+      .tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, "floor_jungle")
       .setOrigin(0, 0)
       .setDepth(-10);
-    // Top jungle strip (above the lane) and bottom jungle strip (below it).
-    this.jungleFloors = [
+    // One stone band centred on each lane row.
+    this.laneFloors = LANES.map((ln) =>
       this.add
-        .tileSprite(0, 0, GAME_WIDTH, LANE_BAND.top, "floor_jungle")
+        .tileSprite(0, ln.row - LANE_BAND_HALF, GAME_WIDTH, LANE_BAND_HALF * 2, "floor")
         .setOrigin(0, 0)
-        .setDepth(-9),
-      this.add
-        .tileSprite(0, LANE_BAND.bottom, GAME_WIDTH, GAME_HEIGHT - LANE_BAND.bottom, "floor_jungle")
-        .setOrigin(0, 0)
-        .setDepth(-9),
-    ];
+        .setDepth(-9)
+    );
   }
 
   // Scatter non-colliding decor (bushes/rocks) on the jungle floor. Above the

@@ -228,11 +228,12 @@ built with shaded shapes. To tweak a sprite, edit its grid or maker and refresh
 — team colours come from `COLORS` in `config.js`.
 
 The ground has two looks: a **stone** lane floor (`COLORS.bg`) and a **mossy
-jungle** floor (`COLORS.jungle`) for the off-lane routes. `ArenaScene.drawGrid`
-lays stone everywhere, then jungle strips above/below the center lane band —
-move the boundary by editing `LANE_BAND` in `config.js` (keep it matching the
-divider walls). `makeFloorTexture(scene, key, baseColor)` builds any tinted
-floor, so adding a third biome is a one-liner.
+jungle** floor (`COLORS.jungle`) for the strips between lanes.
+`ArenaScene.drawGrid` lays jungle everywhere, then a stone "road" band centred on
+each of the three `LANES` rows (band height = `LANE_BAND_HALF * 2`), so every
+lane reads as a paved lane through the jungle. `makeFloorTexture(scene, key,
+baseColor)` builds any tinted floor, so adding a third biome is a one-liner.
+Decor (`DECOR_SPOTS`) sits in the jungle gaps between the bands.
 
 Movement is brought to life by `src/anim.js` — pure, testable animation math: an
 idle breathing **bob**, a **walk hop** with squash & stretch, and an **attack

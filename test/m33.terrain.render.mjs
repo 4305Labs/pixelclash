@@ -1,9 +1,11 @@
-// Milestone 33 (terrain variety): the arena draws a stone lane floor plus mossy
-// jungle floor strips above and below the center lane band, so the three routes
-// read as different ground. We check the textures exist and the jungle strips
-// are placed outside the lane band. Headless render.
+// Milestone 33 (terrain): the arena draws a mossy jungle floor everywhere, then
+// a stone "road" band centred on each of the three lanes, so every lane reads as
+// a paved lane through the jungle. Decor props sit in the jungle gaps between
+// lanes (off the stone bands). Headless render.
 import { openGame, assert } from "./helpers.mjs";
-import { LANE_BAND, GAME_HEIGHT, DECOR_SPOTS } from "../src/config.js";
+import { LANES, LANE_BAND_HALF, DECOR_SPOTS } from "../src/config.js";
+
+const onLaneBand = (y) => LANES.some((ln) => y >= ln.row - LANE_BAND_HALF && y <= ln.row + LANE_BAND_HALF);
 
 let browser;
 try {
@@ -21,28 +23,25 @@ try {
     return {
       hasFloor: s.textures.exists("floor"),
       hasJungle: s.textures.exists("floor_jungle"),
-      hasLaneFloor: !!s.laneFloor,
-      jungleCount: s.jungleFloors ? s.jungleFloors.length : 0,
-      // y-extents of each jungle strip (origin 0,0 tileSprites).
-      strips: (s.jungleFloors || []).map((o) => ({ y: Math.round(o.y), h: Math.round(o.height) })),
+      hasJungleFloor: !!s.jungleFloor,
+      laneCount: s.laneFloors ? s.laneFloors.length : 0,
+      // y-extents of each lane band (origin 0,0 tileSprites).
+      bands: (s.laneFloors || []).map((o) => ({ y: Math.round(o.y), h: Math.round(o.height) })),
     };
   });
 
   assert(v.hasFloor && v.hasJungle, "both the stone and jungle floor textures exist");
-  assert(v.hasLaneFloor, "the stone lane floor is laid down");
-  assert(v.jungleCount === 2, "there are two jungle strips (top + bottom)");
+  assert(v.hasJungleFloor, "the jungle floor covers the whole arena");
+  assert(v.laneCount === LANES.length, "there is a stone band per lane (3)");
 
-  // One strip is the top route (ends at the lane top), the other the bottom
-  // route (starts at the lane bottom) — i.e. both sit OUTSIDE the lane band.
-  const top = v.strips.find((s) => s.y === 0);
-  const bottom = v.strips.find((s) => s.y === LANE_BAND.bottom);
-  assert(top && top.h === LANE_BAND.top, "the top jungle strip covers the top route up to the lane");
-  assert(
-    bottom && bottom.h === GAME_HEIGHT - LANE_BAND.bottom,
-    "the bottom jungle strip covers the bottom route below the lane"
-  );
+  // Each band is centred on its lane row and is LANE_BAND_HALF*2 tall.
+  for (const ln of LANES) {
+    const band = v.bands.find((b) => b.y === ln.row - LANE_BAND_HALF);
+    assert(band, `the ${ln.id} lane has a stone band at its row`);
+    assert(band.h === LANE_BAND_HALF * 2, `the ${ln.id} band is the right height`);
+  }
 
-  // --- Jungle decor: one prop per DECOR_SPOT, all in the jungle bands --------
+  // --- Jungle decor: one prop per DECOR_SPOT, all in the jungle gaps ----------
   const decor = await page.evaluate(() => {
     const s = window.PIXELCLASH.game.scene.getScene("ArenaScene");
     return {
@@ -56,8 +55,8 @@ try {
   assert(decor.hasBush && decor.hasRock, "bush and rock decor textures exist");
   assert(decor.count === DECOR_SPOTS.length, "one decor prop per configured spot");
   assert(
-    decor.ys.every((y) => y < LANE_BAND.top || y > LANE_BAND.bottom),
-    "all decor sits in the jungle (outside the center lane band)"
+    decor.ys.every((y) => !onLaneBand(y)),
+    "all decor sits in the jungle (off the stone lane bands)"
   );
   assert(decor.depths.every((d) => d < -5), "decor is drawn below the walls/units");
 
