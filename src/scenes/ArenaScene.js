@@ -23,6 +23,7 @@ import {
   LANE_ENTRY_X,
   DECOR_SPOTS,
   BUSH_ZONES,
+  BASE_POS,
 } from "../config.js";
 import { generateTextures } from "../textures.js";
 import { stepPosition } from "../sim.js";
@@ -48,6 +49,7 @@ export default class ArenaScene extends Phaser.Scene {
     generateTextures(this);
     this.drawGrid();
     this.drawDecor();
+    this.drawAtmosphere();
     this.drawWalls();
 
     this.net = this.registry.get("net");
@@ -988,13 +990,49 @@ export default class ArenaScene extends Phaser.Scene {
     const yTop = Math.min(...rows) - LANE_BAND_HALF;
     const yBot = Math.max(...rows) + LANE_BAND_HALF;
     this.add
-      .rectangle(0, yTop, entryL, yBot - yTop, COLORS.blueTeam, 0.12)
+      .rectangle(0, yTop, entryL, yBot - yTop, COLORS.blueTeam, 0.08)
       .setOrigin(0, 0)
       .setDepth(-8);
     this.add
-      .rectangle(entryR, yTop, GAME_WIDTH - entryR, yBot - yTop, COLORS.redTeam, 0.12)
+      .rectangle(entryR, yTop, GAME_WIDTH - entryR, yBot - yTop, COLORS.redTeam, 0.08)
       .setOrigin(0, 0)
       .setDepth(-8);
+  }
+
+  // Ambient layer: soft team glows at each nexus, lane direction chevrons, and a
+  // vignette that darkens the edges. Purely cosmetic; sits just above the floor/
+  // decor (depth -6 to -3) but below walls/units, except the vignette which is a
+  // top overlay (depth 90, below the HUD).
+  drawAtmosphere() {
+    // Soft pulsing glow under each base, in team colour.
+    for (const team of ["blue", "red"]) {
+      const b = BASE_POS[team];
+      const color = team === "blue" ? COLORS.blueTeam : COLORS.redTeam;
+      const glow = this.add.circle(b.x, b.y, 64, color, 0.16).setDepth(-6);
+      this.tweens.add({
+        targets: glow,
+        scale: 1.12,
+        alpha: 0.24,
+        duration: 1800,
+        yoyo: true,
+        repeat: -1,
+        ease: "Sine.inOut",
+      });
+    }
+
+    // Vignette: four dark edge bars (top/bottom/left/right) faded inward, framing
+    // the arena. A simple, cheap stand-in for a radial vignette.
+    const vig = 0x000000;
+    const edge = 64;
+    const mk = (x, y, w, h, a) =>
+      this.add.rectangle(x, y, w, h, vig, a).setOrigin(0, 0).setDepth(90);
+    for (let i = 0; i < edge; i += 8) {
+      const a = 0.22 * (1 - i / edge);
+      mk(0, i, GAME_WIDTH, 8, a); // top
+      mk(0, GAME_HEIGHT - i - 8, GAME_WIDTH, 8, a); // bottom
+      mk(i, 0, 8, GAME_HEIGHT, a); // left
+      mk(GAME_WIDTH - i - 8, 0, 8, GAME_HEIGHT, a); // right
+    }
   }
 
   // Scatter non-colliding decor (bushes/rocks) on the jungle floor. Above the
