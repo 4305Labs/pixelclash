@@ -919,6 +919,14 @@ export default class ArenaScene extends Phaser.Scene {
     ];
   }
 
+  // Scatter non-colliding decor (bushes/rocks) on the jungle floor. Above the
+  // floor (-9) but below the walls (-5) and all units, so heroes pass in front.
+  drawDecor() {
+    this.decor = DECOR_SPOTS.map((d) =>
+      this.add.image(d.x, d.y, d.kind === "rock" ? "decor_rock" : "decor_bush").setDepth(-7)
+    );
+  }
+
   // Draw the solid obstacles from config as tiled stone walls, with a dark
   // outline. They sit above the floor but below players/bolts, so characters
   // clearly pass in front of them.
