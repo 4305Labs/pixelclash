@@ -62,7 +62,7 @@ try {
   // --- Per-class attack damage ----------------------------------------------
   server.minions = [];
   server.nextWaveAt = Infinity;
-  server.towers.clear();
+  server.towers = [];
   server.pickups = [];
   server.projectiles = [];
   p1.x = 400;

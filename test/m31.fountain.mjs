@@ -31,7 +31,7 @@ try {
   // Quiet the lane so nothing else perturbs HP.
   server.minions = [];
   server.nextWaveAt = Infinity;
-  server.towers.clear();
+  server.towers = [];
   server.pickups = [];
 
   const p1 = server.players.get("p1"); // blue

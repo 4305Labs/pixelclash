@@ -37,7 +37,7 @@ try {
   // This test isolates hero-vs-hero combat: clear the guard towers that now
   // stand on the center row so they don't soak the straight shot. (Minions
   // don't spawn here either — waves only arm via the real countdown.)
-  server.towers.clear();
+  server.towers = [];
   server.camps = []; // and no neutral camps to steal the auto-aim
 
   // The map now has walls. Put both fighters on the open center row (y=300,

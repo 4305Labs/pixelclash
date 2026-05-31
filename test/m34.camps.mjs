@@ -27,7 +27,7 @@ try {
   // Quiet other systems so they don't perturb HP/positions.
   server.minions = [];
   server.nextWaveAt = Infinity;
-  server.towers.clear();
+  server.towers = [];
   server.pickups = [];
 
   // --- Camps exist, full HP, one per spot -----------------------------------

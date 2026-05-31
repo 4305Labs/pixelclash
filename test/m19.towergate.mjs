@@ -52,7 +52,7 @@ try {
   assert(shot && shot.vx < 0, "auto-aim ignores the shielded base and picks the tower");
 
   // --- Tower down -> base exposed -------------------------------------------
-  server.towers.get("red").alive = false;
+  server.towers.forEach((t) => { if (t.team === "red") t.alive = false; });
   assert(server.baseVulnerable("red") === true, "base is exposed once its tower is gone");
 
   server.projectiles = [];
@@ -73,7 +73,7 @@ try {
     blue.bases.find((b) => b.team === "red").shielded === true,
     "snapshot marks a base shielded while its tower stands"
   );
-  server.towers.get("red").alive = false;
+  server.towers.forEach((t) => { if (t.team === "red") t.alive = false; });
   server.broadcast();
   await flush();
   assert(
@@ -83,7 +83,7 @@ try {
 
   // --- Razing an exposed base wins the match --------------------------------
   server.phase = "playing";
-  server.towers.get("blue").alive = false;
+  server.towers.forEach((t) => { if (t.team === "blue") t.alive = false; });
   server.damageBase(server.bases.get("blue"), 999);
   assert(
     server.phase === "over" && server.winner === "red",

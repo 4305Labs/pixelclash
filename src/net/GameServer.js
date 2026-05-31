@@ -21,7 +21,8 @@ import {
   MATCH,
   MINION,
   TOWER,
-  TOWER_POS,
+  TOWER_X,
+  LANES,
   PICKUP,
   PICKUP_SPOTS,
   CAMP,
@@ -58,7 +59,7 @@ export default class GameServer {
     this.loopTimer = null;
 
     this.bases = new Map(); // team -> { team, x, y, hp, alive }
-    this.towers = new Map(); // team -> { team, x, y, hp, alive, cd }
+    this.towers = []; // [{ team, lane, x, y, hp, alive, cd }] — one per team per lane
     this.pickups = []; // [{ id, kind, x, y, active, respawnAt }]
     this.camps = []; // neutral jungle monsters: [{ id, x, y, hp, alive, cd, respawnAt }]
     this.resetBases();
@@ -88,9 +89,19 @@ export default class GameServer {
   }
 
   resetTowers() {
+    this.towers = [];
     for (const team of ["blue", "red"]) {
-      const pos = TOWER_POS[team];
-      this.towers.set(team, { team, x: pos.x, y: pos.y, hp: TOWER.maxHp, alive: true, cd: 0 });
+      for (const ln of LANES) {
+        this.towers.push({
+          team,
+          lane: ln.id,
+          x: TOWER_X[team],
+          y: ln.row,
+          hp: TOWER.maxHp,
+          alive: true,
+          cd: 0,
+        });
+      }
     }
   }
 
@@ -469,7 +480,7 @@ export default class GameServer {
     for (const m of this.minions) {
       if (m.team !== player.team && m.alive) consider(m.x, m.y);
     }
-    for (const tw of this.towers.values()) {
+    for (const tw of this.towers) {
       if (tw.team !== player.team && tw.alive) consider(tw.x, tw.y);
     }
     for (const c of this.camps) {
@@ -575,7 +586,7 @@ export default class GameServer {
       if (p.team !== m.team && p.alive && !this.isHidden(p))
         consider(p.x, p.y, () => this.damage(p, MINION.dmg, m.team));
     }
-    for (const tw of this.towers.values()) {
+    for (const tw of this.towers) {
       if (tw.team !== m.team && tw.alive) consider(tw.x, tw.y, () => this.damageTower(tw, MINION.dmg));
     }
     if (best) return best;
@@ -630,7 +641,7 @@ export default class GameServer {
 
   // Each living tower zaps the nearest enemy unit in range, on its cooldown.
   stepTowers() {
-    for (const tw of this.towers.values()) {
+    for (const tw of this.towers) {
       if (!tw.alive || this.timeMs < tw.cd) continue;
       const target = this.nearestEnemyUnit(tw, TOWER.range);
       if (!target) continue;
@@ -678,7 +689,7 @@ export default class GameServer {
 
   hitTower(b) {
     const reach = COMBAT.hitPad + TOWER.radius;
-    for (const tw of this.towers.values()) {
+    for (const tw of this.towers) {
       if (tw.team === b.team || !tw.alive) continue;
       if ((tw.x - b.x) ** 2 + (tw.y - b.y) ** 2 <= reach * reach) return tw;
     }
@@ -952,10 +963,10 @@ export default class GameServer {
     }
   }
 
-  // A base can only be harmed once its own team's guard tower is gone.
+  // A base can only be harmed once ALL of its team's guard towers are gone.
   baseVulnerable(team) {
-    const tw = this.towers.get(team);
-    return !tw || !tw.alive;
+    const mine = this.towers.filter((t) => t.team === team);
+    return mine.length === 0 || mine.every((t) => !t.alive);
   }
 
   respawn(p) {
@@ -1060,8 +1071,9 @@ export default class GameServer {
         maxHp: CAMP.maxHp,
         alive: c.alive,
       })),
-      towers: [...this.towers.values()].map((tw) => ({
+      towers: this.towers.map((tw) => ({
         team: tw.team,
+        lane: tw.lane,
         x: tw.x,
         y: tw.y,
         hp: tw.hp,

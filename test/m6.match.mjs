@@ -39,7 +39,7 @@ try {
   assert(server.phase === "playing", "countdown elapses -> playing");
 
   // The base is shielded until its guard tower falls — drop the red tower first.
-  server.towers.get("red").alive = false;
+  server.towers.forEach((t) => { if (t.team === "red") t.alive = false; });
 
   // Walk Alice up next to the red base so her auto-aim picks the base, and fire.
   A.x = redBase.x - 12;
@@ -85,7 +85,7 @@ try {
 
   // The other direction: drop the blue tower, then destroying the blue base
   // makes red win.
-  server.towers.get("blue").alive = false;
+  server.towers.forEach((t) => { if (t.team === "blue") t.alive = false; });
   server.damageBase(server.bases.get("blue"), 999);
   assert(server.winner === "red", "destroying the blue base makes red win");
 

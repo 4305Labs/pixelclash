@@ -793,16 +793,17 @@ export default class ArenaScene extends Phaser.Scene {
     }
   }
 
-  // Draw the guard towers (one per team): flash + chime on damage, big boom
-  // when one is destroyed, faded rubble afterwards.
+  // Draw the guard towers (one per team per lane): flash + chime on damage, big
+  // boom when one is destroyed, faded rubble afterwards.
   syncTowers() {
     for (const tw of this.net.towers) {
-      let sprite = this.towerSprites.get(tw.team);
+      const key = `${tw.team}_${tw.lane || "mid"}`; // one sprite per team+lane
+      let sprite = this.towerSprites.get(key);
       if (!sprite) {
         sprite = new Tower(this, tw.x, tw.y, tw.team);
         sprite.lastHp = tw.hp;
         sprite.lastAlive = tw.alive;
-        this.towerSprites.set(tw.team, sprite);
+        this.towerSprites.set(key, sprite);
       }
       if (tw.alive && tw.hp < sprite.lastHp) {
         sprite.flashHit();

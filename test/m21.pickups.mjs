@@ -80,7 +80,7 @@ try {
 
   // A buffed attack deals boosted damage. Aim p1 at the red base after dropping
   // its tower so the bolt has a clean target, and read the projectile's damage.
-  server.towers.get("red").alive = false;
+  server.towers.forEach((t) => { if (t.team === "red") t.alive = false; });
   server.projectiles = [];
   p1.x = 700;
   p1.y = 300;

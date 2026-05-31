@@ -278,10 +278,23 @@ export const TOWER = {
   boltColor: 0xffa300, // orange zap, distinct from hero/minion bolts
 };
 
-// Towers sit on the center row, guarding the one clear horizontal lane.
+// Three horizontal lanes: top, mid, bottom. Each is a row (y) that minions
+// march along and a tower guards. (Increment A wires the towers; the per-lane
+// minion waves arrive in Increment B.) Rows verified clear of the walls so a
+// tower/minion at (towerX, row) isn't stuck in a wall.
+export const LANES = [
+  { id: "top", row: 110 },
+  { id: "mid", row: GAME_HEIGHT / 2 }, // 300
+  { id: "bot", row: GAME_HEIGHT - 110 }, // 490
+];
+
+// Each team's towers sit at this x (mirrored), one per lane on the lane row.
+export const TOWER_X = { blue: 250, red: GAME_WIDTH - 250 };
+
+// Back-compat single-tower position (mid lane) for any old reference.
 export const TOWER_POS = {
-  blue: { x: 250, y: GAME_HEIGHT / 2 },
-  red: { x: GAME_WIDTH - 250, y: GAME_HEIGHT / 2 },
+  blue: { x: TOWER_X.blue, y: GAME_HEIGHT / 2 },
+  red: { x: TOWER_X.red, y: GAME_HEIGHT / 2 },
 };
 
 // --- Progression: XP / levels / gold ----------------------------------------
@@ -345,12 +358,6 @@ export const WALLS = [
   // Bottom lane divider (mirror of the top).
   { x: 150, y: 364, w: 210, h: 14 },
   { x: 440, y: 364, w: 210, h: 14 },
-  // Jungle cover blocks in the top + bottom routes (small, for cover & flavour;
-  // clear of the spawn rows y=150/450 and the pickup spots).
-  { x: 250, y: 110, w: 70, h: 14 },
-  { x: 480, y: 110, w: 70, h: 14 },
-  { x: 250, y: 476, w: 70, h: 14 },
-  { x: 480, y: 476, w: 70, h: 14 },
 ];
 
 export const MATCH = {

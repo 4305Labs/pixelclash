@@ -17,7 +17,7 @@ const stepN = (srv, n) => {
 // Heal the towers IN PLACE (not resetTowers, which would replace the objects
 // and invalidate the references we hold onto below).
 const quiet = (srv) => {
-  for (const tw of srv.towers.values()) {
+  for (const tw of srv.towers) {
     tw.hp = TOWER.maxHp;
     tw.alive = true;
     tw.cd = 0;
@@ -26,6 +26,7 @@ const quiet = (srv) => {
   srv.minions = [];
   srv.nextWaveAt = Infinity;
 };
+const midTower = (srv, team) => srv.towers.find((t) => t.team === team && t.lane === "mid");
 
 const server = new GameServer();
 function connect() {
@@ -43,18 +44,19 @@ try {
   server.step(DT);
   assert(server.phase === "playing", "match is live");
 
-  // Towers start full and alive, one per team.
-  assert(server.towers.size === 2, "there are two towers");
+  // Towers start full and alive: three lanes per team = six towers.
+  assert(server.towers.length === 6, "there are six towers (3 lanes x 2 teams)");
   assert(
-    [...server.towers.values()].every((t) => t.hp === TOWER.maxHp && t.alive),
+    server.towers.every((t) => t.hp === TOWER.maxHp && t.alive),
     "towers start at full HP and alive"
   );
 
   const p1 = server.players.get("p1"); // blue
   const p2 = server.players.get("p2"); // red
-  // These objects live for the whole match (quiet() heals them in place).
-  const blueTower = server.towers.get("blue");
-  const redTower = server.towers.get("red");
+  // We test the MID-lane towers (heroes sit on the mid row, y=300). These
+  // objects live for the whole match (quiet() heals them in place).
+  const blueTower = midTower(server, "blue");
+  const redTower = midTower(server, "red");
 
   // --- A tower zaps the nearest enemy in range ------------------------------
   quiet(server);
@@ -108,17 +110,17 @@ try {
     "destroying a tower doesn't end the match (only the base does)"
   );
 
-  // --- Reset restores both towers -------------------------------------------
+  // --- Reset restores all towers --------------------------------------------
   server.resetMatch();
   assert(
-    [...server.towers.values()].every((t) => t.hp === TOWER.maxHp && t.alive),
-    "resetMatch restores both towers to full"
+    server.towers.every((t) => t.hp === TOWER.maxHp && t.alive),
+    "resetMatch restores all towers to full"
   );
 
   // --- The snapshot carries towers to the client ----------------------------
   server.broadcast();
   await flush();
-  assert(blue.towers.length === 2, "client receives both towers");
+  assert(blue.towers.length === 6, "client receives all six towers");
   assert(
     blue.towers.every((t) => t.maxHp === TOWER.maxHp && t.alive),
     "tower snapshot includes maxHp and alive"

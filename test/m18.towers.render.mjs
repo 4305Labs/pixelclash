@@ -37,8 +37,8 @@ try {
   );
   await inject(
     [
-      { team: "blue", x: 250, y: 300, hp: 180, maxHp: 180, alive: true },
-      { team: "red", x: 550, y: 300, hp: 180, maxHp: 180, alive: true },
+      { team: "blue", lane: "mid", x: 250, y: 300, hp: 180, maxHp: 180, alive: true },
+      { team: "red", lane: "mid", x: 550, y: 300, hp: 180, maxHp: 180, alive: true },
     ],
     [{ id: "z1", team: "blue", kind: "tower", x: 300, y: 300 }]
   );
@@ -46,7 +46,7 @@ try {
 
   const v = await page.evaluate(() => {
     const s = window.PIXELCLASH.game.scene.getScene("ArenaScene");
-    const t = s.towerSprites.get("blue");
+    const t = s.towerSprites.get("blue_mid");
     const z = s.bolts.get("z1");
     return { count: s.towerSprites.size, x: t.x, y: t.y, w: t.hpFill.width, boltR: z ? z.radius : -1 };
   });
@@ -57,19 +57,19 @@ try {
 
   // Damage the red tower — its bar shrinks; then destroy it — it fades out.
   await inject([
-    { team: "blue", x: 250, y: 300, hp: 180, maxHp: 180, alive: true },
-    { team: "red", x: 550, y: 300, hp: 60, maxHp: 180, alive: true },
+    { team: "blue", lane: "mid", x: 250, y: 300, hp: 180, maxHp: 180, alive: true },
+    { team: "red", lane: "mid", x: 550, y: 300, hp: 60, maxHp: 180, alive: true },
   ]);
   await page.waitForTimeout(80);
   await inject([
-    { team: "blue", x: 250, y: 300, hp: 180, maxHp: 180, alive: true },
-    { team: "red", x: 550, y: 300, hp: 0, maxHp: 180, alive: false },
+    { team: "blue", lane: "mid", x: 250, y: 300, hp: 180, maxHp: 180, alive: true },
+    { team: "red", lane: "mid", x: 550, y: 300, hp: 0, maxHp: 180, alive: false },
   ]);
   await page.waitForTimeout(120);
 
   const after = await page.evaluate(() => {
     const s = window.PIXELCLASH.game.scene.getScene("ArenaScene");
-    const red = s.towerSprites.get("red");
+    const red = s.towerSprites.get("red_mid");
     return { redWidth: red.hpFill.width, redAlpha: red.body.alpha, redBarVisible: red.hpBg.visible };
   });
   assert(after.redWidth < fullWidth, "a damaged tower's health bar shrinks");

@@ -27,7 +27,7 @@ try {
   assert(server.phase === "playing", "match is live");
   server.minions = [];
   server.nextWaveAt = Infinity;
-  server.towers.clear();
+  server.towers = [];
   server.pickups = [];
 
   const p1 = server.players.get("p1"); // blue soldier
