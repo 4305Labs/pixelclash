@@ -4,9 +4,11 @@
 > human) can pick this project up cold and keep building safely.
 > **Update this file after every major change** (see *Update protocol* at the end).
 >
-> **Last updated:** the map now has 3 lanes that fan out from each nexus, drawn
->   as stone roads (mid straight + side lanes via diagonal connectors) on a
->   jungle floor, with team-tinted base ends, camps, and stealth bushes.
+> **Last updated:** four-part art overhaul shipped — (1) atmosphere
+>   (vignette + base glows), (2) richer hero shading with distinct per-class
+>   heads, (3) cobblestone lanes + mossy jungle floor, (4) faceted nexus
+>   crystals + 3D tower battlements. Map is 3 lanes fanning from each nexus
+>   (mid straight + side diagonals) on a jungle floor with camps and bushes.
 > **Status:** all tests green (54 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
