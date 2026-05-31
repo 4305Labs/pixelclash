@@ -1,17 +1,40 @@
 # PixelClash 🟦⚔️🟥
 
-A pixel-art, browser-first **MOBA arena battler**. Move, basic attack, one
-ability, dash — and waves of **lane minions** march out to help you push past
-the enemy's **guard tower** and tear down their base. Destroy that base to win.
-Built to start as **1v1** and grow to **3v3**.
+A pixel-art, browser-first **MOBA arena battler**. Pick one of **six heroes**,
+push **three lanes** of minions past the enemy's guard towers, clear **jungle
+camps** for buffs, ambush from the **bushes**, level up and shop for upgrades —
+and raze the enemy base to win. Play **solo against AI bots** in one click, or
+open a second tab for a real 1v1 (scales toward 3v3).
 
-![A live match — scoreboard + clock, kill feed, minions, towers, pickups, and the level/gold shop HUD](docs/screenshot-match.png)
+![A live match — three lanes of minions and towers, jungle camps, stealth bushes, heroes, bases, and the HUD](docs/screenshot-map.png)
 
 - **Game engine:** [Phaser 3](https://phaser.io) (HTML5, runs in any browser)
 - **Dev server / bundler:** [Vite](https://vitejs.dev)
 - **Multiplayer:** a small **server-authoritative** WebSocket server (Node + [`ws`](https://github.com/websockets/ws))
+- **Art & sound:** every sprite is **drawn in code** and every sound is
+  **synthesized** at runtime — zero asset files, all license-free.
 
 Everything is free and runs on your own machine — no accounts, no credit card.
+
+## What's in it
+
+- **6 hero classes** — Scout, Soldier, Tank, Ranger, Mage, Brawler, each with its
+  own sprite, health, and attack profile.
+- **3 lanes** (top / mid / bottom) of AI minion waves, with a **guard tower** on
+  every lane — six per side.
+- **Tower-gated bases** — a base is shielded until all its towers fall.
+- **Gold & leveling** — last-hit for XP/gold, auto-level, and a shop (damage /
+  max-HP / attack-speed upgrades).
+- **A real map** — distinct stone-lane vs mossy-jungle terrain, **neutral jungle
+  camps** that give a buff when cleared, and **stealth bushes** for ambushes.
+- **Map pickups** (heal / power orbs) and a **base healing fountain**.
+- **AI bots** so you can play solo instantly; a match timer with a kill tiebreak.
+- **Full HUD** — team scoreboard, match clock, kill feed, respawn timer, and a
+  per-hero level/gold/shop line.
+- **Mobile-ready** — touch joystick + buttons, a tap-to-start gate, and tappable
+  class/shop pickers.
+- **Hand-drawn pixel art + procedural animation** (idle bob, walk hop, attack
+  pop, death tumble), all generated in code.
 
 ---
 
@@ -155,13 +178,16 @@ and it's written up plainly in
 
 ## A look at it
 
-| The six heroes | Picking a hero | Full HUD & shop |
-|---|---|---|
-| ![Heroes](docs/screenshot-heroes.png) | ![Lobby](docs/screenshot-heroes-lobby.png) | ![HUD](docs/screenshot-match.png) |
+The top image shows the whole arena: three lanes of minions and towers, jungle
+camps, stealth bushes (the green patches), heroes, bases, and the HUD.
 
-| Lane minions clash | The arena (with walls) | On a phone |
+| The six heroes | Picking a hero (lobby) | Mid-lane clash & shop HUD |
 |---|---|---|
-| ![Minions](docs/screenshot-minions.png) | ![Match](docs/screenshot-map.png) | ![Mobile](docs/screenshot-mobile.png) |
+| ![The six hero classes lined up](docs/screenshot-heroes.png) | ![The lobby hero picker](docs/screenshot-heroes-lobby.png) | ![Minions clashing with the full HUD](docs/screenshot-match.png) |
+
+| Lane minions meet | Victory screen | On a phone (landscape) |
+|---|---|---|
+| ![Two minion waves clashing](docs/screenshot-minions.png) | ![The win screen with final score](docs/screenshot-win.png) | ![Touch controls on a phone](docs/screenshot-mobile.png) |
 
 ---
 
@@ -173,26 +199,33 @@ pixelclash/
 ├─ server.js               ← the multiplayer game server (run with: npm run server)
 ├─ src/
 │  ├─ main.js              ← boots Phaser + the network client
-│  ├─ config.js            ← ALL the tunable numbers (speed, damage, HP, colors…)
-│  ├─ textures.js          ← draws the pixel-art sprites in code (no image files)
+│  ├─ config.js            ← ALL the tunable numbers + map layout (one place to balance)
+│  ├─ sim.js               ← shared movement math (server + client prediction agree)
+│  ├─ textures.js          ← draws every pixel-art sprite in code (no image files)
 │  ├─ anim.js              ← procedural animation math (bob / walk / attack pop)
+│  ├─ audio.js             ← synthesized sound effects + mute (no audio files)
+│  ├─ record.js            ← persisted win/loss/draw tally (localStorage)
 │  ├─ scenes/
-│  │  └─ ArenaScene.js     ← the playing field: input, rendering, HUD
+│  │  └─ ArenaScene.js     ← the playing field: input, rendering, HUD, the map
 │  ├─ entities/
-│  │  ├─ Player.js         ← on-screen player + health bar
+│  │  ├─ Player.js         ← on-screen hero (per-class sprite + health bar)
 │  │  ├─ Minion.js         ← on-screen lane minion + health bar
 │  │  ├─ Tower.js          ← on-screen guard tower + health bar
-│  │  └─ Base.js           ← on-screen base crystal + health bar
+│  │  ├─ Camp.js           ← on-screen neutral jungle monster + health bar
+│  │  └─ Base.js           ← on-screen base crystal (+ shield ring, fountain)
 │  ├─ ui/
 │  │  ├─ VirtualJoystick.js← touch movement stick
-│  │  └─ ActionButton.js   ← touch attack buttons
+│  │  └─ ActionButton.js   ← touch action buttons
 │  └─ net/
-│     ├─ GameServer.js     ← authoritative game logic (the "rules")
-│     ├─ NetClient.js      ← browser side: sends input, stores snapshots
+│     ├─ GameServer.js     ← authoritative game logic (the "rules" + the tick loop)
+│     ├─ NetClient.js      ← browser side: sends input, stores the latest snapshot
 │     ├─ WebSocketConnection.js ← real network transport
 │     └─ LocalConnection.js     ← in-memory transport (used by tests)
 └─ test/                   ← automated tests (you never need these to play)
 ```
+
+> **Building on it?** Start with **[HANDOVER.md](HANDOVER.md)** — a living guide
+> to the architecture, the feature→code map, invariants, and gotchas.
 
 ## Running the automated tests (optional)
 
