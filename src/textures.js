@@ -268,22 +268,22 @@ function makePickupTexture(scene, key, kind) {
   g.destroy();
 }
 
-// A 40×40 floor tile: the dark-blue base with a faint seam at the top/left edge
-// and a fixed scatter of slightly lighter/darker specks, so a tiled floor looks
-// like textured stone instead of a flat fill. Deterministic (no randomness), so
-// the render tests stay stable.
-function makeFloorTexture(scene, key) {
+// A 40×40 floor tile in `baseColor`: the base fill with a faint seam at the
+// top/left edge (tile grout) and a fixed scatter of slightly lighter/darker
+// specks, so a tiled floor looks like textured ground instead of a flat fill.
+// Deterministic (no randomness), so the render tests stay stable.
+function makeFloorTexture(scene, key, baseColor = COLORS.bg) {
   const S = 40;
   const g = scene.make.graphics({ x: 0, y: 0 }, false);
-  g.fillStyle(COLORS.bg, 1);
+  g.fillStyle(baseColor, 1);
   g.fillRect(0, 0, S, S);
   // Seam lines along two edges read as tile grout.
-  g.fillStyle(COLORS.grid, 1);
+  g.fillStyle(shade(baseColor, 1.25), 1);
   g.fillRect(0, 0, S, 1);
   g.fillRect(0, 0, 1, S);
   // A fixed speckle pattern: light flecks and dark pits at set cells.
-  const light = shade(COLORS.bg, 1.35);
-  const dark = shade(COLORS.bg, 0.7);
+  const light = shade(baseColor, 1.35);
+  const dark = shade(baseColor, 0.7);
   const flecks = [
     [6, 9, light], [13, 5, dark], [22, 14, light], [31, 8, dark],
     [9, 24, dark], [18, 30, light], [27, 26, dark], [35, 33, light],
@@ -319,6 +319,7 @@ function makeWallTexture(scene, key) {
 // Called once when the arena starts. Creates every texture the game needs.
 export function generateTextures(scene) {
   makeFloorTexture(scene, "floor");
+  makeFloorTexture(scene, "floor_jungle", COLORS.jungle);
   makeWallTexture(scene, "wall");
   // One hero sprite per class × team, keyed "hero_<cls>_<team>". Plus the legacy
   // "player_<team>" keys (= soldier) so anything not class-aware still works.

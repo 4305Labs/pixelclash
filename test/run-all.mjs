@@ -55,6 +55,7 @@ const tests = [
   "./m31.fountain.render.mjs",
   "./m32.anim.node.mjs",
   "./m32.anim.render.mjs",
+  "./m33.terrain.render.mjs",
 ];
 
 let failed = false;

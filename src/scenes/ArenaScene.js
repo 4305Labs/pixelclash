@@ -18,6 +18,7 @@ import {
   CLASS_ORDER,
   KILLFEED,
   PROGRESS,
+  LANE_BAND,
 } from "../config.js";
 import { generateTextures } from "../textures.js";
 import { stepPosition } from "../sim.js";
@@ -896,12 +897,24 @@ export default class ArenaScene extends Phaser.Scene {
   }
 
   drawGrid() {
-    // A tiled stone-floor texture across the whole arena (replaces the old flat
-    // fill + grid lines). tileSprite repeats the 40×40 floor tile for us.
-    this.add
+    // Stone-floor tiles across the whole arena (the center lane), then mossy
+    // jungle floor strips above and below the lane band so the three routes read
+    // as different ground. tileSprite repeats the 40×40 tiles for us.
+    this.laneFloor = this.add
       .tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, "floor")
       .setOrigin(0, 0)
       .setDepth(-10);
+    // Top jungle strip (above the lane) and bottom jungle strip (below it).
+    this.jungleFloors = [
+      this.add
+        .tileSprite(0, 0, GAME_WIDTH, LANE_BAND.top, "floor_jungle")
+        .setOrigin(0, 0)
+        .setDepth(-9),
+      this.add
+        .tileSprite(0, LANE_BAND.bottom, GAME_WIDTH, GAME_HEIGHT - LANE_BAND.bottom, "floor_jungle")
+        .setOrigin(0, 0)
+        .setDepth(-9),
+    ];
   }
 
   // Draw the solid obstacles from config as tiled stone walls, with a dark

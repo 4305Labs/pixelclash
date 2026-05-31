@@ -21,7 +21,13 @@ export const COLORS = {
   wallEdge: 0x29366f, // darker wall outline
   minionBlue: 0xa8e0ff, // lighter team tints so minions read as "lesser" units
   minionRed: 0xffa3b8,
+  jungle: 0x1a3326, // mossy dark-green ground for the jungle (off-lane) routes
 };
+
+// The center lane is a horizontal band; the jungle floor fills everything
+// outside it (top + bottom routes). Tuned to sit between the lane divider walls
+// (y≈238 and y≈364), so the ground matches the wall layout.
+export const LANE_BAND = { top: 238, bottom: 364 };
 
 // How fast a player moves, in pixels per second.
 export const PLAYER_SPEED = 220;
