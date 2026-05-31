@@ -46,8 +46,8 @@ The server's `snapshot()` is the only thing the client sees. When you add state,
 add it to `snapshot()` AND read it in `NetClient._receive` AND render it in a
 `sync*`/`update*` method. Current fields: `phase, winner, score, killFeed,
 needed, countdown, timeLeft, players[] (id,team,x,y,hp,maxHp,alive,cls,bot,
-respawnIn,powered), projectiles[], minions[], pickups[], towers[], bases[]
-(+shielded)`.
+respawnIn,powered,shielded), projectiles[], blasts[] (AoE shockwaves),
+minions[], pickups[], towers[], bases[] (+shielded)`.
 
 ## Conventions
 - **Server stays authoritative.** Clients only render + predict the LOCAL player.

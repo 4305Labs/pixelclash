@@ -60,6 +60,7 @@ const tests = [
   "./m34.camps.render.mjs",
   "./m35.bush.mjs",
   "./m35.bush.render.mjs",
+  "./m36.abilities.mjs",
 ];
 
 let failed = false;

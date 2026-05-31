@@ -90,7 +90,7 @@ To stop either server: click its Terminal and press `Ctrl + C`.
 |---|---|---|
 | Move | `WASD` or arrow keys | Drag the **left** side of the screen (joystick) |
 | Basic attack | `J` or `Space` | Tap the **A** button (bottom-right) |
-| Ability (Power Shot) | `K` | Tap the **B** button |
+| Ability (unique per hero) | `K` | Tap the **B** button |
 | Dash | `L` or `Shift` | Tap the **C** button |
 | Mute / unmute sound | `M` | Tap **[M] sound** (top-left) |
 | Pick a hero class (in the lobby) | `1`–`6` | Tap a class button |
@@ -110,13 +110,19 @@ max HP and attack damage — and gold buys permanent upgrades from a small shop:
 gold, and the shop show in the bottom-left.
 
 **Hero classes:** in the lobby, press `1`–`6` (or tap a button) to pick one of
-six heroes, each with its own sprite, health, and attack profile:
-- **Scout** — fast-firing but fragile
-- **Soldier** — balanced all-rounder
-- **Tank** — beefy, slow, heavy hits (drawn bigger)
-- **Ranger** — long-range poke, glassy
-- **Mage** — weak basics but a huge burst nuke
-- **Brawler** — short-range dive bruiser, rapid and tough
+six heroes. Each has its own sprite, health, and attack profile — **and its own
+B ability**, which is genuinely different per hero (not just a bigger shot):
+- **Scout** — fast-firing but fragile. **Scatter:** a three-pellet spread shot.
+- **Soldier** — balanced all-rounder. **Pierce:** a bolt that punches through a
+  whole line of enemies.
+- **Tank** — beefy, slow, heavy hits (drawn bigger). **Bulwark:** a shield that
+  halves incoming damage for a few seconds (cyan ring).
+- **Ranger** — long-range poke, glassy. **Seeker:** a homing arrow that curves
+  to chase the nearest enemy hero.
+- **Mage** — weak basics but a huge burst nuke. **Nova:** a fireball that
+  detonates on impact, hitting everything in the blast.
+- **Brawler** — short-range dive bruiser, rapid and tough. **Leap Slam:** lunge
+  forward and smash everything around the landing.
 
 You can change pick until the match starts.
 

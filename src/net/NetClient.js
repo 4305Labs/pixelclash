@@ -15,6 +15,7 @@ export default class NetClient {
     this.cls = DEFAULT_CLASS; // our chosen hero class (for the lobby UI)
     this.players = []; // latest roster: [{ id, team, x, y, hp, alive }]
     this.projectiles = []; // bolts in flight: [{ id, team, kind, x, y }]
+    this.blasts = []; // transient AoE shockwaves: [{ id, x, y, r, team }]
     this.minions = []; // lane minions: [{ id, team, x, y, hp, alive }]
     this.pickups = []; // available map pickups: [{ id, kind, x, y }]
     this.camps = []; // jungle camps: [{ id, x, y, hp, maxHp, alive }]
@@ -87,6 +88,7 @@ export default class NetClient {
     } else if (msg.t === "state") {
       this.players = msg.players;
       this.projectiles = msg.projectiles || [];
+      this.blasts = msg.blasts || []; // AoE shockwaves to draw this frame
       this.minions = msg.minions || [];
       this.pickups = msg.pickups || [];
       this.camps = msg.camps || [];

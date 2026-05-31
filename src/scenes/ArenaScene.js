@@ -60,6 +60,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.record = loadRecord(this.recordStorage); // { w, l, d } across matches
     this.sprites = new Map(); // player id -> Player display object
     this.bolts = new Map(); // projectile id -> circle
+    this.seenBlasts = new Set(); // blast ids already animated (so we play once)
     this.minionSprites = new Map(); // minion id -> Minion display object
     this.pickupSprites = new Map(); // pickup id -> sprite
     this.campSprites = new Map(); // camp id -> Camp display object
@@ -389,6 +390,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.syncMinions(dt);
     this.syncPlayers(dt);
     this.syncProjectiles();
+    this.syncBlasts();
     this.updateLobby();
     this.updateGameOver();
     this.updateHud();
@@ -715,6 +717,7 @@ export default class ArenaScene extends Phaser.Scene {
       sprite.setHp(p.hp, p.maxHp);
       sprite.setAlive(p.alive);
       sprite.setPowered(p.powered);
+      sprite.setShielded(p.shielded);
       // Stealth: a hero standing in a bush. Fade OUR own hidden hero (so we know
       // we're stealthed) but FULLY hide a hidden enemy (the honest client
       // respects the bush). `hidden` is a global flag, so the local id decides
@@ -930,6 +933,33 @@ export default class ArenaScene extends Phaser.Scene {
         this.bolts.delete(id);
       }
     }
+  }
+
+  // Mage Nova / brawler Slam shockwaves: each blast id animates exactly once as
+  // an expanding, fading ring in the casting team's colour.
+  syncBlasts() {
+    const live = new Set();
+    for (const x of this.net.blasts) {
+      live.add(x.id);
+      if (this.seenBlasts.has(x.id)) continue;
+      this.seenBlasts.add(x.id);
+      const color = x.team === "red" ? COLORS.redTeam : COLORS.blueTeam;
+      const ring = this.add
+        .circle(x.x, x.y, x.r, color, 0)
+        .setStrokeStyle(3, color, 0.9)
+        .setDepth(48);
+      this.spawnSpark(x.x, x.y, color); // a bright flash at the centre
+      this.tweens.add({
+        targets: ring,
+        scale: { from: 0.3, to: 1.15 },
+        alpha: { from: 1, to: 0 },
+        duration: 320,
+        ease: "Quad.Out",
+        onComplete: () => ring.destroy(),
+      });
+    }
+    // Forget ids the server no longer reports, so the set can't grow forever.
+    for (const id of this.seenBlasts) if (!live.has(id)) this.seenBlasts.delete(id);
   }
 
   // A stone road as a rotated rectangle from (x1,y1) to (x2,y2), `band` wide.

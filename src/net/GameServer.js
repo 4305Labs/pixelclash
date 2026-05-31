@@ -48,8 +48,12 @@ export default class GameServer {
     this.connections = new Map(); // id -> connection (humans only)
     this.projectiles = [];
     this.minions = []; // AI lane fighters: { id, team, x, y, laneY, hp, alive, cd }
+    // Short-lived AoE markers (mage Nova / brawler Slam) so the client can draw
+    // an expanding ring where the blow landed: { id, x, y, r, team, dieAt }.
+    this.blasts = [];
     this.nextId = 1;
     this.nextProjId = 1;
+    this.nextBlastId = 1;
     this.nextMinionId = 1;
     // Sim-clock time (ms) the next wave spawns. Infinity = disarmed: waves only
     // start once a match actually begins (beginPlaying arms it), so they never
@@ -249,7 +253,7 @@ export default class GameServer {
         p.input.dy = 0;
       }
       this.tryAttack(p, "basic");
-      if (!low && Math.random() < 0.03) this.tryAttack(p, "ability");
+      if (!low && Math.random() < 0.03) this.tryAbility(p);
       if (Math.random() < 0.04) this.tryDash(p);
       this.tryBuy(p); // spend gold on upgrades as soon as it can afford one
     }
@@ -292,6 +296,8 @@ export default class GameServer {
       deadUntil: 0,
       cd: { basic: 0, ability: 0, dash: 0 },
       powerUntil: 0, // attack-damage buff active while timeMs < this
+      shieldUntil: 0, // tank Bulwark: incoming damage is reduced while timeMs < this
+      shieldReduce: 0, // fraction of damage blocked while shielded (0..1)
       revealUntil: 0, // briefly visible (even in a bush) after attacking
       xp: 0,
       gold: 0,
@@ -388,7 +394,8 @@ export default class GameServer {
       p.input.dx = clamp(Number(msg.dx) || 0, -1, 1);
       p.input.dy = clamp(Number(msg.dy) || 0, -1, 1);
     } else if (msg.t === "attack") {
-      this.tryAttack(p, msg.kind === "ability" ? "ability" : "basic");
+      if (msg.kind === "ability") this.tryAbility(p);
+      else this.tryAttack(p, "basic");
     } else if (msg.t === "dash") {
       this.tryDash(p);
     } else if (msg.t === "class") {
@@ -434,7 +441,13 @@ export default class GameServer {
     player.cd[kind] = this.timeMs + spec.cd * this.effectiveCdMult(player);
     player.revealUntil = this.timeMs + BUSH.revealMs; // attacking reveals you
 
-    // Aim at the nearest enemy target (a living enemy player OR the enemy base).
+    const { ax, ay } = this.aimDir(player); // toward the nearest enemy (or facing)
+    this.spawnBolt(player, kind, ax, ay, spec, this.attackDmg(player, spec.dmg));
+  }
+
+  // The unit aim vector toward the nearest enemy target (player/minion/tower/
+  // base/camp), or — if nothing is in sight — the way the hero is facing.
+  aimDir(player) {
     const target = this.nearestTarget(player) || {
       x: player.x + player.face.x,
       y: player.y + player.face.y,
@@ -442,14 +455,19 @@ export default class GameServer {
     let ax = target.x - player.x;
     let ay = target.y - player.y;
     const len = Math.hypot(ax, ay) || 1;
-    ax /= len;
-    ay /= len;
+    return { ax: ax / len, ay: ay / len };
+  }
 
-    // Damage scales with the hero's level + shop buys, and a power pickup.
+  // A hero's outgoing damage for a base amount: level + shop buys + power pickup.
+  attackDmg(player, base) {
     const powered = this.timeMs < player.powerUntil;
     const mult = this.effectiveDmgMult(player) * (powered ? PICKUP.powerMult : 1);
-    const dmg = Math.round(spec.dmg * mult);
+    return Math.round(base * mult);
+  }
 
+  // Create one projectile flying from the player along (ax, ay). `extra` carries
+  // behaviour flags (pierce/homing/blast) read by the projectile step.
+  spawnBolt(player, kind, ax, ay, spec, dmg, extra = {}) {
     this.projectiles.push({
       id: "b" + this.nextProjId++,
       ownerId: player.id,
@@ -461,7 +479,140 @@ export default class GameServer {
       vy: ay * spec.speed,
       dmg,
       dieAt: this.timeMs + spec.ttl,
+      ...extra,
     });
+  }
+
+  // The B button: each class has a behaviourally distinct ability (not just a
+  // bigger bolt). Dispatch on the ability's `type`.
+  tryAbility(player) {
+    if (this.phase !== "playing" || !player.alive) return;
+    const spec = CLASSES[player.cls].ability;
+    if (this.timeMs < player.cd.ability) return; // cooling down
+    player.cd.ability = this.timeMs + spec.cd * this.effectiveCdMult(player);
+    player.revealUntil = this.timeMs + BUSH.revealMs; // using an ability reveals you
+
+    switch (spec.type) {
+      case "spread": return this.abilitySpread(player, spec);
+      case "pierce": return this.abilityPierce(player, spec);
+      case "shield": return this.abilityShield(player, spec);
+      case "homing": return this.abilityHoming(player, spec);
+      case "blast": return this.abilityBlast(player, spec);
+      case "leap": return this.abilityLeap(player, spec);
+      default: // plain bolt (fallback)
+        const { ax, ay } = this.aimDir(player);
+        return this.spawnBolt(player, "ability", ax, ay, spec, this.attackDmg(player, spec.dmg));
+    }
+  }
+
+  // Scout — Scatter: a fan of pellets centred on the aim direction.
+  abilitySpread(player, spec) {
+    const { ax, ay } = this.aimDir(player);
+    const base = Math.atan2(ay, ax);
+    const spread = (spec.spreadDeg * Math.PI) / 180;
+    const dmg = this.attackDmg(player, spec.dmg);
+    for (let i = 0; i < spec.pellets; i++) {
+      // Spread evenly from -spread/2 to +spread/2 across the pellets.
+      const t = spec.pellets === 1 ? 0 : i / (spec.pellets - 1) - 0.5;
+      const a = base + t * spread;
+      this.spawnBolt(player, "ability", Math.cos(a), Math.sin(a), spec, dmg);
+    }
+  }
+
+  // Soldier — Pierce: one bolt that hits every enemy along its line (each once).
+  abilityPierce(player, spec) {
+    const { ax, ay } = this.aimDir(player);
+    this.spawnBolt(player, "ability", ax, ay, spec, this.attackDmg(player, spec.dmg), {
+      pierce: true,
+      hit: new Set(), // ids already struck, so each target only takes one hit
+    });
+  }
+
+  // Tank — Bulwark: a timed shield that reduces all incoming damage.
+  abilityShield(player, spec) {
+    player.shieldUntil = this.timeMs + spec.durationMs;
+    player.shieldReduce = spec.reduce;
+  }
+
+  // Ranger — Seeker: a homing arrow locked onto the nearest enemy hero.
+  abilityHoming(player, spec) {
+    const { ax, ay } = this.aimDir(player);
+    const target = this.nearestEnemyPlayer(player);
+    this.spawnBolt(player, "ability", ax, ay, spec, this.attackDmg(player, spec.dmg), {
+      homing: true,
+      targetId: target ? target.id : null,
+      turn: spec.turn, // max steering rate, radians/sec
+    });
+  }
+
+  // Mage — Nova: a fireball that detonates on the first thing it touches (or at
+  // end of flight), dealing its damage to everything enemy within blastRadius.
+  abilityBlast(player, spec) {
+    const { ax, ay } = this.aimDir(player);
+    this.spawnBolt(player, "ability", ax, ay, spec, this.attackDmg(player, spec.dmg), {
+      blast: spec.blastRadius,
+    });
+  }
+
+  // Brawler — Leap Slam: lunge forward (walls stop the lunge) then smash,
+  // hurting every enemy around the landing point.
+  abilityLeap(player, spec) {
+    const f = normalizeInput(player.face.x, player.face.y);
+    const dest = resolveMove(
+      player.x,
+      player.y,
+      player.x + f.dx * spec.distance,
+      player.y + f.dy * spec.distance
+    );
+    player.x = dest.x;
+    player.y = dest.y;
+    this.areaDamage(player.x, player.y, spec.slamRadius, this.attackDmg(player, spec.dmg), player);
+  }
+
+  // Deal `dmg` to every enemy player and minion within `r` of (x, y); credit the
+  // owning hero. Used by Nova detonations and the Leap Slam. Also drops a blast
+  // marker so the client can draw the shockwave.
+  areaDamage(x, y, r, dmg, owner) {
+    for (const p of this.players.values()) {
+      if (!owner || p.team === owner.team || !p.alive || this.isHidden(p)) continue;
+      const reach = r + PLAYER_HALF;
+      if ((p.x - x) ** 2 + (p.y - y) ** 2 <= reach * reach) {
+        this.damage(p, dmg, owner.team, owner);
+      }
+    }
+    for (const m of this.minions) {
+      if (!m.alive || (owner && m.team === owner.team)) continue;
+      const reach = r + MINION.half;
+      if ((m.x - x) ** 2 + (m.y - y) ** 2 <= reach * reach) this.damageMinion(m, dmg, owner);
+    }
+    for (const tw of this.towers) {
+      if (!tw.alive || (owner && tw.team === owner.team)) continue;
+      const reach = r + TOWER.radius;
+      if ((tw.x - x) ** 2 + (tw.y - y) ** 2 <= reach * reach) this.damageTower(tw, dmg, owner);
+    }
+    this.blasts.push({
+      id: "x" + this.nextBlastId++,
+      x: Math.round(x),
+      y: Math.round(y),
+      r,
+      team: owner ? owner.team : "blue",
+      dieAt: this.timeMs + 220,
+    });
+  }
+
+  // Nearest LIVING, visible enemy hero (no base/minion) — for homing locks.
+  nearestEnemyPlayer(player) {
+    let best = null;
+    let bestD = Infinity;
+    for (const o of this.players.values()) {
+      if (o.team === player.team || !o.alive || this.isHidden(o)) continue;
+      const d = (o.x - player.x) ** 2 + (o.y - player.y) ** 2;
+      if (d < bestD) {
+        bestD = d;
+        best = o;
+      }
+    }
+    return best;
   }
 
   // Closest enemy thing to aim at: any living enemy player, or the enemy base.
@@ -636,10 +787,11 @@ export default class GameServer {
     m.y = next.y;
   }
 
-  hitMinion(b) {
+  hitMinion(b, skip) {
     const reach = COMBAT.hitPad + MINION.half;
     for (const m of this.minions) {
       if (m.team === b.team || !m.alive) continue;
+      if (skip && skip.has(m.id)) continue;
       if ((m.x - b.x) ** 2 + (m.y - b.y) ** 2 <= reach * reach) return m;
     }
     return null;
@@ -784,15 +936,67 @@ export default class GameServer {
     // 4) Move projectiles; expire; check hits on players, minions, towers, bases.
     const survivors = [];
     for (const b of this.projectiles) {
+      if (b.homing) this.steerHoming(b, dt); // curve toward the locked target
       b.x += b.vx * dt;
       b.y += b.vy * dt;
       const offscreen = b.x < 0 || b.x > GAME_WIDTH || b.y < 0 || b.y > GAME_HEIGHT;
-      if (this.timeMs >= b.dieAt || offscreen) continue;
-      if (pointInWall(b.x, b.y)) continue; // a wall swallows the bolt
+      const dead = this.timeMs >= b.dieAt || offscreen;
+      const inWall = !dead && pointInWall(b.x, b.y);
+      if (dead || inWall) {
+        // A Nova fireball still bursts where it fizzles out or smacks a wall
+        // (but not if it sailed off the map edge).
+        if (b.blast && !offscreen) {
+          this.areaDamage(b.x, b.y, b.blast, b.dmg, this.players.get(b.ownerId));
+        }
+        continue; // bolt is gone
+      }
 
       // The owning hero (if any) earns the last-hit reward; tower bolts have a
       // non-player ownerId, so `owner` is undefined and pays nothing.
       const owner = this.players.get(b.ownerId);
+
+      // Nova fireball: detonate on the first thing it touches.
+      if (b.blast) {
+        if (this.hitPlayer(b) || this.hitMinion(b) || this.hitTower(b) || this.hitCamp(b) || this.hitBase(b)) {
+          this.areaDamage(b.x, b.y, b.blast, b.dmg, owner);
+          continue;
+        }
+        survivors.push(b);
+        continue;
+      }
+
+      // Piercing bolt: hit each enemy hero/minion once and keep flying; a
+      // structure (tower/camp/base) still stops it.
+      if (b.pierce) {
+        const victim = this.hitPlayer(b, b.hit);
+        if (victim) {
+          this.damage(victim, b.dmg, b.team, owner);
+          b.hit.add(victim.id);
+        }
+        const mob = this.hitMinion(b, b.hit);
+        if (mob) {
+          this.damageMinion(mob, b.dmg, owner);
+          b.hit.add(mob.id);
+        }
+        const tower = this.hitTower(b);
+        if (tower) {
+          this.damageTower(tower, b.dmg, owner);
+          continue;
+        }
+        const camp = this.hitCamp(b);
+        if (camp) {
+          this.damageCamp(camp, b.dmg, owner);
+          continue;
+        }
+        const base = this.hitBase(b);
+        if (base) {
+          this.damageBase(base, b.dmg);
+          continue;
+        }
+        survivors.push(b);
+        continue;
+      }
+
       const victim = this.hitPlayer(b);
       if (victim) {
         this.damage(victim, b.dmg, b.team, owner); // credit the firing team + hero
@@ -822,12 +1026,35 @@ export default class GameServer {
       survivors.push(b);
     }
     this.projectiles = survivors;
+    // Drop expired blast markers (they live only long enough for the client to
+    // draw the shockwave once).
+    this.blasts = this.blasts.filter((x) => this.timeMs < x.dieAt);
   }
 
-  hitPlayer(b) {
+  // Steer a homing bolt's velocity toward its locked target, capped at `turn`
+  // radians/sec so it arcs rather than snapping. A lost lock flies straight.
+  steerHoming(b, dt) {
+    const t = this.players.get(b.targetId);
+    if (!t || !t.alive) return;
+    const desired = Math.atan2(t.y - b.y, t.x - b.x);
+    const cur = Math.atan2(b.vy, b.vx);
+    let diff = desired - cur;
+    while (diff > Math.PI) diff -= 2 * Math.PI;
+    while (diff < -Math.PI) diff += 2 * Math.PI;
+    const maxTurn = (b.turn || 5) * dt;
+    const na = cur + clamp(diff, -maxTurn, maxTurn);
+    const sp = Math.hypot(b.vx, b.vy);
+    b.vx = Math.cos(na) * sp;
+    b.vy = Math.sin(na) * sp;
+  }
+
+  // `skip` (optional Set of ids) lets a piercing bolt ignore targets it already
+  // struck, so it keeps finding fresh ones along its line.
+  hitPlayer(b, skip) {
     const reach = COMBAT.hitPad + PLAYER_HALF;
     for (const p of this.players.values()) {
       if (p.team === b.team || !p.alive) continue;
+      if (skip && skip.has(p.id)) continue;
       if (this.isHidden(p)) continue; // a hidden hero can't be hit by enemy bolts
       if ((p.x - b.x) ** 2 + (p.y - b.y) ** 2 <= reach * reach) return p;
     }
@@ -847,6 +1074,10 @@ export default class GameServer {
   // to the scoreboard; `attacker` (optional) is the killing hero, paid XP/gold.
   damage(player, amount, byTeam, attacker) {
     if (!player.alive) return;
+    // Tank's Bulwark shield soaks a fraction of every incoming hit.
+    if (this.timeMs < player.shieldUntil) {
+      amount = Math.round(amount * (1 - player.shieldReduce));
+    }
     player.hp = Math.max(0, player.hp - amount);
     if (player.hp === 0) {
       player.alive = false;
@@ -1058,8 +1289,13 @@ export default class GameServer {
         // Seconds until this player respawns (0 if alive) — for the HUD timer.
         respawnIn: p.alive ? 0 : Math.max(0, Math.ceil((p.deadUntil - this.timeMs) / 1000)),
         powered: this.timeMs < p.powerUntil, // power buff active (for the aura)
+        shielded: this.timeMs < p.shieldUntil, // tank Bulwark active (shield ring)
         hidden: this.isHidden(p), // in a bush, unseen by enemies (client hides it)
       })),
+      // Transient AoE shockwaves (Nova / Slam) the client draws as a ring once.
+      blasts: this.blasts
+        .filter((x) => this.timeMs < x.dieAt)
+        .map((x) => ({ id: x.id, x: x.x, y: x.y, r: x.r, team: x.team })),
       projectiles: this.projectiles.map((b) => ({
         id: b.id,
         team: b.team,

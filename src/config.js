@@ -126,7 +126,8 @@ export const CLASSES = {
     scale: 0.85, // drawn a touch smaller
     emblem: 0xfff1e8, // visor/emblem accent (drawn on the sprite)
     basic: { dmg: 6, cd: 250, speed: 480, ttl: 1200 }, // rapid, light
-    ability: { dmg: 18, cd: 1800, speed: 640, ttl: 1200 },
+    // Scatter: a three-pellet spread shot — spray-and-pray for an assassin.
+    ability: { type: "spread", dmg: 13, cd: 1900, speed: 560, ttl: 1000, pellets: 3, spreadDeg: 24 },
   },
   soldier: {
     name: "Soldier",
@@ -134,7 +135,8 @@ export const CLASSES = {
     scale: 1,
     emblem: 0xfff1e8,
     basic: COMBAT.basic,
-    ability: COMBAT.ability,
+    // Pierce: one heavy bolt that passes through every enemy in its line.
+    ability: { type: "pierce", dmg: COMBAT.ability.dmg, cd: COMBAT.ability.cd, speed: COMBAT.ability.speed, ttl: COMBAT.ability.ttl },
   },
   tank: {
     name: "Tank",
@@ -142,7 +144,8 @@ export const CLASSES = {
     scale: 1.25, // drawn bigger
     emblem: 0xffec27,
     basic: { dmg: 13, cd: 650, speed: 360, ttl: 1500 }, // slow, heavy
-    ability: { dmg: 45, cd: 3200, speed: 460, ttl: 1400 },
+    // Bulwark: raise a shield that halves incoming damage for a few seconds.
+    ability: { type: "shield", cd: 3200, durationMs: 3000, reduce: 0.5 },
   },
   ranger: {
     name: "Ranger",
@@ -151,7 +154,8 @@ export const CLASSES = {
     emblem: 0x00e436, // green
     // Long range (high ttl), fast bolts, modest damage — pokes from afar.
     basic: { dmg: 7, cd: 380, speed: 560, ttl: 2000 },
-    ability: { dmg: 26, cd: 2200, speed: 700, ttl: 2200 },
+    // Seeker: a homing arrow that curves to chase the nearest enemy hero.
+    ability: { type: "homing", dmg: 28, cd: 2300, speed: 470, ttl: 2400, turn: 5 },
   },
   mage: {
     name: "Mage",
@@ -160,7 +164,8 @@ export const CLASSES = {
     emblem: 0xff77a8, // pink
     // Weak basic, but a huge slow-cooldown nuke — burst caster.
     basic: { dmg: 9, cd: 600, speed: 420, ttl: 1300 },
-    ability: { dmg: 60, cd: 4200, speed: 480, ttl: 1500 },
+    // Nova: a fireball that detonates on contact, hitting everything nearby.
+    ability: { type: "blast", dmg: 40, cd: 4200, speed: 470, ttl: 1500, blastRadius: 74 },
   },
   brawler: {
     name: "Brawler",
@@ -169,7 +174,8 @@ export const CLASSES = {
     emblem: 0xffa300, // orange
     // Short-range (low ttl) but rapid, hard-hitting — a dive bruiser.
     basic: { dmg: 12, cd: 320, speed: 360, ttl: 800 },
-    ability: { dmg: 34, cd: 2400, speed: 420, ttl: 900 },
+    // Leap Slam: lunge forward and smash, hurting everything around the landing.
+    ability: { type: "leap", dmg: 34, cd: 2400, distance: 170, slamRadius: 62 },
   },
 };
 

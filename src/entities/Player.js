@@ -23,6 +23,10 @@ export default class Player extends Phaser.GameObjects.Container {
 
     // A soft orange aura shown behind the body while a power buff is active.
     this.aura = scene.add.circle(0, 0, (PLAYER_SIZE * SPRITE_SCALE) / 2 + 6, 0xffa300, 0);
+    // A cyan ring shown while the tank's Bulwark shield is up.
+    this.shield = scene.add
+      .circle(0, 0, (PLAYER_SIZE * SPRITE_SCALE) / 2 + 8, 0x29adff, 0)
+      .setStrokeStyle(2, 0x29adff, 0);
 
     const texture = team === "red" ? "player_red" : "player_blue";
     this.bodySprite = scene.add.sprite(0, 0, texture).setScale(SPRITE_SCALE);
@@ -52,7 +56,7 @@ export default class Player extends Phaser.GameObjects.Container {
       .setOrigin(0.5)
       .setVisible(false);
 
-    this.add([this.aura, this.bodySprite, this.hpBg, this.hpFill, this.botLabel, this.levelLabel]);
+    this.add([this.aura, this.shield, this.bodySprite, this.hpBg, this.hpFill, this.botLabel, this.levelLabel]);
     scene.add.existing(this);
   }
 
@@ -64,6 +68,11 @@ export default class Player extends Phaser.GameObjects.Container {
   setLevel(level) {
     if (level > 1) this.levelLabel.setText(`L${level}`).setVisible(true);
     else this.levelLabel.setVisible(false);
+  }
+
+  // Toggle the Bulwark shield ring.
+  setShielded(on) {
+    this.shield.setStrokeStyle(2, 0x29adff, on ? 0.9 : 0);
   }
 
   // Toggle the power-buff aura.

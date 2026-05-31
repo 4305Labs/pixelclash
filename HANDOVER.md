@@ -4,12 +4,12 @@
 > human) can pick this project up cold and keep building safely.
 > **Update this file after every major change** (see *Update protocol* at the end).
 >
-> **Last updated:** four-part art overhaul shipped — (1) atmosphere
->   (vignette + base glows), (2) richer hero shading with distinct per-class
->   heads, (3) cobblestone lanes + mossy jungle floor, (4) faceted nexus
->   crystals + 3D tower battlements. Map is 3 lanes fanning from each nexus
->   (mid straight + side diagonals) on a jungle floor with camps and bushes.
-> **Status:** all tests green (54 test groups), live two-browser test green, build OK.
+> **Last updated:** per-hero abilities — the B button is now behaviourally
+>   distinct per class: Scout Scatter (spread), Soldier Pierce, Tank Bulwark
+>   (shield), Ranger Seeker (homing), Mage Nova (AoE blast), Brawler Leap Slam.
+>   Built on the prior four-part art overhaul (atmosphere, hero shading,
+>   cobblestone/moss terrain, faceted nexus + 3D tower battlements).
+> **Status:** all tests green (55 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
 > **`claude/pixel-moba-game-WobPa`** (PR #1 → `main`). `main` is the empty root
@@ -86,17 +86,19 @@ add it to `snapshot()` AND read it in `NetClient._receive` AND render it in a
 read by NetClient**, so a new field with no client reader fails the suite.
 
 Current top-level fields: `t, tick, phase, winner, score, killFeed, needed,
-countdown, timeLeft, players[], projectiles[], minions[], pickups[], camps[],
-towers[], bases[]`.
+countdown, timeLeft, players[], projectiles[], blasts[], minions[], pickups[],
+camps[], towers[], bases[]`. `blasts[]` are short-lived AoE shockwave markers
+(`id,x,y,r,team`) the client draws as an expanding ring once per id.
 Per-player: `id, team, x, y, hp, maxHp, alive, cls, bot, level, gold, buys,
-respawnIn, powered, hidden`. Per-base adds `shielded`.
+respawnIn, powered, shielded, hidden`. Per-base adds `shielded`.
 
 ## 4. Feature map (where to look)
 
 | System | Server (`GameServer.js`) | Client | Config |
 |---|---|---|---|
 | Movement/prediction | `step()` move loop | `predictLocal`, `sim.js` | `PLAYER_SPEED` |
-| Combat (basic/ability/dash) | `tryAttack`, `tryDash` | `doAction` | `COMBAT`, `DASH` |
+| Combat (basic/dash) | `tryAttack`, `tryDash` | `doAction` | `COMBAT`, `DASH` |
+| Per-hero abilities (B) | `tryAbility` + `ability*` handlers | shield ring, `syncBlasts` | `CLASSES[cls].ability.type` |
 | Bases + win/shield | `damageBase`, `baseVulnerable` | `Base` (shield ring) | `BASE`, `BASE_POS` |
 | 3 lanes (top/mid/bot) | per-lane in `spawnWave`/`resetTowers` | lane geometry | `LANES`, `TOWER_X` |
 | Lane minions (per lane) | `stepMinions`, `spawnWave`, `moveMinion` | `syncMinions`, `Minion` | `MINION` |
