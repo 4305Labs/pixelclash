@@ -19,7 +19,9 @@ Everything is free and runs on your own machine — no accounts, no credit card.
 ## What's in it
 
 - **6 hero classes** — Scout, Soldier, Tank, Ranger, Mage, Brawler, each with its
-  own sprite, health, and attack profile.
+  own sprite, health, and attack profile — **plus a unique B ability** (a pellet
+  spread, a piercing bolt, a damage-soaking shield, a homing arrow, an AoE nova,
+  and a leap slam — one per hero, not just a bigger shot).
 - **3 lanes** (top / mid / bottom) of AI minion waves, with a **guard tower** on
   every lane — six per side.
 - **Tower-gated bases** — a base is shielded until all its towers fall.
@@ -190,6 +192,11 @@ camps, stealth bushes (the green patches), heroes, bases, and the HUD.
 | The six heroes | Picking a hero (lobby) | Mid-lane clash & shop HUD |
 |---|---|---|
 | ![The six hero classes lined up](docs/screenshot-heroes.png) | ![The lobby hero picker](docs/screenshot-heroes-lobby.png) | ![Minions clashing with the full HUD](docs/screenshot-match.png) |
+
+Each hero's **B ability** is genuinely different — here a tank's shield ring, a
+scout's pellet spread, a mage's nova blast, and a homing arrow all at once:
+
+![Per-hero abilities in flight — shield ring, scatter pellets, nova shockwave, homing arrow](docs/screenshot-abilities.png)
 
 | Lane minions meet | Victory screen | On a phone (landscape) |
 |---|---|---|
