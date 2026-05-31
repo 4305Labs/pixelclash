@@ -4,8 +4,8 @@
 > human) can pick this project up cold and keep building safely.
 > **Update this file after every major change** (see *Update protocol* at the end).
 >
-> **Last updated:** commit `fb623db` — "Add HANDOVER.md (living handover doc)"
-> **Status:** all tests green (50 test groups), live two-browser test green, build OK.
+> **Last updated:** commit `4f9e5e5` — "Jungle camps: neutral monsters with a clear reward"
+> **Status:** all tests green (52 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
 > **`claude/pixel-moba-game-WobPa`** (PR #1 → `main`). `main` is the empty root
