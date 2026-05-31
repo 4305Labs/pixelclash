@@ -50,62 +50,68 @@ function paintGrid(scene, key, { rows, palette, pixel = 1 }) {
 // hood, wizard hat, headband…) while the body stays clean. "v" is the class
 // emblem accent. paintGrid validates every row is 16 wide, so a miscount throws.
 const HERO_BODY = [
-  "...obdbbbbdbo...",
-  "..obbbbbbbbbbo..",
-  "..obbbvvvvbbbo..",
-  "..obbbbbbbbbbo..",
-  "..oddddddddddo..",
-  "...obbbbbbbbo...",
-  "...obbo..obbo...",
-  "...obbo..obbo...",
-  "...offo..offo...",
+  "...odhllllhdo...", // shoulders: top-lit highlight across the top
+  "..odhlbbbblhdo..",
+  "..oklbvvvvblko..", // chest emblem, flanked by light/shadow
+  "..obbgvvvvgbbo..", // emblem highlight row
+  "..okdbbbbbbdko..",
+  "...okdddddko....", // belt line: deep shadow
+  "...odbo..odbo...", // arms with a lit outer edge
+  "...okbo..okbo...",
+  "...ofso..ofso...", // boots with a highlight
   "...oooo..oooo...",
   "................",
 ];
 
 // Each head is 5 rows × 16 cols. Together with HERO_BODY that's a 16×16 sprite.
 const HERO_HEADS = {
+  // Soldier: domed helmet (lit top), white visor slit with a glint.
   soldier: [
-    ".....oooooo.....",
-    "....obbbbbbo....",
-    "...obbbbbbbbo...",
-    "...obbwwwwbbo...",
-    "...obbbbbbbbo...",
+    ".....ohhhho.....",
+    "....ohllllllo...",
+    "...ohlbbbblho...",
+    "...obwweewwbo...",
+    "...okdbbbbdko...",
   ],
+  // Scout: small goggled head, twin glinting lenses.
   scout: [
-    "......oooo......",
-    ".....obbbbo.....",
-    ".....obwwbo.....",
-    ".....obbbbo.....",
-    "......obbo......",
+    "......ohho......",
+    ".....ohllho.....",
+    ".....oweewo.....",
+    ".....obbbdo.....",
+    "......okdo......",
   ],
+  // Tank: heavy wide helm with two visor slits.
   tank: [
-    ".....oooooo.....",
-    "....obbbbbbo....",
-    "...obbbbbbbbo...",
-    "...owwbbbbwwo...",
-    "...obbbbbbbbo...",
+    "....ohhhhhho....",
+    "...ohllllllho...",
+    "..ohlbbbbbbblo..",
+    "..owebbbbbbewo..",
+    "..okddbbbbddko..",
   ],
+  // Ranger: hooded head, shadowed face under the hood.
   ranger: [
-    ".......oo.......",
-    "......obbo......",
-    ".....obddbo.....",
-    "....obddddbo....",
-    "...obddddddbo...",
+    ".....ohhhho.....",
+    "....ohlddlho....",
+    "...ohdkkkkdho...",
+    "...okdkwwkdko...",
+    "....okddddko....",
   ],
+  // Mage: pointed hat (emblem-coloured) over a lit face.
   mage: [
-    ".......oo.......",
-    "......ovvo......",
-    ".....ovvvvo.....",
-    "....obbbbbbo....",
-    "...obbbwwbbbo...",
+    ".......go.......",
+    "......ogvo......",
+    ".....ogvvvo.....",
+    "....ohllllho....",
+    "....ohlwwlho....",
   ],
+  // Brawler: headband (emblem) over a wide jaw.
   brawler: [
-    "....oooooooo....",
-    "...ovvvvvvvvo...",
-    "...obbbbbbbbo...",
-    "...obwbbbbwbo...",
-    "...obbbbbbbbo...",
+    "....ohhhhhho....",
+    "...ogvvvvvvgo...",
+    "..ohlbbbbbbblo..",
+    "..obbwbbbbwbbo..",
+    "..okdbbbbbbdko..",
   ],
 };
 
@@ -115,12 +121,17 @@ function makeCharacterTexture(scene, key, cls, bodyColor, emblemColor) {
   const palette = {
     ".": null,
     o: COLORS.outline,
-    b: bodyColor,
+    h: shade(bodyColor, 1.7), // bright top-light highlight
+    l: shade(bodyColor, 1.3), // light
+    b: bodyColor, // mid body
     d: shade(bodyColor, 0.6), // shadow
-    l: shade(bodyColor, 1.4), // highlight (unused by some heads — harmless)
+    k: shade(bodyColor, 0.4), // deep shadow / occlusion
     v: emblemColor, // class emblem accent
+    g: shade(emblemColor, 1.4), // emblem highlight
     w: COLORS.white, // visor / eyes
+    e: 0xffffff, // eye glint
     f: 0x3a3a4a, // boots
+    s: 0x52526a, // boot highlight
   };
   const rows = [...(HERO_HEADS[cls] || HERO_HEADS.soldier), ...HERO_BODY];
   paintGrid(scene, key, { rows, palette, pixel: 1 });
