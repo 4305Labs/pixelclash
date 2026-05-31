@@ -29,6 +29,23 @@ export const COLORS = {
 // (y≈238 and y≈364), so the ground matches the wall layout.
 export const LANE_BAND = { top: 238, bottom: 364 };
 
+// Non-colliding decor props scattered on the jungle floor (top + bottom routes)
+// so they don't feel empty. Purely visual — fixed positions (mirror-symmetric)
+// so render tests stay deterministic. Kept clear of the spawn rows (y=150/450)
+// and the flank heal-orbs (x≈400, y=60/540).
+export const DECOR_SPOTS = [
+  // Top jungle.
+  { kind: "bush", x: 70, y: 70 }, { kind: "rock", x: 730, y: 70 },
+  { kind: "rock", x: 210, y: 80 }, { kind: "bush", x: 590, y: 80 },
+  { kind: "bush", x: 120, y: 205 }, { kind: "rock", x: 680, y: 205 },
+  { kind: "rock", x: 330, y: 175 }, { kind: "bush", x: 470, y: 175 },
+  // Bottom jungle (mirror).
+  { kind: "rock", x: 70, y: 530 }, { kind: "bush", x: 730, y: 530 },
+  { kind: "bush", x: 210, y: 520 }, { kind: "rock", x: 590, y: 520 },
+  { kind: "rock", x: 120, y: 395 }, { kind: "bush", x: 680, y: 395 },
+  { kind: "bush", x: 330, y: 425 }, { kind: "rock", x: 470, y: 425 },
+];
+
 // How fast a player moves, in pixels per second.
 export const PLAYER_SPEED = 220;
 

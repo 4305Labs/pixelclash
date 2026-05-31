@@ -316,6 +316,45 @@ function makeWallTexture(scene, key) {
   g.destroy();
 }
 
+// Non-colliding jungle decor as pixel grids (pixel=2). A leafy bush or a mossy
+// rock, both on a transparent background, palettes derived from the jungle
+// colour so they sit naturally on the green floor.
+const DECOR_ROWS = {
+  bush: [
+    "...oooo...",
+    "..ollllo..",
+    ".ollgglloo",
+    "ollggggllo",
+    "ollggggglo",
+    "olgggggglo",
+    ".ologgolo.",
+    "..oo..oo..",
+  ],
+  rock: [
+    "..........",
+    "...oooo...",
+    "..olllho..",
+    ".ollllhho.",
+    "ollllhhho.",
+    "olllhhhho.",
+    ".oohhhhoo.",
+    "..oooooo..",
+  ],
+};
+
+function makeDecorTexture(scene, key, kind) {
+  const moss = COLORS.jungle;
+  const stone = COLORS.wall;
+  const palette = {
+    ".": null,
+    o: COLORS.outline,
+    l: kind === "rock" ? stone : shade(moss, 2.6), // leaf body / rock body
+    g: shade(moss, 2.0), // darker leaf
+    h: shade(stone, 0.7), // rock shadow
+  };
+  paintGrid(scene, key, { rows: DECOR_ROWS[kind], palette, pixel: 2 });
+}
+
 // Called once when the arena starts. Creates every texture the game needs.
 export function generateTextures(scene) {
   makeFloorTexture(scene, "floor");
@@ -338,4 +377,6 @@ export function generateTextures(scene) {
   makeTowerTexture(scene, "tower_red", COLORS.redTeam);
   makePickupTexture(scene, "pickup_heal", "heal");
   makePickupTexture(scene, "pickup_power", "power");
+  makeDecorTexture(scene, "decor_bush", "bush");
+  makeDecorTexture(scene, "decor_rock", "rock");
 }

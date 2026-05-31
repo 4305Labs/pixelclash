@@ -3,7 +3,7 @@
 // read as different ground. We check the textures exist and the jungle strips
 // are placed outside the lane band. Headless render.
 import { openGame, assert } from "./helpers.mjs";
-import { LANE_BAND, GAME_HEIGHT } from "../src/config.js";
+import { LANE_BAND, GAME_HEIGHT, DECOR_SPOTS } from "../src/config.js";
 
 let browser;
 try {
@@ -41,6 +41,25 @@ try {
     bottom && bottom.h === GAME_HEIGHT - LANE_BAND.bottom,
     "the bottom jungle strip covers the bottom route below the lane"
   );
+
+  // --- Jungle decor: one prop per DECOR_SPOT, all in the jungle bands --------
+  const decor = await page.evaluate(() => {
+    const s = window.PIXELCLASH.game.scene.getScene("ArenaScene");
+    return {
+      hasBush: s.textures.exists("decor_bush"),
+      hasRock: s.textures.exists("decor_rock"),
+      count: s.decor ? s.decor.length : 0,
+      ys: (s.decor || []).map((o) => Math.round(o.y)),
+      depths: (s.decor || []).map((o) => o.depth),
+    };
+  });
+  assert(decor.hasBush && decor.hasRock, "bush and rock decor textures exist");
+  assert(decor.count === DECOR_SPOTS.length, "one decor prop per configured spot");
+  assert(
+    decor.ys.every((y) => y < LANE_BAND.top || y > LANE_BAND.bottom),
+    "all decor sits in the jungle (outside the center lane band)"
+  );
+  assert(decor.depths.every((d) => d < -5), "decor is drawn below the walls/units");
 
   const realErrors = errors.filter((e) => !/websocket|ws:\/\//i.test(e));
   assert(realErrors.length === 0, "no unexpected errors: " + JSON.stringify(realErrors));

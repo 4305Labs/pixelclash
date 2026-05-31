@@ -19,6 +19,7 @@ import {
   KILLFEED,
   PROGRESS,
   LANE_BAND,
+  DECOR_SPOTS,
 } from "../config.js";
 import { generateTextures } from "../textures.js";
 import { stepPosition } from "../sim.js";
@@ -42,6 +43,7 @@ export default class ArenaScene extends Phaser.Scene {
   create() {
     generateTextures(this);
     this.drawGrid();
+    this.drawDecor();
     this.drawWalls();
 
     this.net = this.registry.get("net");
