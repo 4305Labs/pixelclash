@@ -1,5 +1,9 @@
 # CLAUDE.md — working on PixelClash
 
+> **Picking this up cold?** Read **`HANDOVER.md`** first — it's the living
+> handover (current status, full feature map, invariants, gotchas, next steps)
+> and is updated after every major change.
+
 A pixel-art, browser-first **MOBA arena battler** (Phaser 3 + Vite client, a
 Node + `ws` **server-authoritative** game server). Heroes move/attack/ability/
 dash; lane minions and guard towers push the lane; destroy the enemy base — which
