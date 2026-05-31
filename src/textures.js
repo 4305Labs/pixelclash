@@ -173,28 +173,39 @@ function makeBaseTexture(scene, key, color) {
   const g = scene.make.graphics({ x: 0, y: 0 }, false);
   const r = BASE.radius;
   const size = r * 2;
-  const lit = color;
-  const dark = shade(color, 0.55);
 
-  // Outline, then the two facets (left half lit, right half shadowed), then a
-  // smaller bright core, drawn as nested diamonds.
+  // Outlined diamond silhouette.
   g.fillStyle(COLORS.outline, 1);
   g.fillPoints(diamond(r, r, r), true);
 
-  // Left facet (lit): a triangle from top to bottom down the centre, to the
-  // left point. Right facet (shadowed): the mirror.
-  const top = { x: r, y: r - (r - 2) };
-  const bot = { x: r, y: r + (r - 2) };
-  const left = { x: r - (r - 2), y: r };
-  const right = { x: r + (r - 2), y: r };
-  g.fillStyle(lit, 1);
-  g.fillPoints([top, bot, left], true);
-  g.fillStyle(dark, 1);
-  g.fillPoints([top, bot, right], true);
+  // Four cut facets around the centre, lit from the top-left: the upper-left
+  // face is brightest and the lower-right darkest, so the gem reads as faceted
+  // crystal rather than a flat lozenge.
+  const e = r - 2;
+  const top = { x: r, y: r - e };
+  const bot = { x: r, y: r + e };
+  const left = { x: r - e, y: r };
+  const right = { x: r + e, y: r };
+  const ctr = { x: r, y: r };
+  g.fillStyle(shade(color, 1.45), 1); // upper-left: brightest
+  g.fillPoints([top, left, ctr], true);
+  g.fillStyle(shade(color, 1.1), 1); // upper-right
+  g.fillPoints([top, right, ctr], true);
+  g.fillStyle(shade(color, 0.8), 1); // lower-left
+  g.fillPoints([bot, left, ctr], true);
+  g.fillStyle(shade(color, 0.5), 1); // lower-right: darkest
+  g.fillPoints([bot, right, ctr], true);
+
+  // Thin facet seam lines from centre to each tip sharpen the cut.
+  g.lineStyle(1, COLORS.outline, 0.5);
+  for (const p of [top, bot, left, right]) g.lineBetween(r, r, p.x, p.y);
 
   // Bright core + a sparkle up-left.
   g.fillStyle(COLORS.white, 1);
-  g.fillPoints(diamond(r, r, r * 0.34), true);
+  g.fillPoints(diamond(r, r, r * 0.3), true);
+  g.fillStyle(shade(color, 1.8), 1);
+  g.fillPoints(diamond(r, r, r * 0.16), true);
+  g.fillStyle(COLORS.white, 1);
   g.fillRect(r - Math.round(r * 0.45), r - Math.round(r * 0.45), 2, 2);
 
   g.generateTexture(key, size, size);
@@ -231,9 +242,20 @@ function makeTowerTexture(scene, key, color) {
   g.fillRect(2, s - 5, s - 4, 3);
   g.fillRect(s - 5, 2, 3, s - 4);
 
-  // Crenellations: three dark notches along the very top.
-  g.fillStyle(COLORS.outline, 1);
-  for (let i = 0; i < 3; i++) g.fillRect(4 + i * ((s - 8) / 3) + 2, 0, 4, 3);
+  // Battlements: raised merlon blocks (lit top, shadowed under-edge) standing
+  // proud of the parapet, with transparent gaps between — reads as 3D crenels.
+  const merlons = 3;
+  const span = (s - 6) / merlons;
+  for (let i = 0; i < merlons; i++) {
+    const mx = 3 + i * span + span * 0.18;
+    const mw = span * 0.64;
+    g.fillStyle(COLORS.outline, 1);
+    g.fillRect(mx - 1, 0, mw + 2, 5);
+    g.fillStyle(stone, 1);
+    g.fillRect(mx, 1, mw, 4);
+    g.fillStyle(shade(stone, 1.4), 1); // lit cap
+    g.fillRect(mx, 1, mw, 1);
+  }
 
   // Team cannon disc + bright muzzle.
   g.fillStyle(COLORS.outline, 1);
