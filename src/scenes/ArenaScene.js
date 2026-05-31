@@ -20,6 +20,7 @@ import {
   PROGRESS,
   LANES,
   LANE_BAND_HALF,
+  LANE_ENTRY_X,
   DECOR_SPOTS,
   BUSH_ZONES,
 } from "../config.js";
@@ -929,61 +930,71 @@ export default class ArenaScene extends Phaser.Scene {
     }
   }
 
+  // A stone road as a rotated rectangle from (x1,y1) to (x2,y2), `band` wide.
+  // Used for the diagonal connectors that fan the side lanes out of each base.
+  // `COLORS.grid` is the lighter stone-blue, so the road reads against the dark
+  // jungle (the straight bands are a textured tile; these are a flat fill).
+  drawRoad(x1, y1, x2, y2, band, color = COLORS.grid) {
+    const len = Math.hypot(x2 - x1, y2 - y1);
+    const r = this.add
+      .rectangle((x1 + x2) / 2, (y1 + y2) / 2, len, band, color)
+      .setRotation(Math.atan2(y2 - y1, x2 - x1))
+      .setDepth(-9);
+    return r;
+  }
+
   drawGrid() {
-    // Mossy jungle floor across the WHOLE arena, then a stone "road" band per
-    // lane on top — so each of the three lanes reads as a paved lane through the
-    // jungle (the gaps between lanes stay jungle). tileSprite repeats the 40×40
-    // tiles for us.
+    // Mossy jungle floor across the WHOLE arena, then stone "roads": the mid lane
+    // runs straight across, while the top/bottom lanes run between their entries
+    // and DIAGONAL connectors fan them out of each base — so the three lanes
+    // radiate from the nexus instead of being parallel strips.
     this.jungleFloor = this.add
       .tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, "floor_jungle")
       .setOrigin(0, 0)
       .setDepth(-10);
-    // One stone band centred on each lane row.
-    this.laneFloors = LANES.map((ln) =>
-      this.add
-        .tileSprite(0, ln.row - LANE_BAND_HALF, GAME_WIDTH, LANE_BAND_HALF * 2, "floor")
-        .setOrigin(0, 0)
-        .setDepth(-9)
-    );
-    // A stone "courtyard" at each base spanning all three lanes, so the lanes
-    // visibly fan out FROM the nexus instead of being detached parallel strips.
-    // It runs from each edge out to roughly the lane-entry x, top lane to bottom.
+
+    const band = LANE_BAND_HALF * 2;
+    const entryL = LANE_ENTRY_X;
+    const entryR = GAME_WIDTH - LANE_ENTRY_X;
+    const midRow = GAME_HEIGHT / 2;
+
+    this.laneFloors = [];
+    for (const ln of LANES) {
+      if (ln.id === "mid") {
+        // Mid lane: a full-width stone band.
+        this.laneFloors.push(
+          this.add
+            .tileSprite(0, ln.row - LANE_BAND_HALF, GAME_WIDTH, band, "floor")
+            .setOrigin(0, 0)
+            .setDepth(-9)
+        );
+      } else {
+        // Side lane: a straight stone band only BETWEEN the two entries…
+        this.laneFloors.push(
+          this.add
+            .tileSprite(entryL, ln.row - LANE_BAND_HALF, entryR - entryL, band, "floor")
+            .setOrigin(0, 0)
+            .setDepth(-9)
+        );
+        // …plus a diagonal connector from each base (mid row) to that entry.
+        this.laneFloors.push(this.drawRoad(0, midRow, entryL, ln.row, band));
+        this.laneFloors.push(this.drawRoad(GAME_WIDTH, midRow, entryR, ln.row, band));
+      }
+    }
+
+    // A faint team tint at each base end (where the lanes converge), so each
+    // side reads as that team's territory.
     const rows = LANES.map((l) => l.row);
     const yTop = Math.min(...rows) - LANE_BAND_HALF;
     const yBot = Math.max(...rows) + LANE_BAND_HALF;
-    const courtW = 175; // ~ lane-entry x; covers base + the fan-out
-    this.baseCourts = [
-      this.add.tileSprite(0, yTop, courtW, yBot - yTop, "floor").setOrigin(0, 0).setDepth(-9),
-      this.add
-        .tileSprite(GAME_WIDTH - courtW, yTop, courtW, yBot - yTop, "floor")
-        .setOrigin(0, 0)
-        .setDepth(-9),
-    ];
-
-    // A faint team tint over each base courtyard, so each end reads as that
-    // team's territory (blue on the left, red on the right).
     this.add
-      .rectangle(0, yTop, courtW, yBot - yTop, COLORS.blueTeam, 0.12)
+      .rectangle(0, yTop, entryL, yBot - yTop, COLORS.blueTeam, 0.12)
       .setOrigin(0, 0)
       .setDepth(-8);
     this.add
-      .rectangle(GAME_WIDTH - courtW, yTop, courtW, yBot - yTop, COLORS.redTeam, 0.12)
+      .rectangle(entryR, yTop, GAME_WIDTH - entryR, yBot - yTop, COLORS.redTeam, 0.12)
       .setOrigin(0, 0)
       .setDepth(-8);
-
-    // Curbs: a darker edge line along the top and bottom of each lane band, so
-    // the lanes read as deliberate paved roads, not just lighter floor.
-    this.laneCurbs = [];
-    for (const ln of LANES) {
-      for (const edgeY of [ln.row - LANE_BAND_HALF, ln.row + LANE_BAND_HALF - 2]) {
-        this.laneCurbs.push(
-          this.add
-            .rectangle(0, edgeY, GAME_WIDTH, 2, COLORS.wallEdge, 0.85)
-            .setOrigin(0, 0)
-            .setDepth(-8)
-        );
-      }
-    }
   }
 
   // Scatter non-colliding decor (bushes/rocks) on the jungle floor. Above the

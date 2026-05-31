@@ -4,7 +4,9 @@
 > human) can pick this project up cold and keep building safely.
 > **Update this file after every major change** (see *Update protocol* at the end).
 >
-> **Last updated:** commit `9c8bb17` — "Three lanes (increment B): per-lane minion waves"
+> **Last updated:** the map now has 3 lanes that fan out from each nexus, drawn
+>   as stone roads (mid straight + side lanes via diagonal connectors) on a
+>   jungle floor, with team-tinted base ends, camps, and stealth bushes.
 > **Status:** all tests green (54 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
@@ -135,8 +137,12 @@ respawnIn, powered, hidden`. Per-base adds `shielded`.
   script before moving a row). `WALLS[0]/[1]` are the two central pillars (now
   shortened to sit BETWEEN the lanes) — `m13.walls` reads `WALLS[0]` and shoots
   at its computed mid-row, so keep it a pillar at x≈392. `TOWER_X` spots and
-  `BUSH_ZONES` must stay wall-free; `LANE_BAND` (the jungle-floor band) is purely
-  cosmetic and independent of `LANES`.
+  `BUSH_ZONES` must stay wall-free. Floors are cosmetic and independent of
+  pathing: `drawGrid` lays jungle, a `LANE_BAND_HALF`-tall stone band per lane
+  (mid full-width; side lanes only between `LANE_ENTRY_X`…`W-entry`), and four
+  rotated-rectangle DIAGONAL connectors fanning the side lanes from each base.
+  The minions' actual fan-out is the spawn `waypoint` (config `LANE_ENTRY_X`),
+  not the floor.
 - **Towers are an ARRAY** `[{team,lane,...}]` (not a Map) — 3 per team. Use
   `find(t=>t.team===x && t.lane===y)`, not `.get(team)`. `baseVulnerable(team)`
   is true only when ALL of a team's towers are dead. Client keys tower sprites

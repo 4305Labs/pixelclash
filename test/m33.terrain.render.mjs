@@ -1,7 +1,7 @@
 // Milestone 33 (terrain): the arena draws a mossy jungle floor everywhere, then
-// a stone "road" band centred on each of the three lanes, so every lane reads as
-// a paved lane through the jungle. Decor props sit in the jungle gaps between
-// lanes (off the stone bands). Headless render.
+// stone "roads" for the lanes — the mid lane straight across, and the top/bottom
+// lanes as straight mid-sections plus DIAGONAL connectors that fan them out of
+// each base. Decor props sit in the jungle gaps between lanes. Headless render.
 import { openGame, assert } from "./helpers.mjs";
 import { LANES, LANE_BAND_HALF, DECOR_SPOTS } from "../src/config.js";
 
@@ -24,22 +24,27 @@ try {
       hasFloor: s.textures.exists("floor"),
       hasJungle: s.textures.exists("floor_jungle"),
       hasJungleFloor: !!s.jungleFloor,
-      laneCount: s.laneFloors ? s.laneFloors.length : 0,
-      // y-extents of each lane band (origin 0,0 tileSprites).
-      bands: (s.laneFloors || []).map((o) => ({ y: Math.round(o.y), h: Math.round(o.height) })),
+      // Straight stone bands are unrotated tile sprites; diagonal connectors are
+      // rotated rectangles. Report both.
+      straightBands: (s.laneFloors || [])
+        .filter((o) => o.type === "TileSprite")
+        .map((o) => ({ y: Math.round(o.y), h: Math.round(o.height) })),
+      diagonals: (s.laneFloors || []).filter((o) => o.type === "Rectangle" && o.rotation !== 0).length,
     };
   });
 
   assert(v.hasFloor && v.hasJungle, "both the stone and jungle floor textures exist");
   assert(v.hasJungleFloor, "the jungle floor covers the whole arena");
-  assert(v.laneCount === LANES.length, "there is a stone band per lane (3)");
 
-  // Each band is centred on its lane row and is LANE_BAND_HALF*2 tall.
+  // Every lane has a straight stone band centred on its row (mid spans the full
+  // width; the side lanes' straight sections run between their entries).
   for (const ln of LANES) {
-    const band = v.bands.find((b) => b.y === ln.row - LANE_BAND_HALF);
-    assert(band, `the ${ln.id} lane has a stone band at its row`);
+    const band = v.straightBands.find((b) => b.y === ln.row - LANE_BAND_HALF);
+    assert(band, `the ${ln.id} lane has a straight stone band at its row`);
     assert(band.h === LANE_BAND_HALF * 2, `the ${ln.id} band is the right height`);
   }
+  // The two side lanes each fan out of BOTH bases → four diagonal connectors.
+  assert(v.diagonals === 4, "four diagonal connectors fan the side lanes from each base");
 
   // --- Jungle decor: one prop per DECOR_SPOT, all in the jungle gaps ----------
   const decor = await page.evaluate(() => {
