@@ -4,7 +4,7 @@
 > human) can pick this project up cold and keep building safely.
 > **Update this file after every major change** (see *Update protocol* at the end).
 >
-> **Last updated:** commit `6c81bea` — "Bush stealth: hide in the brush for jungle ambushes"
+> **Last updated:** commit `9c8bb17` — "Three lanes (increment B): per-lane minion waves"
 > **Status:** all tests green (54 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
