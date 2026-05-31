@@ -27,6 +27,7 @@ import Player from "../entities/Player.js";
 import Base from "../entities/Base.js";
 import Minion from "../entities/Minion.js";
 import Tower from "../entities/Tower.js";
+import Camp from "../entities/Camp.js";
 import VirtualJoystick from "../ui/VirtualJoystick.js";
 import ActionButton from "../ui/ActionButton.js";
 import { loadRecord, bumpRecord, safeStorage } from "../record.js";
@@ -56,6 +57,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.bolts = new Map(); // projectile id -> circle
     this.minionSprites = new Map(); // minion id -> Minion display object
     this.pickupSprites = new Map(); // pickup id -> sprite
+    this.campSprites = new Map(); // camp id -> Camp display object
     this.towerSprites = new Map(); // team -> Tower display object
     this.baseSprites = new Map(); // team -> Base display object
     this.damageNumbers = []; // active floating damage-number texts
@@ -377,6 +379,7 @@ export default class ArenaScene extends Phaser.Scene {
     // 2) Sync everything to the server's snapshot.
     this.syncBases();
     this.syncTowers();
+    this.syncCamps();
     this.syncPickups();
     this.syncMinions(dt);
     this.syncPlayers(dt);
@@ -804,6 +807,26 @@ export default class ArenaScene extends Phaser.Scene {
       sprite.lastAlive = tw.alive;
       sprite.setHp(tw.hp, tw.maxHp);
       sprite.setAlive(tw.alive);
+    }
+  }
+
+  // Draw the neutral jungle camps: create on first sight, flash + chime on
+  // damage, fade when cleared, restore when they respawn.
+  syncCamps() {
+    for (const c of this.net.camps) {
+      let sprite = this.campSprites.get(c.id);
+      if (!sprite) {
+        sprite = new Camp(this, c.x, c.y);
+        sprite.lastHp = c.hp;
+        this.campSprites.set(c.id, sprite);
+      }
+      if (c.alive && c.hp < sprite.lastHp) {
+        sprite.flashHit();
+        this.audio.play("hit");
+      }
+      sprite.lastHp = c.hp;
+      sprite.setHp(c.hp, c.maxHp);
+      sprite.setAlive(c.alive);
     }
   }
 

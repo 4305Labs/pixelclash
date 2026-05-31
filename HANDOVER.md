@@ -82,8 +82,8 @@ add it to `snapshot()` AND read it in `NetClient._receive` AND render it in a
 read by NetClient**, so a new field with no client reader fails the suite.
 
 Current top-level fields: `t, tick, phase, winner, score, killFeed, needed,
-countdown, timeLeft, players[], projectiles[], minions[], pickups[], towers[],
-bases[]`.
+countdown, timeLeft, players[], projectiles[], minions[], pickups[], camps[],
+towers[], bases[]`.
 Per-player: `id, team, x, y, hp, maxHp, alive, cls, bot, level, gold, buys,
 respawnIn, powered`. Per-base adds `shielded`.
 
@@ -98,6 +98,7 @@ respawnIn, powered`. Per-base adds `shielded`.
 | Guard towers | `stepTowers`, `nearestEnemyUnit` | `syncTowers`, `Tower` | `TOWER`, `TOWER_POS` |
 | Map pickups + power buff | `stepPickups`, `grantPickup` | `syncPickups` | `PICKUP`, `PICKUP_SPOTS` |
 | Healing fountain | `stepFountains` | `Base` fountain ring | `BASE.heal*` |
+| Jungle camps (neutral) | `stepCamps`, `damageCamp`, `hitCamp` | `syncCamps`, `Camp` | `CAMP`, `CAMP_SPOTS` |
 | Hero classes (×6) | per-class in `freshPlayer`/`tryAttack`/respawn | `Player.setClass`, lobby picker | `CLASSES`, `CLASS_ORDER` |
 | Progression (XP/gold/shop) | `awardKill`, `levelOf`, `effective*`, `tryBuy` | `updateShopHud`, level badges | `PROGRESS` |
 | Match lifecycle + timer | `evaluateLobby`, `beginPlaying`, `endByTimeout` | `updateLobby`, `updateGameOver` | `MATCH` |

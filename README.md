@@ -118,6 +118,10 @@ Taken orbs reappear on a timer.
 HP quickly. Retreating home when low is a real option — but you can't heal and
 fight at the front at the same time.
 
+**Jungle camps:** a neutral monster lurks in each jungle pocket. It bites heroes
+who get close, but clear it and you bag **gold + XP and a short attack-damage
+buff** — a real reason to leave the lane. Camps respawn on a timer.
+
 **Scoreboard, clock & respawns:** a team kill scoreboard and a match clock sit at
 the top of the screen, recent knockouts scroll by in a corner kill feed, and when
 you're knocked out a "Respawning in N…" countdown tells you how long until you're

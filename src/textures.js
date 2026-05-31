@@ -238,6 +238,39 @@ function makeTowerTexture(scene, key, color) {
   g.destroy();
 }
 
+// A neutral jungle-camp monster: a spiky, two-eyed brute in a sickly green, so
+// it reads as a hostile creature (not a team unit). 14×14 grid at pixel=2 to
+// fill the 28×28 (CAMP.radius*2) texture.
+const CAMP_ROWS = [
+  "..o..oo..o....",
+  ".obo.oo.obo...",
+  ".obboooobbo...",
+  "obbggggggbbo..",
+  "obgggwwggggo..",
+  "obggwwwwgggo..",
+  "obgggwwggggo..",
+  "obbgggggggbo..",
+  ".obggrrgggbo..",
+  ".obbgggggbbo..",
+  "..obbgggbbo...",
+  "...obbbbbo....",
+  "....o..o.o....",
+  "..............",
+];
+
+function makeCampTexture(scene, key) {
+  const moss = COLORS.jungle;
+  const palette = {
+    ".": null,
+    o: COLORS.outline,
+    b: shade(moss, 1.6), // dark body / spikes
+    g: shade(moss, 2.8), // body
+    w: COLORS.white, // eyes
+    r: 0xff004d, // angry mouth
+  };
+  paintGrid(scene, key, { rows: CAMP_ROWS, palette, pixel: 2 });
+}
+
 // Draws a pickup orb: an outlined gem-disc with shading (shadowed lower body, a
 // bright upper-left highlight) and a white symbol — a plus for heal (green), a
 // lightning bolt for power (orange). Size unchanged (radius*2).
@@ -379,4 +412,5 @@ export function generateTextures(scene) {
   makePickupTexture(scene, "pickup_power", "power");
   makeDecorTexture(scene, "decor_bush", "bush");
   makeDecorTexture(scene, "decor_rock", "rock");
+  makeCampTexture(scene, "camp");
 }

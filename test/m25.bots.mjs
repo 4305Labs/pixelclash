@@ -55,6 +55,7 @@ try {
   // Isolate the decision: clear the lane so the human is the bot's only target.
   server.minions = [];
   server.towers.clear();
+  server.camps = []; // and no neutral camps to distract the bot's auto-aim
   const human = server.players.get("p1"); // blue; bot is red (home base on the right)
   human.alive = true;
 

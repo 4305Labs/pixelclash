@@ -56,6 +56,8 @@ const tests = [
   "./m32.anim.node.mjs",
   "./m32.anim.render.mjs",
   "./m33.terrain.render.mjs",
+  "./m34.camps.mjs",
+  "./m34.camps.render.mjs",
 ];
 
 let failed = false;

@@ -14,6 +14,10 @@ await page.evaluate(() => {
       { id: "p3", team: "blue", x: 250, y: 200, hp: 70, alive: true },
     ],
     projectiles: [{ id: "b1", team: "blue", kind: "basic", x: 430, y: 270 }],
+    camps: [
+      { id: "camp_top", x: 200, y: 185, hp: 120, maxHp: 120, alive: true },
+      { id: "camp_bot", x: 600, y: 415, hp: 78, maxHp: 120, alive: true },
+    ],
     towers: [
       { team: "blue", x: 250, y: 300, hp: 180, maxHp: 180, alive: true },
       { team: "red", x: 550, y: 300, hp: 180, maxHp: 180, alive: true },

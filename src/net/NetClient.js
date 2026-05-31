@@ -17,6 +17,7 @@ export default class NetClient {
     this.projectiles = []; // bolts in flight: [{ id, team, kind, x, y }]
     this.minions = []; // lane minions: [{ id, team, x, y, hp, alive }]
     this.pickups = []; // available map pickups: [{ id, kind, x, y }]
+    this.camps = []; // jungle camps: [{ id, x, y, hp, maxHp, alive }]
     this.towers = []; // guard towers: [{ team, x, y, hp, maxHp, alive }]
     this.bases = []; // [{ team, x, y, hp, maxHp, alive }]
     this.phase = "playing"; // "waiting" | "countdown" | "playing" | "over"
@@ -88,6 +89,7 @@ export default class NetClient {
       this.projectiles = msg.projectiles || [];
       this.minions = msg.minions || [];
       this.pickups = msg.pickups || [];
+      this.camps = msg.camps || [];
       this.towers = msg.towers || [];
       this.bases = msg.bases || [];
       this.phase = msg.phase || "playing";

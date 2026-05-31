@@ -24,6 +24,8 @@ import {
   TOWER_POS,
   PICKUP,
   PICKUP_SPOTS,
+  CAMP,
+  CAMP_SPOTS,
   CLASSES,
   DEFAULT_CLASS,
   KILLFEED,
@@ -56,9 +58,11 @@ export default class GameServer {
     this.bases = new Map(); // team -> { team, x, y, hp, alive }
     this.towers = new Map(); // team -> { team, x, y, hp, alive, cd }
     this.pickups = []; // [{ id, kind, x, y, active, respawnAt }]
+    this.camps = []; // neutral jungle monsters: [{ id, x, y, hp, alive, cd, respawnAt }]
     this.resetBases();
     this.resetTowers();
     this.resetPickups();
+    this.resetCamps();
     // Match lifecycle:
     //   "waiting"   — not enough players yet; the world is frozen in the lobby
     //   "countdown" — enough players; a short "get ready" timer is running
@@ -96,6 +100,18 @@ export default class GameServer {
       y: s.y,
       active: true, // available to grab
       respawnAt: 0, // when an inactive one comes back (ms on the sim clock)
+    }));
+  }
+
+  resetCamps() {
+    this.camps = CAMP_SPOTS.map((s) => ({
+      id: s.id,
+      x: s.x,
+      y: s.y,
+      hp: CAMP.maxHp,
+      alive: true,
+      cd: 0, // next time it can bite (ms)
+      respawnAt: 0, // when a cleared camp comes back (ms)
     }));
   }
 
@@ -428,6 +444,9 @@ export default class GameServer {
     for (const tw of this.towers.values()) {
       if (tw.team !== player.team && tw.alive) consider(tw.x, tw.y);
     }
+    for (const c of this.camps) {
+      if (c.alive) consider(c.x, c.y); // neutral camps are fair game for anyone
+    }
     for (const b of this.bases.values()) {
       if (b.team !== player.team && b.alive && this.baseVulnerable(b.team)) consider(b.x, b.y);
     }
@@ -703,6 +722,9 @@ export default class GameServer {
     // 3c) Healing fountains: regen heroes standing near their own base.
     this.stepFountains(dt);
 
+    // 3d) Jungle camps: bite nearby heroes; respawn cleared ones.
+    this.stepCamps();
+
     // 4) Move projectiles; expire; check hits on players, minions, towers, bases.
     const survivors = [];
     for (const b of this.projectiles) {
@@ -728,6 +750,12 @@ export default class GameServer {
       const tower = this.hitTower(b);
       if (tower) {
         this.damageTower(tower, b.dmg, owner);
+        continue;
+      }
+      // Camps are neutral — any owner's bolt hurts them (only heroes get credit).
+      const camp = this.hitCamp(b);
+      if (camp) {
+        this.damageCamp(camp, b.dmg, owner);
         continue;
       }
       const base = this.hitBase(b);
@@ -818,6 +846,63 @@ export default class GameServer {
     }
   }
 
+  // --- Jungle camps ----------------------------------------------------------
+
+  // Camps don't roam. A live camp bites the nearest enemy hero within range on
+  // its cooldown; a cleared camp respawns at full HP after its timer.
+  stepCamps() {
+    const r2 = CAMP.range * CAMP.range;
+    for (const c of this.camps) {
+      if (!c.alive) {
+        if (this.timeMs >= c.respawnAt) {
+          c.alive = true;
+          c.hp = CAMP.maxHp;
+          c.cd = 0;
+        }
+        continue;
+      }
+      if (this.timeMs < c.cd) continue;
+      // Bite the nearest living hero in range (any team — it's neutral).
+      let victim = null;
+      let bestD = r2;
+      for (const p of this.players.values()) {
+        if (!p.alive) continue;
+        const d = (p.x - c.x) ** 2 + (p.y - c.y) ** 2;
+        if (d <= bestD) {
+          bestD = d;
+          victim = p;
+        }
+      }
+      if (victim) {
+        c.cd = this.timeMs + CAMP.attackCd;
+        this.damage(victim, CAMP.dmg); // no byTeam/attacker — neutral, no credit
+      }
+    }
+  }
+
+  hitCamp(b) {
+    const reach = COMBAT.hitPad + CAMP.radius;
+    for (const c of this.camps) {
+      if (!c.alive) continue;
+      if ((c.x - b.x) ** 2 + (c.y - b.y) ** 2 <= reach * reach) return c;
+    }
+    return null;
+  }
+
+  // Damage a camp; on the killing blow, pay the attacker (gold/xp) and grant a
+  // short attack buff (reuses the power-pickup buff), then start its respawn.
+  damageCamp(c, amount, attacker) {
+    c.hp = Math.max(0, c.hp - amount);
+    if (c.hp === 0 && c.alive) {
+      c.alive = false;
+      c.respawnAt = this.timeMs + CAMP.respawnMs;
+      if (attacker) {
+        this.awardKill(attacker, "camp");
+        attacker.powerUntil = this.timeMs + CAMP.buffMs;
+      }
+    }
+  }
+
   grantPickup(player, pk) {
     if (pk.kind === "heal") {
       player.hp = Math.min(this.effectiveMaxHp(player), player.hp + PICKUP.heal);
@@ -858,6 +943,7 @@ export default class GameServer {
     this.resetBases();
     this.resetTowers();
     this.resetPickups();
+    this.resetCamps();
     this.score = { blue: 0, red: 0 };
     this.killFeed = [];
     for (const p of this.players.values()) {
@@ -935,6 +1021,14 @@ export default class GameServer {
       pickups: this.pickups
         .filter((pk) => pk.active)
         .map((pk) => ({ id: pk.id, kind: pk.kind, x: pk.x, y: pk.y })),
+      camps: this.camps.map((c) => ({
+        id: c.id,
+        x: c.x,
+        y: c.y,
+        hp: c.hp,
+        maxHp: CAMP.maxHp,
+        alive: c.alive,
+      })),
       towers: [...this.towers.values()].map((tw) => ({
         team: tw.team,
         x: tw.x,

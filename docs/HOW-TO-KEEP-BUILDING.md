@@ -128,6 +128,15 @@ buffed bolt's damage. The client draws active orbs (`syncPickups`) and a glow on
 a powered hero (`Player.setPowered`). New `kind`s are easy: add a case to
 `grantPickup` and a texture in `textures.js`.
 
+**Jungle camps** (neutral monsters) are tuned in `src/config.js` → `CAMP` (HP,
+bite `dmg`/`range`/`attackCd`, `respawnMs`, the kill `buffMs`) and placed by
+`CAMP_SPOTS`. The reward is `PROGRESS.reward.camp`. Logic: `GameServer.stepCamps`
+(bite nearby heroes, respawn cleared ones), `hitCamp`/`damageCamp` (any bolt
+hurts a camp; the killing hero gets gold/xp + a power buff). Drawn by
+`src/entities/Camp.js` via `syncCamps`. Keep new spots clear of the central
+pillars (x≈392–408) and cover blocks, or bolts get absorbed by the wall before
+reaching the camp.
+
 **Progression (XP / levels / gold)** is tuned in `src/config.js` → `PROGRESS`:
 
 | You want… | Change this | Try |

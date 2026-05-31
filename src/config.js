@@ -204,6 +204,30 @@ export const PICKUP_SPOTS = [
   { id: "power_mid", kind: "power", x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 },
 ];
 
+// --- Jungle camps -----------------------------------------------------------
+// Neutral monsters that sit in the jungle pockets (off-lane). They don't roam:
+// they hold their spot, and only fight back (a short-range bite) when an enemy
+// hero is in range. Last-hitting one pays the killer PROGRESS.reward.camp AND
+// grants a brief attack-damage buff (a "blue buff" style reward), so clearing
+// camps is a real reason to leave the lane. They respawn on a timer.
+export const CAMP = {
+  maxHp: 120, // tanky — takes a few hits to clear solo
+  radius: 14, // body + hit radius
+  dmg: 6, // bite damage
+  attackCd: 700, // ms between bites
+  range: 46, // bite reach (only attacks heroes this close)
+  respawnMs: 25000, // time to respawn after being cleared
+  buffMs: 8000, // attack buff granted to the killer, in ms
+};
+
+// Two camps, one in each jungle (mirror-symmetric). Kept clear of the spawn
+// rows, divider walls, and lane.
+// Rotationally symmetric (180° about center) so each team has one nearer camp.
+export const CAMP_SPOTS = [
+  { id: "camp_top", x: 200, y: 185 }, // top-left jungle (nearer blue)
+  { id: "camp_bot", x: GAME_WIDTH - 200, y: GAME_HEIGHT - 185 }, // bottom-right (nearer red)
+];
+
 // --- Bases & match ----------------------------------------------------------
 export const BASE = {
   maxHp: 250, // ~31 basic hits, or fewer with the ability — short matches
@@ -264,6 +288,7 @@ export const PROGRESS = {
     minion: { xp: 18, gold: 14 },
     hero: { xp: 65, gold: 50 },
     tower: { xp: 80, gold: 60 },
+    camp: { xp: 70, gold: 55 }, // neutral jungle monster
   },
   // The shop: buy any of these with gold (keys Z / X / C, or B for the next
   // one). Bonuses are permanent and stack up to `shopMaxStacks` total buys.
