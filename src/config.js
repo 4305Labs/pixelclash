@@ -54,10 +54,13 @@ export const DECOR_SPOTS = [
 // rotationally symmetric. `BUSH.revealMs` is how long attacking reveals you.
 export const BUSH = { revealMs: 1200 };
 export const BUSH_ZONES = [
-  { x: 150, y: 150, w: 110, h: 70 }, // top-left jungle (by camp_top)
-  { x: 540, y: 150, w: 110, h: 70 }, // top-right jungle
-  { x: 150, y: GAME_HEIGHT - 220, w: 110, h: 70 }, // bottom-left
-  { x: 540, y: GAME_HEIGHT - 220, w: 110, h: 70 }, // bottom-right (by camp_bot)
+  // Sat over the jungle mouth of each tower's gank gap, so a hidden jungler can
+  // spring an ambush down into the lane. Rotationally symmetric; the two near
+  // the camps double as ambush cover when contesting them.
+  { x: 200, y: 175, w: 100, h: 60 }, // upper jungle, blue-side tower gap (+ camp_top)
+  { x: 500, y: 175, w: 100, h: 60 }, // upper jungle, red-side tower gap
+  { x: 200, y: GAME_HEIGHT - 235, w: 100, h: 60 }, // lower jungle, blue side
+  { x: 500, y: GAME_HEIGHT - 235, w: 100, h: 60 }, // lower jungle, red side (+ camp_bot)
 ];
 
 // How fast a player moves, in pixels per second.
