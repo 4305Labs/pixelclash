@@ -358,6 +358,25 @@ export const KILLFEED = { ms: 6000, max: 5 };
 // the pillars) and a near-base gap at each end — so heroes can rotate between
 // the lane and the jungle. Keep WALLS[0]/[1] as the central pillars (the wall
 // tests and the minion center-corridor depend on them).
+// Tower "gateposts": a short wall just above and below EVERY tower, inside its
+// lane band, so the tower guards a ~60px-wide chokepoint instead of sitting in
+// open ground. The lane ROW itself stays clear (minions march straight through
+// the gap); heroes can no longer swing wide around a tower within the lane.
+// Generated from the tower X and lane rows so it stays mirror-symmetric.
+const TOWER_CHOKES = [];
+for (const team of ["blue", "red"]) {
+  for (const ln of LANES) {
+    const tx = TOWER_X[team];
+    // The gatepost on the side facing the MAP EDGE runs all the way to the wall
+    // (so you can't sneak around the outer lanes); the side facing the jungle is
+    // a short post. The lane row keeps a ~60px gap so minions march through.
+    const top = ln.id === "top" ? { y: 0, h: ln.row - 30 } : { y: ln.row - 60, h: 30 };
+    const bot = ln.id === "bot" ? { y: ln.row + 30, h: GAME_HEIGHT - (ln.row + 30) } : { y: ln.row + 30, h: 30 };
+    TOWER_CHOKES.push({ x: tx - 8, w: 16, ...top });
+    TOWER_CHOKES.push({ x: tx - 8, w: 16, ...bot });
+  }
+}
+
 export const WALLS = [
   // Two central pillars flanking the mid lane's gap. Shortened so they sit
   // BETWEEN the lane rows (top=110, mid=300, bot=490) and don't block the side
@@ -371,6 +390,8 @@ export const WALLS = [
   // Bottom lane divider (mirror of the top).
   { x: 150, y: 364, w: 210, h: 14 },
   { x: 440, y: 364, w: 210, h: 14 },
+  // Per-tower chokepoints (12 short gateposts).
+  ...TOWER_CHOKES,
 ];
 
 export const MATCH = {

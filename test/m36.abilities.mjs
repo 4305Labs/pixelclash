@@ -89,10 +89,13 @@ try {
   assert(A.hp === before - 10, "Bulwark halves a 20 hit to 10");
 
   // --- Ranger — Seeker: a homing arrow curves onto a moved target -------------
+  // Set up in the open mid-band pocket (between the tower chokes and the central
+  // pillars) so we're testing homing, not map collision.
   arm(A, "ranger");
-  B.x = 400; B.y = 300; B.hp = B.maxHp = 100; B.alive = true; B.cls = "soldier";
+  A.x = 300; A.y = 300; A.face = { x: 1, y: 0 };
+  B.x = 470; B.y = 300; B.hp = B.maxHp = 100; B.alive = true; B.cls = "soldier";
   server.tryAbility(A); // locks + aims at B's current (straight-ahead) spot
-  B.y = 230; // now step B off the straight line — only homing can still connect
+  B.y = 250; // now step B off the straight line — only homing can still connect
   const bHp0 = B.hp;
   stepN(server, 50);
   assert(B.hp < bHp0, "Seeker homes onto the displaced target and hits it");
