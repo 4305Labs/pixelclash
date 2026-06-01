@@ -39,7 +39,7 @@ try {
 
   // Only known palette characters appear (so nothing renders as an accidental
   // transparent hole). Mirrors the keys defined in gbPalette / GB_BODY.
-  const known = new Set([".", "o", "h", "H", "s", "S", "e", "k", "b", "B", "f", "v", "V", "w"]);
+  const known = new Set([".", "o", "h", "H", "s", "S", "e", "k", "l", "b", "B", "f", "v", "V", "w"]);
   for (const cls of CLASS_ORDER) {
     for (const dir of GB_DIRS) {
       for (const ch of gbHeroRows(cls, dir, "idle").join("")) {

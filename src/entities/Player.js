@@ -21,6 +21,12 @@ export default class Player extends Phaser.GameObjects.Container {
     this.targetX = x;
     this.targetY = y;
 
+    // A soft drop shadow on the ground under the feet, so the top-down hero
+    // reads as standing on the map instead of floating. Stays put while the
+    // body bobs above it (which reads as a little hop).
+    const half = (PLAYER_SIZE * SPRITE_SCALE) / 2;
+    this.shadow = scene.add.ellipse(0, half - 2, half * 1.4, half * 0.6, 0x000000, 0.28);
+
     // A soft orange aura shown behind the body while a power buff is active.
     this.aura = scene.add.circle(0, 0, (PLAYER_SIZE * SPRITE_SCALE) / 2 + 6, 0xffa300, 0);
     // A cyan ring shown while the tank's Bulwark shield is up.
@@ -61,7 +67,7 @@ export default class Player extends Phaser.GameObjects.Container {
       .setOrigin(0.5)
       .setVisible(false);
 
-    this.add([this.aura, this.shield, this.bodySprite, this.hpBg, this.hpFill, this.botLabel, this.levelLabel]);
+    this.add([this.shadow, this.aura, this.shield, this.bodySprite, this.hpBg, this.hpFill, this.botLabel, this.levelLabel]);
     scene.add.existing(this);
   }
 
@@ -110,6 +116,7 @@ export default class Player extends Phaser.GameObjects.Container {
     if (cls === this.cls || !CLASSES[cls]) return;
     this.cls = cls;
     this.baseScale = SPRITE_SCALE * CLASSES[cls].scale;
+    this.shadow.setScale(CLASSES[cls].scale); // bigger heroes cast a bigger shadow
     this._applySprite("idle");
   }
 

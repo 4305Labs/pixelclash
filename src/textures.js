@@ -57,7 +57,8 @@ function gbPalette(teamColor, emblem) {
     s: 0xf2c79a, S: 0xc78f60, // skin light / shadow
     e: 0x10131c, // eye
     k: 0x39394d, // dark hair / hood
-    b: teamColor, B: shade(teamColor, 0.62), // tunic light / shadow
+    l: shade(teamColor, 1.35), // tunic top-light highlight
+    b: teamColor, B: shade(teamColor, 0.62), // tunic mid / shadow
     f: 0x6d4a2c, // boots
     v: emblem, V: shade(emblem, 0.6), // emblem accent / shadow
     w: 0xfff1e8, // shine

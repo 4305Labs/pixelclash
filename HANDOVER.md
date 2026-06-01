@@ -4,9 +4,10 @@
 > human) can pick this project up cold and keep building safely.
 > **Update this file after every major change** (see *Update protocol* at the end).
 >
-> **Last updated:** Game Boy top-down hero art — heroes are now Pokemon/Zelda
->   style chibi sprites with 4-direction facing (down/up/side, left = mirrored
->   side) + a 2-frame walk shuffle, derived from movement. Pixel data lives in
+> **Last updated:** Game Boy top-down hero art — Pokemon/Zelda style chibi
+>   sprites with 4-direction facing (down/up/side, left = mirrored side) + a
+>   2-frame walk, derived from movement, now with a ground drop shadow
+>   (`Player.shadow`) and a lit/belted tunic (3-tone l/b/B). Pixel data lives in
 >   `src/gbsprites.js` (per-class HEAD + shared BODY, all 16x16, width-validated
 >   at boot and in m37). Prior work: per-hero abilities + the four-part art
 >   overhaul.
