@@ -11,6 +11,7 @@
 // ===========================================================================
 
 import { COLORS, PLAYER_SIZE, BASE, MINION, TOWER, PICKUP, CLASSES, CLASS_ORDER } from "./config.js";
+import { GB_DIRS, GB_FRAMES, gbHeroRows, validateGbGrids } from "./gbsprites.js";
 
 // Multiply a 0xRRGGBB colour's brightness by `f` (｢<1｣ darker, ｢>1｣ lighter),
 // clamped to 0–255. Used to derive shadow/highlight shades from a team colour.
@@ -45,96 +46,38 @@ function paintGrid(scene, key, { rows, palette, pixel = 1 }) {
   g.destroy();
 }
 
-// Heroes share one 16-wide torso/legs (11 rows) and get a distinct 5-row HEAD
-// per class, so the six picks read as different characters (helmet, goggles,
-// hood, wizard hat, headband…) while the body stays clean. "v" is the class
-// emblem accent. paintGrid validates every row is 16 wide, so a miscount throws.
-const HERO_BODY = [
-  "...odhllllhdo...", // shoulders: top-lit highlight across the top
-  "..odhlbbbblhdo..",
-  "..oklbvvvvblko..", // chest emblem, flanked by light/shadow
-  "..obbgvvvvgbbo..", // emblem highlight row
-  "..okdbbbbbbdko..",
-  "...okdddddko....", // belt line: deep shadow
-  "...odbo..odbo...", // arms with a lit outer edge
-  "...okbo..okbo...",
-  "...ofso..ofso...", // boots with a highlight
-  "...oooo..oooo...",
-  "................",
-];
-
-// Each head is 5 rows × 16 cols. Together with HERO_BODY that's a 16×16 sprite.
-const HERO_HEADS = {
-  // Soldier: domed helmet (lit top), white visor slit with a glint.
-  soldier: [
-    ".....ohhhho.....",
-    "....ohllllllo...",
-    "...ohlbbbblho...",
-    "...obwweewwbo...",
-    "...okdbbbbdko...",
-  ],
-  // Scout: small goggled head, twin glinting lenses.
-  scout: [
-    "......ohho......",
-    ".....ohllho.....",
-    ".....oweewo.....",
-    ".....obbbdo.....",
-    "......okdo......",
-  ],
-  // Tank: heavy wide helm with two visor slits.
-  tank: [
-    "....ohhhhhho....",
-    "...ohllllllho...",
-    "..ohlbbbbbbblo..",
-    "..owebbbbbbewo..",
-    "..okddbbbbddko..",
-  ],
-  // Ranger: hooded head, shadowed face under the hood.
-  ranger: [
-    ".....ohhhho.....",
-    "....ohlddlho....",
-    "...ohdkkkkdho...",
-    "...okdkwwkdko...",
-    "....okddddko....",
-  ],
-  // Mage: pointed hat (emblem-coloured) over a lit face.
-  mage: [
-    ".......go.......",
-    "......ogvo......",
-    ".....ogvvvo.....",
-    "....ohllllho....",
-    "....ohlwwlho....",
-  ],
-  // Brawler: headband (emblem) over a wide jaw.
-  brawler: [
-    "....ohhhhhho....",
-    "...ogvvvvvvgo...",
-    "..ohlbbbbbbblo..",
-    "..obbwbbbbwbbo..",
-    "..okdbbbbbbdko..",
-  ],
-};
-
-// Draws one 16×16 hero sprite for a class into `key`, tinted with the team
-// `bodyColor` and a class `emblemColor`.
-function makeCharacterTexture(scene, key, cls, bodyColor, emblemColor) {
-  const palette = {
+// Game Boy palette for a top-down hero: steel helmet, skin, team-coloured tunic,
+// brown boots, an emblem accent (goggles/hat/headband), all over a cool-black
+// outline. `teamColor` tints the tunic; `emblem` is the class accent colour.
+function gbPalette(teamColor, emblem) {
+  return {
     ".": null,
-    o: COLORS.outline,
-    h: shade(bodyColor, 1.7), // bright top-light highlight
-    l: shade(bodyColor, 1.3), // light
-    b: bodyColor, // mid body
-    d: shade(bodyColor, 0.6), // shadow
-    k: shade(bodyColor, 0.4), // deep shadow / occlusion
-    v: emblemColor, // class emblem accent
-    g: shade(emblemColor, 1.4), // emblem highlight
-    w: COLORS.white, // visor / eyes
-    e: 0xffffff, // eye glint
-    f: 0x3a3a4a, // boots
-    s: 0x52526a, // boot highlight
+    o: 0x10131c, // outline (cool near-black)
+    h: 0xcfd8e8, H: 0x8a93ad, // helmet steel light / shadow
+    s: 0xf2c79a, S: 0xc78f60, // skin light / shadow
+    e: 0x10131c, // eye
+    k: 0x39394d, // dark hair / hood
+    b: teamColor, B: shade(teamColor, 0.62), // tunic light / shadow
+    f: 0x6d4a2c, // boots
+    v: emblem, V: shade(emblem, 0.6), // emblem accent / shadow
+    w: 0xfff1e8, // shine
   };
-  const rows = [...(HERO_HEADS[cls] || HERO_HEADS.soldier), ...HERO_BODY];
-  paintGrid(scene, key, { rows, palette, pixel: 1 });
+}
+
+// Bakes every directional + walk-frame texture for one class × team:
+//   hero_<cls>_<team>_<dir>_<frame>  (dir: down|up|side, frame: idle|walkA|walkB)
+// plus a back-compat key  hero_<cls>_<team>  (= the down/idle pose) used by the
+// lobby picker, screenshots, and anything not yet facing-aware. LEFT is the SIDE
+// sprite flipped horizontally at draw time, so it isn't baked here.
+function makeGbHero(scene, cls, team, teamColor, emblem) {
+  const palette = gbPalette(teamColor, emblem);
+  for (const dir of GB_DIRS) {
+    for (const frame of GB_FRAMES) {
+      const rows = gbHeroRows(cls, dir, frame);
+      paintGrid(scene, `hero_${cls}_${team}_${dir}_${frame}`, { rows, palette, pixel: 1 });
+    }
+  }
+  paintGrid(scene, `hero_${cls}_${team}`, { rows: gbHeroRows(cls, "down", "idle"), palette, pixel: 1 });
 }
 
 // A 10×10 one-eyed lane minion (painted at pixel=2 → 20×20), in a lighter team
@@ -463,14 +406,23 @@ export function generateTextures(scene) {
   makeFloorTexture(scene, "floor", COLORS.bg, "stone");
   makeFloorTexture(scene, "floor_jungle", COLORS.jungle, "moss");
   makeWallTexture(scene, "wall");
-  // One hero sprite per class × team, keyed "hero_<cls>_<team>". Plus the legacy
-  // "player_<team>" keys (= soldier) so anything not class-aware still works.
+  // Game Boy top-down heroes: one set of directional + walk-frame textures per
+  // class × team (keys "hero_<cls>_<team>_<dir>_<frame>", plus a back-compat
+  // "hero_<cls>_<team>" = down/idle). The legacy "player_<team>" key (= soldier)
+  // stays for anything not class-aware. validateGbGrids() throws loudly if a
+  // hand-authored grid row isn't 16 wide, before paintGrid can crash obscurely.
+  validateGbGrids();
   for (const team of ["blue", "red"]) {
     const color = team === "red" ? COLORS.redTeam : COLORS.blueTeam;
     for (const cls of CLASS_ORDER) {
-      makeCharacterTexture(scene, `hero_${cls}_${team}`, cls, color, CLASSES[cls].emblem);
+      makeGbHero(scene, cls, team, color, CLASSES[cls].emblem);
     }
-    makeCharacterTexture(scene, `player_${team}`, "soldier", color, CLASSES.soldier.emblem);
+    // "player_<team>" alias = the soldier's down/idle pose.
+    paintGrid(scene, `player_${team}`, {
+      rows: gbHeroRows("soldier", "down", "idle"),
+      palette: gbPalette(color, CLASSES.soldier.emblem),
+      pixel: 1,
+    });
   }
   makeBaseTexture(scene, "base_blue", COLORS.blueTeam);
   makeBaseTexture(scene, "base_red", COLORS.redTeam);

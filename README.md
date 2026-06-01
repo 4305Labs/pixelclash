@@ -35,8 +35,9 @@ Everything is free and runs on your own machine — no accounts, no credit card.
   per-hero level/gold/shop line.
 - **Mobile-ready** — touch joystick + buttons, a tap-to-start gate, and tappable
   class/shop pickers.
-- **Hand-drawn pixel art + procedural animation** (idle bob, walk hop, attack
-  pop, death tumble), all generated in code.
+- **Game Boy / Pokemon-Zelda style pixel art** — top-down chibi heroes with
+  4-direction facing and a 2-frame walk shuffle, plus procedural animation (idle
+  bob, attack pop, death tumble), all hand-drawn in code (zero asset files).
 
 ---
 

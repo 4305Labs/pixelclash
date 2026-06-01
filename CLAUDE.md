@@ -37,7 +37,10 @@ match timer with tiebreak.
   (`predictLocal`); everyone else interpolates.
 - **`src/entities/`** — display objects: `Player`, `Minion`, `Tower`, `Base`.
 - **`src/config.js`** — ALL tunable numbers and layout (one place to balance).
-- **`src/textures.js`** — sprites drawn in code (no asset files).
+- **`src/textures.js`** — sprites drawn in code (no asset files). Heroes are
+  Game Boy top-down sprites painted from **`src/gbsprites.js`** (pure-data pixel
+  grids: per-class HEAD + shared BODY, 4-direction + 2-frame walk). `Player`
+  picks the directional/walk frame from movement.
 - Transports: `WebSocketConnection.js` (real) and `LocalConnection.js` (in-memory,
   used by tests). `defaultServerUrl()` auto-picks `ws://`/`wss://` (see deploy).
 

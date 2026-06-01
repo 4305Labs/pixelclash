@@ -37,6 +37,11 @@ export default class Player extends Phaser.GameObjects.Container {
     this.attackAt = -Infinity; // timestamp of the last attack, for the pop
     this.prevX = x; // last frame's position, to detect movement
     this.prevY = y;
+    // Top-down facing for the directional GB sprites. `facing` is one of
+    // down/up/side; `flip` mirrors the side sprite to face LEFT. Derived from
+    // movement each frame (heroes face the way they walk; idle keeps the last).
+    this.facing = "down";
+    this.flip = false;
 
     // Health bar: a dark background and a colored fill that shrinks with HP.
     this.hpBg = scene.add.rectangle(0, BAR_Y, BAR_W + 2, 5, 0x000000, 0.6);
@@ -98,15 +103,25 @@ export default class Player extends Phaser.GameObjects.Container {
     this.hpFill.setFillStyle(color);
   }
 
-  // Switch to the class's sprite and size (tank bigger, scout smaller). We
-  // record the size as the BASE scale; animate() multiplies bob/squash/pop on
-  // top. Texture keys are "hero_<cls>_<team>" (see textures.js).
+  // Switch to the class's size (tank bigger, scout smaller). We record the size
+  // as the BASE scale; animate() multiplies bob/squash/pop on top and picks the
+  // directional walk frame. Start on the down/idle pose.
   setClass(cls) {
     if (cls === this.cls || !CLASSES[cls]) return;
     this.cls = cls;
     this.baseScale = SPRITE_SCALE * CLASSES[cls].scale;
-    const key = `hero_${cls}_${this.team === "red" ? "red" : "blue"}`;
+    this._applySprite("idle");
+  }
+
+  // Point the body sprite at the right directional + walk-frame texture for the
+  // current class/facing, mirroring SIDE for a leftward walk. Keys are
+  // "hero_<cls>_<team>_<dir>_<frame>" (see textures.js / gbsprites.js).
+  _applySprite(frame) {
+    if (!this.cls) return;
+    const team = this.team === "red" ? "red" : "blue";
+    const key = `hero_${this.cls}_${team}_${this.facing}_${frame}`;
     if (this.scene.textures.exists(key)) this.bodySprite.setTexture(key);
+    this.bodySprite.setFlipX(this.facing === "side" && this.flip);
   }
 
   // Mark an attack so animate() plays a quick scale "pop".
@@ -119,14 +134,31 @@ export default class Player extends Phaser.GameObjects.Container {
   // detect movement from how far the sprite travelled since the last frame.
   animate(dt) {
     if (this.dead) return; // the death tumble owns the body while knocked out
-    const moved = Math.hypot(this.x - this.prevX, this.y - this.prevY);
+    const dx = this.x - this.prevX;
+    const dy = this.y - this.prevY;
+    const moved = Math.hypot(dx, dy);
     this.prevX = this.x;
     this.prevY = this.y;
     const moving = moved > 0.4; // px/frame threshold — ignores tiny jitter
 
+    // Face the way we're walking (idle keeps the last facing). Dominant axis
+    // wins: horizontal -> side (mirror for left), vertical -> up/down.
+    if (moving) {
+      if (Math.abs(dx) > Math.abs(dy)) {
+        this.facing = "side";
+        this.flip = dx < 0;
+      } else {
+        this.facing = dy < 0 ? "up" : "down";
+      }
+    }
+
     this.animPhase = advancePhase(this.animPhase, dt * 1000, moving);
     const pose = bodyPose(this.animPhase, moving);
     const pop = popScale(this.scene.time.now - this.attackAt);
+
+    // Two-frame leg shuffle while moving; the still pose when idle.
+    const frame = moving ? (Math.sin(this.animPhase) >= 0 ? "walkA" : "walkB") : "idle";
+    this._applySprite(frame);
 
     this.bodySprite.y = pose.bob;
     this.bodySprite.setScale(this.baseScale * pose.sx * pop, this.baseScale * pose.sy * pop);

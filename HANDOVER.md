@@ -4,12 +4,13 @@
 > human) can pick this project up cold and keep building safely.
 > **Update this file after every major change** (see *Update protocol* at the end).
 >
-> **Last updated:** per-hero abilities — the B button is now behaviourally
->   distinct per class: Scout Scatter (spread), Soldier Pierce, Tank Bulwark
->   (shield), Ranger Seeker (homing), Mage Nova (AoE blast), Brawler Leap Slam.
->   Built on the prior four-part art overhaul (atmosphere, hero shading,
->   cobblestone/moss terrain, faceted nexus + 3D tower battlements).
-> **Status:** all tests green (55 test groups), live two-browser test green, build OK.
+> **Last updated:** Game Boy top-down hero art — heroes are now Pokemon/Zelda
+>   style chibi sprites with 4-direction facing (down/up/side, left = mirrored
+>   side) + a 2-frame walk shuffle, derived from movement. Pixel data lives in
+>   `src/gbsprites.js` (per-class HEAD + shared BODY, all 16x16, width-validated
+>   at boot and in m37). Prior work: per-hero abilities + the four-part art
+>   overhaul.
+> **Status:** all tests green (56 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
 > **`claude/pixel-moba-game-WobPa`** (PR #1 → `main`). `main` is the empty root
@@ -69,9 +70,13 @@ Open the client and you immediately get a **bot opponent** (server starts with
   hop w/ squash-stretch, attack pop. Entities call `animate(dt)`.
 - **`src/config.js`** — ALL tunable numbers + layout. Balance/map lives here.
 - **`src/textures.js`** — every sprite drawn in code. `paintGrid(rows,palette)`
-  + `shade(color,f)` toolkit; per-class hero grids (`HERO_HEADS` on a shared
-  `HERO_BODY`); floor/wall/decor/structure makers. `generateTextures(scene)`
-  bakes them all at boot.
+  + `shade(color,f)` toolkit; `makeGbHero` bakes the directional hero textures;
+  floor/wall/decor/structure makers. `generateTextures(scene)` bakes them all
+  at boot (and calls `validateGbGrids()` first).
+- **`src/gbsprites.js`** — pure-data Game Boy hero pixel grids: per-class HEAD
+  (`GB_HEADS`, 8 rows) + shared team-tinted BODY (`GB_BODY`, 8 rows, 3 walk
+  frames). `gbHeroRows(cls,dir,frame)` composes a 16x16; `validateGbGrids()`
+  asserts widths. No Phaser import, so m37 unit-tests it in plain Node.
 - **`src/audio.js`** — WebAudio blips (shoot/hit/death/base/win/pickup) + mute,
   guarded so headless/no-audio is a silent no-op.
 - **`src/record.js`** — persisted win/loss/draw tally (localStorage, guarded).
@@ -113,7 +118,8 @@ respawnIn, powered, shielded, hidden`. Per-base adds `shielded`.
 | Scoreboard / kill feed / respawn | `score`, `killFeed`, `damage(...,byTeam,attacker)` | `updateHud`, `updateKillFeed` | `KILLFEED` |
 | AI bots | `stepBots`, `fillBots`, `addBot` | "bot" tag | (`{bots:true}` in server.js) |
 | Map (3 routes + jungle) | — | `drawGrid/drawDecor/drawWalls` | `WALLS`, `LANE_BAND`, `DECOR_SPOTS` |
-| Art / animation | — | `textures.js`, `anim.js`, entities | `COLORS`, sprite grids |
+| Art / animation | — | `textures.js`, `gbsprites.js`, `anim.js`, entities | `COLORS`, GB grids |
+| Hero facing / walk | — | `Player.animate` (facing from movement) | `gbsprites.js` |
 | Audio / record | — | `audio.js`, `record.js` | — |
 
 ## 5. Conventions & invariants (don't break these)
