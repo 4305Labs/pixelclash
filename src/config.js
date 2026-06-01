@@ -72,6 +72,11 @@ export const PLAYER_SIZE = 16;
 // How much we scale the tiny pixel sprites up so they're visible.
 export const SPRITE_SCALE = 2;
 
+// Heroes are drawn from a 24x24 art grid; this renders them at roughly the 32px
+// hitbox footprint (class `.scale` multiplies on top). Separate from SPRITE_SCALE
+// (which still sizes the 16px minion/decor art).
+export const HERO_SCALE = 1.4;
+
 // Half the on-screen size of a player (used to keep them inside the walls).
 export const PLAYER_HALF = (PLAYER_SIZE * SPRITE_SCALE) / 2;
 

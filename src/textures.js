@@ -11,7 +11,7 @@
 // ===========================================================================
 
 import { COLORS, PLAYER_SIZE, BASE, MINION, TOWER, PICKUP, CLASSES, CLASS_ORDER } from "./config.js";
-import { GB_DIRS, GB_FRAMES, gbHeroRows, validateGbGrids } from "./gbsprites.js";
+import { RPG_HEROES, validateRpgGrids } from "./rpgsprites.js";
 
 // Multiply a 0xRRGGBB colour's brightness by `f` (｢<1｣ darker, ｢>1｣ lighter),
 // clamped to 0–255. Used to derive shadow/highlight shades from a team colour.
@@ -46,39 +46,37 @@ function paintGrid(scene, key, { rows, palette, pixel = 1 }) {
   g.destroy();
 }
 
-// Game Boy palette for a top-down hero: steel helmet, skin, team-coloured tunic,
-// brown boots, an emblem accent (goggles/hat/headband), all over a cool-black
-// outline. `teamColor` tints the tunic; `emblem` is the class accent colour.
-function gbPalette(teamColor, emblem) {
+// Palette for a detailed "Tiny RPG" hero. Neutral materials (steel, skin, gold,
+// wood, blade, green, white) are shared; only the team GARMENT (c/C/p) is tinted
+// per team, so blue vs red read apart. Garment colours are picked to look like
+// dyed cloth (not the neon HUD team colours).
+const TEAM_GARMENT = {
+  blue: { c: 0x3a78c0, C: 0x244e84, p: 0x6aa0e8 },
+  red: { c: 0xc23a3a, C: 0x822020, p: 0xe06a6a },
+};
+function rpgPalette(team) {
+  const g = TEAM_GARMENT[team] || TEAM_GARMENT.blue;
   return {
     ".": null,
-    o: 0x10131c, // outline (cool near-black)
-    h: 0xcfd8e8, H: 0x8a93ad, // helmet steel light / shadow
-    s: 0xf2c79a, S: 0xc78f60, // skin light / shadow
-    e: 0x10131c, // eye
-    k: 0x39394d, // dark hair / hood
-    l: shade(teamColor, 1.35), // tunic top-light highlight
-    b: teamColor, B: shade(teamColor, 0.62), // tunic mid / shadow
-    f: 0x6d4a2c, // boots
-    v: emblem, V: shade(emblem, 0.6), // emblem accent / shadow
-    w: 0xfff1e8, // shine
+    o: 0x0d0d16, // outline
+    L: 0xc8d0e0, M: 0x8a92a8, D: 0x565c70, // steel light / mid / dark
+    s: 0xf0c090, k: 0xc08858, // skin / shadow
+    e: 0x0d0d16, // eye
+    c: g.c, C: g.C, p: g.p, // team garment mid / dark / light
+    b: 0xdfe6f2, // blade
+    h: 0xe0ac28, g: 0x9c6c14, // gold / dark gold (hilts, gems)
+    w: 0xffffff, W: 0x5c3a18, // white shine / dark wood
+    r: 0xff5030, // fire / gem
+    n: 0x3aa05a, G: 0x6a8a3a, // ranger greens (cloak light / dark)
+    f: 0xe8e8f0, // beard / fur white
   };
 }
 
-// Bakes every directional + walk-frame texture for one class × team:
-//   hero_<cls>_<team>_<dir>_<frame>  (dir: down|up|side, frame: idle|walkA|walkB)
-// plus a back-compat key  hero_<cls>_<team>  (= the down/idle pose) used by the
-// lobby picker, screenshots, and anything not yet facing-aware. LEFT is the SIDE
-// sprite flipped horizontally at draw time, so it isn't baked here.
-function makeGbHero(scene, cls, team, teamColor, emblem) {
-  const palette = gbPalette(teamColor, emblem);
-  for (const dir of GB_DIRS) {
-    for (const frame of GB_FRAMES) {
-      const rows = gbHeroRows(cls, dir, frame);
-      paintGrid(scene, `hero_${cls}_${team}_${dir}_${frame}`, { rows, palette, pixel: 1 });
-    }
-  }
-  paintGrid(scene, `hero_${cls}_${team}`, { rows: gbHeroRows(cls, "down", "idle"), palette, pixel: 1 });
+// Bakes the single front-facing hero texture "hero_<cls>_<team>" (24x24) for one
+// class × team. Heroes always face the camera; left-facing is the same sprite
+// mirrored at draw time (see Player).
+function makeRpgHero(scene, cls, team) {
+  paintGrid(scene, `hero_${cls}_${team}`, { rows: RPG_HEROES[cls], palette: rpgPalette(team), pixel: 1 });
 }
 
 // A 10×10 one-eyed lane minion (painted at pixel=2 → 20×20), in a lighter team
@@ -407,23 +405,14 @@ export function generateTextures(scene) {
   makeFloorTexture(scene, "floor", COLORS.bg, "stone");
   makeFloorTexture(scene, "floor_jungle", COLORS.jungle, "moss");
   makeWallTexture(scene, "wall");
-  // Game Boy top-down heroes: one set of directional + walk-frame textures per
-  // class × team (keys "hero_<cls>_<team>_<dir>_<frame>", plus a back-compat
-  // "hero_<cls>_<team>" = down/idle). The legacy "player_<team>" key (= soldier)
-  // stays for anything not class-aware. validateGbGrids() throws loudly if a
-  // hand-authored grid row isn't 16 wide, before paintGrid can crash obscurely.
-  validateGbGrids();
+  // Detailed front-facing "Tiny RPG" heroes: one texture "hero_<cls>_<team>" per
+  // class × team, plus the "player_<team>" alias (= soldier) for anything not
+  // class-aware. validateRpgGrids() throws loudly if a hand-authored grid isn't
+  // 24x24, before paintGrid can crash obscurely.
+  validateRpgGrids();
   for (const team of ["blue", "red"]) {
-    const color = team === "red" ? COLORS.redTeam : COLORS.blueTeam;
-    for (const cls of CLASS_ORDER) {
-      makeGbHero(scene, cls, team, color, CLASSES[cls].emblem);
-    }
-    // "player_<team>" alias = the soldier's down/idle pose.
-    paintGrid(scene, `player_${team}`, {
-      rows: gbHeroRows("soldier", "down", "idle"),
-      palette: gbPalette(color, CLASSES.soldier.emblem),
-      pixel: 1,
-    });
+    for (const cls of CLASS_ORDER) makeRpgHero(scene, cls, team);
+    paintGrid(scene, `player_${team}`, { rows: RPG_HEROES.soldier, palette: rpgPalette(team), pixel: 1 });
   }
   makeBaseTexture(scene, "base_blue", COLORS.blueTeam);
   makeBaseTexture(scene, "base_red", COLORS.redTeam);

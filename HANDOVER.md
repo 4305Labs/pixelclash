@@ -4,14 +4,15 @@
 > human) can pick this project up cold and keep building safely.
 > **Update this file after every major change** (see *Update protocol* at the end).
 >
-> **Last updated:** map-layout pass — every tower now guards a generated
->   chokepoint (gatepost walls narrowing the lane to a ~60px gap; outer lanes
->   run to the map edge), the jungle dividers open AT the towers for gank
->   rotations (centre solid), and the stealth bushes moved onto those gaps. All
->   in `config.js` `WALLS`/`BUSH_ZONES`; lane rows stay clear for minions.
->   Before that: Game Boy top-down hero art (`src/gbsprites.js`) with 4-direction
->   facing + walk, ground shadow, 3-tone tunic; per-hero abilities; the
->   four-part art overhaul.
+> **Last updated:** heroes restyled as detailed "Tiny RPG" front-facing
+>   characters — knight, rogue, heavy-shield tank, green archer, wizard,
+>   barbarian — each a single 24x24 pose with a weapon, in chibi proportions
+>   (big head centred on a narrow body), team-coloured garment, mirrored when
+>   walking left, with the existing bob + ground shadow. Data in
+>   `src/rpgsprites.js`; rendered at `HERO_SCALE`. This REPLACED the Game Boy
+>   top-down 4-direction system (gbsprites.js removed). Before that: the
+>   map-layout pass (tower chokepoints + jungle gank gaps in `config.js`
+>   `WALLS`/`BUSH_ZONES`), per-hero abilities, the four-part art overhaul.
 > **Status:** all tests green (56 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
@@ -75,10 +76,11 @@ Open the client and you immediately get a **bot opponent** (server starts with
   + `shade(color,f)` toolkit; `makeGbHero` bakes the directional hero textures;
   floor/wall/decor/structure makers. `generateTextures(scene)` bakes them all
   at boot (and calls `validateGbGrids()` first).
-- **`src/gbsprites.js`** — pure-data Game Boy hero pixel grids: per-class HEAD
-  (`GB_HEADS`, 8 rows) + shared team-tinted BODY (`GB_BODY`, 8 rows, 3 walk
-  frames). `gbHeroRows(cls,dir,frame)` composes a 16x16; `validateGbGrids()`
-  asserts widths. No Phaser import, so m37 unit-tests it in plain Node.
+- **`src/rpgsprites.js`** — pure-data detailed hero pixel grids: one 24x24
+  front-facing pose per class (`RPG_HEROES`), chibi proportions, team garment =
+  `c/C/p`. `validateRpgGrids()` asserts 24x24. No Phaser import, so m38
+  unit-tests it in plain Node. (textures.js `rpgPalette` injects the team colour;
+  `Player` mirrors the sprite for left-facing.)
 - **`src/audio.js`** — WebAudio blips (shoot/hit/death/base/win/pickup) + mute,
   guarded so headless/no-audio is a silent no-op.
 - **`src/record.js`** — persisted win/loss/draw tally (localStorage, guarded).
@@ -120,8 +122,8 @@ respawnIn, powered, shielded, hidden`. Per-base adds `shielded`.
 | Scoreboard / kill feed / respawn | `score`, `killFeed`, `damage(...,byTeam,attacker)` | `updateHud`, `updateKillFeed` | `KILLFEED` |
 | AI bots | `stepBots`, `fillBots`, `addBot` | "bot" tag | (`{bots:true}` in server.js) |
 | Map (3 routes + jungle) | — | `drawGrid/drawDecor/drawWalls` | `WALLS`, `LANE_BAND`, `DECOR_SPOTS` |
-| Art / animation | — | `textures.js`, `gbsprites.js`, `anim.js`, entities | `COLORS`, GB grids |
-| Hero facing / walk | — | `Player.animate` (facing from movement) | `gbsprites.js` |
+| Art / animation | — | `textures.js`, `rpgsprites.js`, `anim.js`, entities | `COLORS`, RPG grids |
+| Hero sprite / facing | — | `Player.setClass`/`animate` (mirror on left) | `rpgsprites.js`, `HERO_SCALE` |
 | Audio / record | — | `audio.js`, `record.js` | — |
 
 ## 5. Conventions & invariants (don't break these)

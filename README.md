@@ -35,9 +35,11 @@ Everything is free and runs on your own machine — no accounts, no credit card.
   per-hero level/gold/shop line.
 - **Mobile-ready** — touch joystick + buttons, a tap-to-start gate, and tappable
   class/shop pickers.
-- **Game Boy / Pokemon-Zelda style pixel art** — top-down chibi heroes with
-  4-direction facing and a 2-frame walk shuffle, plus procedural animation (idle
-  bob, attack pop, death tumble), all hand-drawn in code (zero asset files).
+- **Detailed RPG-style heroes** — each class is a distinct chibi character with
+  its own weapon (knight w/ sword & shield, rogue w/ dagger, shield tank, green
+  archer, wizard w/ staff, axe barbarian), drawn front-facing and mirrored when
+  walking, plus procedural animation (idle bob, attack pop, death tumble) and a
+  ground shadow — all hand-drawn in code (zero asset files).
 
 ---
 
@@ -223,7 +225,7 @@ pixelclash/
 │  ├─ config.js            ← ALL the tunable numbers + map layout (one place to balance)
 │  ├─ sim.js               ← shared movement math (server + client prediction agree)
 │  ├─ textures.js          ← draws every pixel-art sprite in code (no image files)
-│  ├─ gbsprites.js         ← Game Boy top-down hero pixel grids (4-direction + walk)
+│  ├─ rpgsprites.js        ← detailed front-facing hero pixel grids (one per class)
 │  ├─ anim.js              ← procedural animation math (bob / walk / attack pop)
 │  ├─ audio.js             ← synthesized sound effects + mute (no audio files)
 │  ├─ record.js            ← persisted win/loss/draw tally (localStorage)

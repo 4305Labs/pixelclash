@@ -38,9 +38,10 @@ match timer with tiebreak.
 - **`src/entities/`** — display objects: `Player`, `Minion`, `Tower`, `Base`.
 - **`src/config.js`** — ALL tunable numbers and layout (one place to balance).
 - **`src/textures.js`** — sprites drawn in code (no asset files). Heroes are
-  Game Boy top-down sprites painted from **`src/gbsprites.js`** (pure-data pixel
-  grids: per-class HEAD + shared BODY, 4-direction + 2-frame walk). `Player`
-  picks the directional/walk frame from movement.
+  detailed front-facing "Tiny RPG" characters painted from **`src/rpgsprites.js`**
+  (pure-data 24x24 grid per class, with a weapon; team garment tinted by
+  `rpgPalette`). `Player` renders one pose per class at `HERO_SCALE`, mirrored
+  when walking left.
 - Transports: `WebSocketConnection.js` (real) and `LocalConnection.js` (in-memory,
   used by tests). `defaultServerUrl()` auto-picks `ws://`/`wss://` (see deploy).
 

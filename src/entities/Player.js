@@ -8,7 +8,7 @@
 // ===========================================================================
 
 import Phaser from "phaser";
-import { SPRITE_SCALE, PLAYER_SIZE, COMBAT, CLASSES } from "../config.js";
+import { SPRITE_SCALE, PLAYER_SIZE, HERO_SCALE, COMBAT, CLASSES } from "../config.js";
 import { advancePhase, bodyPose, popScale } from "../anim.js";
 
 const BAR_W = PLAYER_SIZE * SPRITE_SCALE; // health bar width matches the body
@@ -35,18 +35,16 @@ export default class Player extends Phaser.GameObjects.Container {
       .setStrokeStyle(2, 0x29adff, 0);
 
     const texture = team === "red" ? "player_red" : "player_blue";
-    this.bodySprite = scene.add.sprite(0, 0, texture).setScale(SPRITE_SCALE);
+    this.bodySprite = scene.add.sprite(0, 0, texture).setScale(HERO_SCALE);
 
     // --- Procedural animation state ----------------------------------------
-    this.baseScale = SPRITE_SCALE; // class scale; animation multiplies on top
+    this.baseScale = HERO_SCALE; // class scale; animation multiplies on top
     this.animPhase = 0; // walk/idle cycle position (radians)
     this.attackAt = -Infinity; // timestamp of the last attack, for the pop
     this.prevX = x; // last frame's position, to detect movement
     this.prevY = y;
-    // Top-down facing for the directional GB sprites. `facing` is one of
-    // down/up/side; `flip` mirrors the side sprite to face LEFT. Derived from
-    // movement each frame (heroes face the way they walk; idle keeps the last).
-    this.facing = "down";
+    // Heroes always face the camera; we only mirror them left/right to match the
+    // way they're walking. `flip` true = facing left. Kept across idle frames.
     this.flip = false;
 
     // Health bar: a dark background and a colored fill that shrinks with HP.
@@ -109,26 +107,16 @@ export default class Player extends Phaser.GameObjects.Container {
     this.hpFill.setFillStyle(color);
   }
 
-  // Switch to the class's size (tank bigger, scout smaller). We record the size
-  // as the BASE scale; animate() multiplies bob/squash/pop on top and picks the
-  // directional walk frame. Start on the down/idle pose.
+  // Switch to the class's sprite + size (tank bigger, scout smaller). The size is
+  // the BASE scale; animate() multiplies bob/squash/pop on top. Texture key is
+  // "hero_<cls>_<team>" (see textures.js / rpgsprites.js).
   setClass(cls) {
     if (cls === this.cls || !CLASSES[cls]) return;
     this.cls = cls;
-    this.baseScale = SPRITE_SCALE * CLASSES[cls].scale;
+    this.baseScale = HERO_SCALE * CLASSES[cls].scale;
     this.shadow.setScale(CLASSES[cls].scale); // bigger heroes cast a bigger shadow
-    this._applySprite("idle");
-  }
-
-  // Point the body sprite at the right directional + walk-frame texture for the
-  // current class/facing, mirroring SIDE for a leftward walk. Keys are
-  // "hero_<cls>_<team>_<dir>_<frame>" (see textures.js / gbsprites.js).
-  _applySprite(frame) {
-    if (!this.cls) return;
-    const team = this.team === "red" ? "red" : "blue";
-    const key = `hero_${this.cls}_${team}_${this.facing}_${frame}`;
+    const key = `hero_${cls}_${this.team === "red" ? "red" : "blue"}`;
     if (this.scene.textures.exists(key)) this.bodySprite.setTexture(key);
-    this.bodySprite.setFlipX(this.facing === "side" && this.flip);
   }
 
   // Mark an attack so animate() plays a quick scale "pop".
@@ -148,24 +136,14 @@ export default class Player extends Phaser.GameObjects.Container {
     this.prevY = this.y;
     const moving = moved > 0.4; // px/frame threshold — ignores tiny jitter
 
-    // Face the way we're walking (idle keeps the last facing). Dominant axis
-    // wins: horizontal -> side (mirror for left), vertical -> up/down.
-    if (moving) {
-      if (Math.abs(dx) > Math.abs(dy)) {
-        this.facing = "side";
-        this.flip = dx < 0;
-      } else {
-        this.facing = dy < 0 ? "up" : "down";
-      }
-    }
+    // Heroes always face the camera; mirror left/right to match travel (only on
+    // clear horizontal movement, so vertical/idle keeps the last facing).
+    if (moving && Math.abs(dx) > 0.2) this.flip = dx < 0;
+    this.bodySprite.setFlipX(this.flip);
 
     this.animPhase = advancePhase(this.animPhase, dt * 1000, moving);
     const pose = bodyPose(this.animPhase, moving);
     const pop = popScale(this.scene.time.now - this.attackAt);
-
-    // Two-frame leg shuffle while moving; the still pose when idle.
-    const frame = moving ? (Math.sin(this.animPhase) >= 0 ? "walkA" : "walkB") : "idle";
-    this._applySprite(frame);
 
     this.bodySprite.y = pose.bob;
     this.bodySprite.setScale(this.baseScale * pose.sx * pop, this.baseScale * pose.sy * pop);

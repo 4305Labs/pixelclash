@@ -1,7 +1,7 @@
 // Milestone 22 (render): the lobby shows a class picker that marks your pick,
 // and a hero is drawn at its class size (tank bigger, scout smaller).
 import { openGame, assert } from "./helpers.mjs";
-import { SPRITE_SCALE, CLASSES } from "../src/config.js";
+import { HERO_SCALE, CLASSES } from "../src/config.js";
 
 const lobby = (players) => ({
   t: "state",
@@ -69,7 +69,7 @@ try {
     const s = window.PIXELCLASH.game.scene.getScene("ArenaScene");
     return { scale: s.sprites.get("p1").bodySprite.scaleX, picker: s.classText.visible };
   });
-  assert(Math.abs(r.scale - SPRITE_SCALE * CLASSES.tank.scale) < 0.001, "a tank hero is drawn at tank size");
+  assert(Math.abs(r.scale - HERO_SCALE * CLASSES.tank.scale) < 0.001, "a tank hero is drawn at tank size");
   assert(!r.picker, "the class picker hides during play");
 
   const realErrors = errors.filter((e) => !/websocket|ws:\/\//i.test(e));
