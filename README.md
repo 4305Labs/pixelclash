@@ -6,7 +6,7 @@ camps** for buffs, ambush from the **bushes**, level up and shop for upgrades �
 and raze the enemy base to win. Play **solo against AI bots** in one click, or
 open a second tab for a real 1v1 (scales toward 3v3).
 
-![A live match — three lanes of minions and towers, jungle camps, stealth bushes, heroes, bases, and the HUD](docs/screenshot-map.png)
+![A live match — three lanes with tower chokepoints, jungle camps, stealth bushes, detailed RPG heroes on team-coloured rings, bases, and the HUD](docs/screenshot-map.png)
 
 - **Game engine:** [Phaser 3](https://phaser.io) (HTML5, runs in any browser)
 - **Dev server / bundler:** [Vite](https://vitejs.dev)
@@ -23,12 +23,13 @@ Everything is free and runs on your own machine — no accounts, no credit card.
   spread, a piercing bolt, a damage-soaking shield, a homing arrow, an AoE nova,
   and a leap slam — one per hero, not just a bigger shot).
 - **3 lanes** (top / mid / bottom) of AI minion waves, with a **guard tower** on
-  every lane — six per side.
+  every lane — six per side, each guarding a **chokepoint**.
 - **Tower-gated bases** — a base is shielded until all its towers fall.
 - **Gold & leveling** — last-hit for XP/gold, auto-level, and a shop (damage /
   max-HP / attack-speed upgrades).
-- **A real map** — distinct stone-lane vs mossy-jungle terrain, **neutral jungle
-  camps** that give a buff when cleared, and **stealth bushes** for ambushes.
+- **A real map** — distinct stone-lane vs mossy-jungle terrain, lane chokepoints,
+  **jungle gank routes** that open at the towers, **neutral jungle camps** that
+  give a buff when cleared, and **stealth bushes** for ambushes.
 - **Map pickups** (heal / power orbs) and a **base healing fountain**.
 - **AI bots** so you can play solo instantly; a match timer with a kill tiebreak.
 - **Full HUD** — team scoreboard, match clock, kill feed, respawn timer, and a
@@ -196,12 +197,13 @@ and it's written up plainly in
 
 ## A look at it
 
-The top image shows the whole arena: three lanes of minions and towers, jungle
-camps, stealth bushes (the green patches), heroes, bases, and the HUD.
+The top image shows the whole arena: three lanes of minions and **tower
+chokepoints**, jungle camps, stealth bushes (the green patches), heroes (each on
+a team-coloured ground ring), bases, and the HUD.
 
 | The six heroes | Picking a hero (lobby) | Mid-lane clash & shop HUD |
 |---|---|---|
-| ![The six hero classes lined up](docs/screenshot-heroes.png) | ![The lobby hero picker](docs/screenshot-heroes-lobby.png) | ![Minions clashing with the full HUD](docs/screenshot-match.png) |
+| ![The six RPG hero classes — knight, rogue, tank, archer, wizard, barbarian](docs/screenshot-heroes.png) | ![The lobby hero picker](docs/screenshot-heroes-lobby.png) | ![A mid-lane clash with the full HUD](docs/screenshot-match.png) |
 
 Each hero's **B ability** is genuinely different — here a tank's shield ring, a
 scout's pellet spread, a mage's nova blast, and a homing arrow all at once:
