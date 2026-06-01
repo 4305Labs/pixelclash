@@ -383,13 +383,16 @@ export const WALLS = [
   // lanes — they only choke the mid lane's edges.
   { x: 392, y: 145, w: 16, h: 90 }, // WALLS[0] — upper pillar (between top & mid)
   { x: 392, y: 365, w: 16, h: 90 }, // WALLS[1] — lower pillar (between mid & bot)
-  // Top lane divider: left + right segments, leaving a central gap (x≈360–440)
-  // and near-base gaps (x<150, x>650). Sits above the center corridor.
-  { x: 150, y: 224, w: 210, h: 14 },
-  { x: 440, y: 224, w: 210, h: 14 },
+  // Top lane divider: three segments leaving a gap near each base (x<150,
+  // x>650) AND a gap at each tower (x≈225–275 / 525–575). Junglers drop through
+  // the tower gap straight into the lane fight; the centre is solid cover.
+  { x: 150, y: 224, w: 75, h: 14 },
+  { x: 275, y: 224, w: 250, h: 14 },
+  { x: 575, y: 224, w: 75, h: 14 },
   // Bottom lane divider (mirror of the top).
-  { x: 150, y: 364, w: 210, h: 14 },
-  { x: 440, y: 364, w: 210, h: 14 },
+  { x: 150, y: 364, w: 75, h: 14 },
+  { x: 275, y: 364, w: 250, h: 14 },
+  { x: 575, y: 364, w: 75, h: 14 },
   // Per-tower chokepoints (12 short gateposts).
   ...TOWER_CHOKES,
 ];
