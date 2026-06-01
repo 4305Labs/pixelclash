@@ -4,12 +4,13 @@
 > human) can pick this project up cold and keep building safely.
 > **Update this file after every major change** (see *Update protocol* at the end).
 >
-> **Last updated:** Game Boy top-down hero art — Pokemon/Zelda style chibi
->   sprites with 4-direction facing (down/up/side, left = mirrored side) and a
->   clean alternating-stride 2-frame walk, derived from movement, with a ground
->   drop shadow (`Player.shadow`) and a lit/belted 3-tone tunic. Pixel data
->   lives in `src/gbsprites.js` (per-class HEAD + shared BODY, all 16x16,
->   width-validated at boot and in m37). Prior work: per-hero abilities + the
+> **Last updated:** map-layout pass — every tower now guards a generated
+>   chokepoint (gatepost walls narrowing the lane to a ~60px gap; outer lanes
+>   run to the map edge), the jungle dividers open AT the towers for gank
+>   rotations (centre solid), and the stealth bushes moved onto those gaps. All
+>   in `config.js` `WALLS`/`BUSH_ZONES`; lane rows stay clear for minions.
+>   Before that: Game Boy top-down hero art (`src/gbsprites.js`) with 4-direction
+>   facing + walk, ground shadow, 3-tone tunic; per-hero abilities; the
 >   four-part art overhaul.
 > **Status:** all tests green (56 test groups), live two-browser test green, build OK.
 >

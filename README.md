@@ -135,11 +135,18 @@ the enemy base and fighting whatever they meet. They're weak alone, but they soa
 fire and chip the base — push a lane alongside your wave to break through.
 
 **Guard towers:** each team has a defensive tower on **every lane** (six in
-total) between its base and the center. A tower auto-zaps the nearest enemy in
-range (orange bolts), so diving in alone is dangerous — let your minions soak the
-tower while you whittle it down. **A base is shielded (a glowing ring) and can't
-be touched until ALL of its towers are destroyed**, so the towers are the gate to
-victory: break a team's towers, then raze the exposed base to win.
+total) between its base and the center. Each tower **guards a chokepoint** —
+walls flank it so the lane narrows to a single gap you must run through, right
+under the tower's guns. A tower auto-zaps the nearest enemy in range (orange
+bolts), so diving in alone is dangerous — let your minions soak the tower while
+you whittle it down. **A base is shielded (a glowing ring) and can't be touched
+until ALL of its towers are destroyed**, so the towers are the gate to victory:
+break a team's towers, then raze the exposed base to win.
+
+**Ganking the lanes:** the jungle dividers open right at each tower, and a
+**stealth bush** sits at that opening — so a roamer can lurk in the brush, then
+spring down through the gap into the lane fight. Holding a bush by a tower is the
+classic ambush.
 
 **Map pickups:** orbs sit at fixed spots down the center of the arena (fair to
 both teams, but contested). Grab a green **heal** orb to restore HP, or an
