@@ -8,7 +8,7 @@
 // ===========================================================================
 
 import Phaser from "phaser";
-import { SPRITE_SCALE, PLAYER_SIZE, HERO_SCALE, COMBAT, CLASSES } from "../config.js";
+import { SPRITE_SCALE, PLAYER_SIZE, HERO_SCALE, COLORS, COMBAT, CLASSES } from "../config.js";
 import { advancePhase, bodyPose, popScale } from "../anim.js";
 
 const BAR_W = PLAYER_SIZE * SPRITE_SCALE; // health bar width matches the body
@@ -26,6 +26,13 @@ export default class Player extends Phaser.GameObjects.Container {
     // body bobs above it (which reads as a little hop).
     const half = (PLAYER_SIZE * SPRITE_SCALE) / 2;
     this.shadow = scene.add.ellipse(0, half - 2, half * 1.4, half * 0.6, 0x000000, 0.28);
+    // A team-coloured ring on the ground for instant team ID — the detailed hero
+    // armour is neutral steel, so the garment alone isn't always enough at a
+    // glance. Scaled with the class in setClass().
+    const teamColor = team === "red" ? COLORS.redTeam : COLORS.blueTeam;
+    this.teamRing = scene.add
+      .ellipse(0, half - 1, half * 1.8, half * 0.85, teamColor, 0)
+      .setStrokeStyle(2, teamColor, 0.85);
 
     // A soft orange aura shown behind the body while a power buff is active.
     this.aura = scene.add.circle(0, 0, (PLAYER_SIZE * SPRITE_SCALE) / 2 + 6, 0xffa300, 0);
@@ -65,7 +72,7 @@ export default class Player extends Phaser.GameObjects.Container {
       .setOrigin(0.5)
       .setVisible(false);
 
-    this.add([this.shadow, this.aura, this.shield, this.bodySprite, this.hpBg, this.hpFill, this.botLabel, this.levelLabel]);
+    this.add([this.shadow, this.teamRing, this.aura, this.shield, this.bodySprite, this.hpBg, this.hpFill, this.botLabel, this.levelLabel]);
     scene.add.existing(this);
   }
 
@@ -115,6 +122,7 @@ export default class Player extends Phaser.GameObjects.Container {
     this.cls = cls;
     this.baseScale = HERO_SCALE * CLASSES[cls].scale;
     this.shadow.setScale(CLASSES[cls].scale); // bigger heroes cast a bigger shadow
+    this.teamRing.setScale(CLASSES[cls].scale);
     const key = `hero_${cls}_${this.team === "red" ? "red" : "blue"}`;
     if (this.scene.textures.exists(key)) this.bodySprite.setTexture(key);
   }
