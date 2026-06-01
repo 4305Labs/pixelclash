@@ -216,6 +216,7 @@ pixelclash/
 │  ├─ config.js            ← ALL the tunable numbers + map layout (one place to balance)
 │  ├─ sim.js               ← shared movement math (server + client prediction agree)
 │  ├─ textures.js          ← draws every pixel-art sprite in code (no image files)
+│  ├─ gbsprites.js         ← Game Boy top-down hero pixel grids (4-direction + walk)
 │  ├─ anim.js              ← procedural animation math (bob / walk / attack pop)
 │  ├─ audio.js             ← synthesized sound effects + mute (no audio files)
 │  ├─ record.js            ← persisted win/loss/draw tally (localStorage)
