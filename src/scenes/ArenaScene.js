@@ -1094,9 +1094,23 @@ export default class ArenaScene extends Phaser.Scene {
   // Scatter non-colliding decor (bushes/rocks) on the jungle floor. Above the
   // floor (-9) but below the walls (-5) and all units, so heroes pass in front.
   drawDecor() {
-    this.decor = DECOR_SPOTS.map((d) =>
-      this.add.image(d.x, d.y, `decor_${d.kind}`).setDepth(-7)
-    );
+    this.decor = DECOR_SPOTS.map((d) => {
+      const img = this.add.image(d.x, d.y, `decor_${d.kind}`).setDepth(-7);
+      // Trees and bushes get a gentle wind rustle (a subtle width wobble with a
+      // randomised phase, so they don't all sway in sync). Doesn't move them.
+      if (d.kind === "tree" || d.kind === "bush") {
+        this.tweens.add({
+          targets: img,
+          scaleX: { from: 0.97, to: 1.03 },
+          duration: 1400 + Math.random() * 900,
+          delay: Math.random() * 1200,
+          yoyo: true,
+          repeat: -1,
+          ease: "Sine.inOut",
+        });
+      }
+      return img;
+    });
     // Bush stealth zones: translucent leafy patches drawn ABOVE units (depth
     // 100) so a hero standing in one is partly obscured by the foliage.
     this.bushZones = BUSH_ZONES.map((z) =>
