@@ -434,6 +434,15 @@ const DECOR_ROWS = {
     ".owwwwwo.",
     "..ooooo..",
   ],
+  // A little cluster of wildflowers on stems — a yellow, a blue, and a pink.
+  flowers: [
+    "..o.....o..",
+    ".oyo...obo.",
+    "..g.....g..",
+    "....o......",
+    "...opo.....",
+    "...gggg....",
+  ],
 };
 
 function makeDecorTexture(scene, key, kind) {
@@ -444,11 +453,14 @@ function makeDecorTexture(scene, key, kind) {
     // Foliage greens are fixed (independent of the bright grass base) so bushes
     // and trees read as darker, leafier clumps against the field.
     l: kind === "rock" ? stone : 0x4f9e34, // rock body / leaf mid
-    g: kind === "rock" ? shade(stone, 0.6) : 0x2f6b22, // rock crack / leaf shadow
+    g: kind === "rock" ? shade(stone, 0.6) : 0x2f6b22, // rock crack / leaf shadow / stem
     L: 0x82c44e, // leaf highlight
     h: shade(stone, 0.7), // rock shadow
     w: 0x8a5a2a, // trunk wood
     W: 0x5c3a18, // trunk shadow
+    y: 0xffe34d, // yellow bloom
+    b: 0x6fc0ff, // blue bloom
+    p: 0xff7bbf, // pink bloom
   };
   paintGrid(scene, key, { rows: DECOR_ROWS[kind], palette, pixel: 2 });
 }
@@ -480,5 +492,6 @@ export function generateTextures(scene) {
   makeDecorTexture(scene, "decor_rock", "rock");
   makeDecorTexture(scene, "decor_tree", "tree");
   makeDecorTexture(scene, "decor_stump", "stump");
+  makeDecorTexture(scene, "decor_flowers", "flowers");
   makeCampTexture(scene, "camp");
 }

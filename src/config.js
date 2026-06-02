@@ -51,6 +51,10 @@ export const DECOR_SPOTS = [
   { kind: "tree", x: 400, y: 28 }, { kind: "tree", x: 400, y: 576 },
   { kind: "tree", x: 250, y: 26 }, { kind: "tree", x: 560, y: 578 },
   { kind: "stump", x: 300, y: 205 }, { kind: "stump", x: 510, y: 398 },
+  // Wildflower clusters dotted through the grassy gaps.
+  { kind: "flowers", x: 240, y: 195 }, { kind: "flowers", x: 560, y: 205 },
+  { kind: "flowers", x: 240, y: 405 }, { kind: "flowers", x: 560, y: 395 },
+  { kind: "flowers", x: 440, y: 200 }, { kind: "flowers", x: 360, y: 400 },
 ];
 
 // --- Bushes (stealth zones) -------------------------------------------------
