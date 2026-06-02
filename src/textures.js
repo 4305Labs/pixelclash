@@ -79,15 +79,16 @@ function makeRpgHero(scene, cls, team) {
   paintGrid(scene, `hero_${cls}_${team}`, { rows: RPG_HEROES[cls], palette: rpgPalette(team), pixel: 1 });
 }
 
-// A 10×10 one-eyed lane minion (painted at pixel=2 → 20×20), in a lighter team
-// tint so it reads as a "lesser" creature next to the heroes.
+// A 10×10 little goblin lane minion (painted at pixel=2 → 20×20): pointy ears,
+// two eyes, stubby legs, in a lighter team tint so it reads as a "lesser"
+// creature next to the heroes.
 const MINION_ROWS = [
-  "..oooooo..",
+  "..o....o..",
+  ".obo..obo.",
   ".obbbbbbo.",
-  "obbbbbbbbo",
-  "obbbbwwbbo",
-  "obbbbbbbbo",
-  "obdbbbbdbo",
+  ".obwbbwbo.",
+  ".obbbbbbo.",
+  ".obdbbdbo.",
   ".obbbbbbo.",
   ".obo..obo.",
   ".oo....oo.",
