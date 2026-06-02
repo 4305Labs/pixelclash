@@ -1021,12 +1021,25 @@ export default class ArenaScene extends Phaser.Scene {
 
     const CURB = 0x141d38; // dark stone edge
     const ROAD = 0x36447c; // lighter paved path (reads against the dark jungle)
-    const LINE = 0x46568f; // faint worn centre line
+    const ROAD_HI = 0x46568f; // top-lit paving (a soft bevel along the road)
+    const LINE = 0x5a6cb0; // faint worn centre line
+
+    // Nexus plaza: a paved disc where the three lanes converge at each base, so
+    // each nexus reads as a hub. Drawn under the lane ribbons (same colours) so
+    // they merge seamlessly into one paved area.
+    for (const team of ["blue", "red"]) {
+      const b = BASE_POS[team];
+      this.add.circle(b.x, b.y, 82, CURB).setDepth(-9.6);
+      this.add.circle(b.x, b.y, 75, ROAD).setDepth(-9.1);
+    }
 
     this.laneFloors = [];
     for (const p of lanes) this.laneFloors.push(...this.drawLaneRibbon(p, band + 10, CURB, -9.5));
     for (const p of lanes) this.laneFloors.push(...this.drawLaneRibbon(p, band, ROAD, -9));
-    for (const p of lanes) this.laneFloors.push(...this.drawLaneRibbon(p, 8, LINE, -8.8));
+    // A narrower band nudged up = a soft top-lit bevel so roads aren't flat.
+    for (const p of lanes)
+      this.laneFloors.push(...this.drawLaneRibbon(p.map(([x, y]) => [x, y - 7]), band - 16, ROAD_HI, -8.9));
+    for (const p of lanes) this.laneFloors.push(...this.drawLaneRibbon(p, 6, LINE, -8.8));
 
     // A faint team tint at each base end (where the lanes converge), so each side
     // reads as that team's territory.
