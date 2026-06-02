@@ -26,7 +26,7 @@ import {
   BASE_POS,
 } from "../config.js";
 import { generateTextures } from "../textures.js";
-import { stepPosition } from "../sim.js";
+import { stepPosition, towerObstacles } from "../sim.js";
 import Player from "../entities/Player.js";
 import Base from "../entities/Base.js";
 import Minion from "../entities/Minion.js";
@@ -784,8 +784,9 @@ export default class ArenaScene extends Phaser.Scene {
   predictLocal(sprite, serverP, dt) {
     const input = this.lastInput || { dx: 0, dy: 0 };
 
-    // Step our sprite forward using the SAME math the server uses.
-    const moved = stepPosition(sprite.x, sprite.y, input.dx, input.dy, dt);
+    // Step our sprite forward using the SAME math (and the SAME live-tower
+    // obstacles) the server uses, so prediction agrees with the authority.
+    const moved = stepPosition(sprite.x, sprite.y, input.dx, input.dy, dt, towerObstacles(this.net.towers));
     sprite.x = moved.x;
     sprite.y = moved.y;
 

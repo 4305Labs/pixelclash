@@ -35,7 +35,7 @@ import {
   KILLFEED,
   PROGRESS,
 } from "../config.js";
-import { stepPosition, normalizeInput, resolveMove, pointInWall } from "../sim.js";
+import { stepPosition, normalizeInput, resolveMove, pointInWall, towerObstacles } from "../sim.js";
 
 const BOT_STANDOFF = 200; // how far a bot holds from its target to shoot
 
@@ -450,7 +450,8 @@ export default class GameServer {
       player.x,
       player.y,
       player.x + f.dx * DASH.distance,
-      player.y + f.dy * DASH.distance
+      player.y + f.dy * DASH.distance,
+      towerObstacles(this.towers)
     );
     player.x = dest.x;
     player.y = dest.y;
@@ -584,7 +585,8 @@ export default class GameServer {
       player.x,
       player.y,
       player.x + f.dx * spec.distance,
-      player.y + f.dy * spec.distance
+      player.y + f.dy * spec.distance,
+      towerObstacles(this.towers)
     );
     player.x = dest.x;
     player.y = dest.y;
@@ -956,7 +958,9 @@ export default class GameServer {
     // 0) Drive the AI bots (sets their input + fires their attacks).
     this.stepBots();
 
-    // 1) Move players; remember facing; trickle in passive XP/gold.
+    // 1) Move players; remember facing; trickle in passive XP/gold. Live towers
+    // are solid for heroes (they path around them), so build that list once.
+    const towerObs = towerObstacles(this.towers);
     for (const p of this.players.values()) {
       if (!p.alive) {
         if (this.timeMs >= p.deadUntil) this.respawn(p);
@@ -971,7 +975,7 @@ export default class GameServer {
         const n = normalizeInput(dx, dy);
         p.face = { x: n.dx, y: n.dy };
       }
-      const next = stepPosition(p.x, p.y, dx, dy, dt);
+      const next = stepPosition(p.x, p.y, dx, dy, dt, towerObs);
       p.x = next.x;
       p.y = next.y;
     }

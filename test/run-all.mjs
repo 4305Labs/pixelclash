@@ -63,6 +63,7 @@ const tests = [
   "./m36.abilities.mjs",
   "./m38.rpgsprites.mjs",
   "./m39.bots.mjs",
+  "./m40.towers-solid.mjs",
 ];
 
 let failed = false;

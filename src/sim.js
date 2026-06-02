@@ -19,8 +19,8 @@ function clamp(v, lo, hi) {
 
 // Push a horizontal move out of any wall it would enter. `y` is the player's
 // current vertical position, used to see which walls are actually in the way.
-function collideX(oldX, newX, y) {
-  for (const w of WALLS) {
+function collideX(oldX, newX, y, walls) {
+  for (const w of walls) {
     const top = w.y;
     const bottom = w.y + w.h;
     // Skip walls the player isn't level with vertically.
@@ -37,8 +37,8 @@ function collideX(oldX, newX, y) {
 }
 
 // The vertical twin of collideX. `x` is the (already X-resolved) position.
-function collideY(oldY, newY, x) {
-  for (const w of WALLS) {
+function collideY(oldY, newY, x, walls) {
+  for (const w of walls) {
     const left = w.x;
     const right = w.x + w.w;
     if (x + PLAYER_HALF <= left || x - PLAYER_HALF >= right) continue;
@@ -56,11 +56,14 @@ function collideY(oldY, newY, x) {
 // Move from (oldX,oldY) toward a target point, clamped to the arena and
 // blocked by walls. Shared by normal movement and the dash so both obey the
 // same map. Identical on server and client, so prediction stays in sync.
-export function resolveMove(oldX, oldY, targetX, targetY) {
+// `extra` is an optional list of dynamic obstacle rects (e.g. live towers) that
+// block this mover too — pass the SAME list on server and client.
+export function resolveMove(oldX, oldY, targetX, targetY, extra) {
+  const walls = extra && extra.length ? WALLS.concat(extra) : WALLS;
   let nx = clamp(targetX, PLAYER_HALF, GAME_WIDTH - PLAYER_HALF);
   let ny = clamp(targetY, PLAYER_HALF, GAME_HEIGHT - PLAYER_HALF);
-  nx = collideX(oldX, nx, oldY);
-  ny = collideY(oldY, ny, nx);
+  nx = collideX(oldX, nx, oldY, walls);
+  ny = collideY(oldY, ny, nx, walls);
   return { x: nx, y: ny };
 }
 
@@ -70,6 +73,19 @@ export function pointInWall(x, y) {
     if (x >= w.x && x <= w.x + w.w && y >= w.y && y <= w.y + w.h) return true;
   }
   return false;
+}
+
+// Build collision rects for the LIVE towers so heroes path around them (a bit
+// smaller than the 44px sprite so you can hug the turret). Dead towers drop out,
+// so a destroyed tower stops blocking. Same list is used on server + client.
+export const TOWER_BLOCK_HALF = 16;
+export function towerObstacles(towers) {
+  const r = TOWER_BLOCK_HALF;
+  const obs = [];
+  for (const t of towers) {
+    if (t.alive) obs.push({ x: t.x - r, y: t.y - r, w: 2 * r, h: 2 * r });
+  }
+  return obs;
 }
 
 // Normalize an input vector so diagonals aren't faster than straight lines.
@@ -82,7 +98,7 @@ export function normalizeInput(dx, dy) {
 
 // Advance a position by an input vector over dt seconds, clamped to the arena
 // and blocked by walls.
-export function stepPosition(x, y, dx, dy, dt) {
+export function stepPosition(x, y, dx, dy, dt, extra) {
   const n = normalizeInput(dx, dy);
-  return resolveMove(x, y, x + n.dx * PLAYER_SPEED * dt, y + n.dy * PLAYER_SPEED * dt);
+  return resolveMove(x, y, x + n.dx * PLAYER_SPEED * dt, y + n.dy * PLAYER_SPEED * dt, extra);
 }
