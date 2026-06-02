@@ -4,15 +4,15 @@
 > human) can pick this project up cold and keep building safely.
 > **Update this file after every major change** (see *Update protocol* at the end).
 >
-> **Last updated:** smarter AI bots (`GameServer.stepBots` + perception helpers
->   `lowestEnemyHeroNear`/`enemyTowerCovering`/`hasMinionSupport`): they collapse
->   on weak nearby heroes, fire abilities with intent (enemy hero in range, not
->   random), refuse to dive an enemy tower without minion support, retreat home
->   when low, and dash to engage/escape. Tested in m39. Before that: flowing
->   curved MOBA lane visuals + nexus plazas (`ArenaScene.drawGrid`); detailed
->   "Tiny RPG" front-facing heroes (`src/rpgsprites.js`, `HERO_SCALE`) on
->   team-coloured rings; the map-layout pass (chokepoints/gank gaps); per-hero
->   abilities; the four-part art overhaul.
+> **Last updated:** grassland "glades" retheme — bright grass field
+>   (`COLORS.jungle`) with scattered tufts/wildflowers (80px tile), warm DIRT
+>   lane paths, warm grey-stone structures with moss, and new tree/stump decor
+>   (`DECOR_ROWS` + `DECOR_SPOTS`). Purely visual; gameplay unchanged. Before
+>   that: smarter AI bots (`GameServer.stepBots` + `lowestEnemyHeroNear`/
+>   `enemyTowerCovering`/`hasMinionSupport`, tested in m39); flowing curved MOBA
+>   lanes + nexus plazas (`ArenaScene.drawGrid`); detailed "Tiny RPG" heroes
+>   (`src/rpgsprites.js`, `HERO_SCALE`) on team rings; chokepoints/gank gaps;
+>   per-hero abilities.
 > **Status:** all tests green (57 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on

@@ -6,7 +6,7 @@ camps** for buffs, ambush from the **bushes**, level up and shop for upgrades �
 and raze the enemy base to win. Play **solo against AI bots** in one click, or
 open a second tab for a real 1v1 (scales toward 3v3).
 
-![A live match — three lanes with tower chokepoints, jungle camps, stealth bushes, detailed RPG heroes on team-coloured rings, bases, and the HUD](docs/screenshot-map.png)
+![A live match — a grassy glade with three dirt-path lanes, tower chokepoints, trees, camps, stealth bushes, detailed RPG heroes on team-coloured rings, bases, and the HUD](docs/screenshot-map.png)
 
 - **Game engine:** [Phaser 3](https://phaser.io) (HTML5, runs in any browser)
 - **Dev server / bundler:** [Vite](https://vitejs.dev)
@@ -27,9 +27,10 @@ Everything is free and runs on your own machine — no accounts, no credit card.
 - **Tower-gated bases** — a base is shielded until all its towers fall.
 - **Gold & leveling** — last-hit for XP/gold, auto-level, and a shop (damage /
   max-HP / attack-speed upgrades).
-- **A real map** — distinct stone-lane vs mossy-jungle terrain, lane chokepoints,
-  **jungle gank routes** that open at the towers, **neutral jungle camps** that
-  give a buff when cleared, and **stealth bushes** for ambushes.
+- **A real map** — a grassy glade with winding **dirt-path lanes**, trees,
+  flowers and mossy stone ruins, lane chokepoints, **jungle gank routes** that
+  open at the towers, **neutral camps** that give a buff when cleared, and
+  **stealth bushes** for ambushes.
 - **Map pickups** (heal / power orbs) and a **base healing fountain**.
 - **AI bots** so you can play solo instantly; a match timer with a kill tiebreak.
 - **Full HUD** — team scoreboard, match clock, kill feed, respawn timer, and a
@@ -197,9 +198,9 @@ and it's written up plainly in
 
 ## A look at it
 
-The top image shows the whole arena: three lanes of minions and **tower
-chokepoints**, jungle camps, stealth bushes (the green patches), heroes (each on
-a team-coloured ground ring), bases, and the HUD.
+The top image shows the whole arena: a grassy glade with three dirt-path lanes
+and **tower chokepoints**, trees and mossy ruins, neutral camps, stealth bushes,
+heroes (each on a team-coloured ground ring), bases, and the HUD.
 
 | The six heroes | Picking a hero (lobby) | Mid-lane clash & shop HUD |
 |---|---|---|
