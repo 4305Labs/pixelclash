@@ -11,17 +11,17 @@ export const GAME_HEIGHT = 600;
 // A small, cohesive pixel-art palette (PICO-8 inspired). Numbers are hex
 // colors; the 0x prefix is how Phaser wants colors in code.
 export const COLORS = {
-  bg: 0x1d2b53, // dark blue background
-  grid: 0x29366f, // slightly lighter grid lines
+  bg: 0x2c3a22, // dark earthy green (shows only behind the vignette at the edges)
+  grid: 0x3a7a2e, // darker grass (legacy "grid" key)
   blueTeam: 0x29adff, // player team 1
   redTeam: 0xff004d, // player team 2
   outline: 0x000000,
   white: 0xfff1e8,
-  wall: 0x4a5680, // stone-blue obstacles
-  wallEdge: 0x29366f, // darker wall outline
+  wall: 0x8f8a78, // warm grey stone obstacles (fences/ruins on the grass)
+  wallEdge: 0x595446, // darker stone outline
   minionBlue: 0xa8e0ff, // lighter team tints so minions read as "lesser" units
   minionRed: 0xffa3b8,
-  jungle: 0x1a3326, // mossy dark-green ground for the jungle (off-lane) routes
+  jungle: 0x4c9b3a, // lush grassland ground (covers the whole field)
 };
 
 // Each lane is drawn as a stone "road" band centred on its row, this tall (px);
@@ -44,6 +44,13 @@ export const DECOR_SPOTS = [
   { kind: "bush", x: 200, y: 405 }, { kind: "rock", x: 600, y: 405 },
   { kind: "rock", x: 330, y: 390 }, { kind: "bush", x: 470, y: 390 },
   { kind: "bush", x: 130, y: 385 }, { kind: "rock", x: 670, y: 385 },
+  // Glade trees + stumps in the grassy gaps and along the top/bottom edges
+  // (kept off the lane bands). Big round canopies sell the "glades" look.
+  { kind: "tree", x: 110, y: 200 }, { kind: "tree", x: 690, y: 200 },
+  { kind: "tree", x: 110, y: 400 }, { kind: "tree", x: 690, y: 400 },
+  { kind: "tree", x: 400, y: 28 }, { kind: "tree", x: 400, y: 576 },
+  { kind: "tree", x: 250, y: 26 }, { kind: "tree", x: 560, y: 578 },
+  { kind: "stump", x: 300, y: 205 }, { kind: "stump", x: 510, y: 398 },
 ];
 
 // --- Bushes (stealth zones) -------------------------------------------------

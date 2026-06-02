@@ -289,15 +289,20 @@ function makeFloorTexture(scene, key, baseColor = COLORS.bg, style = "stone") {
   const dark = shade(baseColor, 0.7);
 
   if (style === "moss") {
-    // Jungle ground: scattered moss tufts (lighter green clumps) and a few
-    // darker soil pits, so the off-lane floor reads as living undergrowth.
-    const tuft = shade(baseColor, 1.5);
-    const tips = shade(baseColor, 1.9);
-    const soil = shade(baseColor, 0.6);
-    // Each tuft: a 3×2 clump with a brighter top edge (light hits from above).
+    // Lush grassland: a bright base scattered with darker + lighter grass tufts
+    // and the odd little wildflower, so the field reads like a grassy meadow.
+    const dark = shade(baseColor, 0.78);
+    const tuft = shade(baseColor, 1.22);
+    const tips = shade(baseColor, 1.5);
+    // Faint darker patches break up the flat green.
+    for (const [x, y] of [[12, 12], [33, 16], [7, 35], [23, 6]]) {
+      g.fillStyle(dark, 1);
+      g.fillRect(x, y, 3, 2);
+    }
+    // Grass tufts: a 3×2 clump with a brighter top edge (lit from above).
     const tufts = [
       [5, 7], [17, 4], [30, 9], [9, 19], [24, 22], [34, 28], [13, 31], [3, 27],
-      [27, 34], [20, 14],
+      [27, 34], [20, 14], [36, 20], [15, 24],
     ];
     for (const [x, y] of tufts) {
       g.fillStyle(tuft, 1);
@@ -305,10 +310,16 @@ function makeFloorTexture(scene, key, baseColor = COLORS.bg, style = "stone") {
       g.fillStyle(tips, 1);
       g.fillRect(x, y, 3, 1);
     }
-    // Bare soil pits between the tufts.
-    for (const [x, y] of [[12, 12], [33, 16], [7, 35], [23, 6]]) {
-      g.fillStyle(soil, 1);
+    // A few wildflowers: a coloured petal block with a white centre dot.
+    const flowers = [
+      [8, 10, 0xffe34d], [29, 6, 0xffffff], [19, 30, 0xff7bbf],
+      [34, 34, 0xc77bff], [4, 20, 0xffe34d],
+    ];
+    for (const [x, y, c] of flowers) {
+      g.fillStyle(c, 1);
       g.fillRect(x, y, 2, 2);
+      g.fillStyle(0xffffff, 1);
+      g.fillRect(x, y, 1, 1);
     }
     g.generateTexture(key, S, S);
     g.destroy();
@@ -367,12 +378,12 @@ function makeWallTexture(scene, key) {
 const DECOR_ROWS = {
   bush: [
     "...oooo...",
-    "..ollllo..",
-    ".ollgglloo",
-    "ollggggllo",
-    "ollggggglo",
-    "olgggggglo",
-    ".ologgolo.",
+    "..oLLLLo..",
+    ".oLLgglLoo",
+    "oLLggggLLo",
+    "oLLgggggLo",
+    "oLgggggggo",
+    ".oLggggLo.",
     "..oo..oo..",
   ],
   rock: [
@@ -385,17 +396,46 @@ const DECOR_ROWS = {
     ".oohhhhoo.",
     "..oooooo..",
   ],
+  // A round leafy tree: layered canopy (highlight L / body l / shadow g) over a
+  // short wooden trunk. 13 wide so it reads as a proper glade tree.
+  tree: [
+    "....ooooo....",
+    "..ooLLLLLoo..",
+    ".oLLLLLLLLLo.",
+    "oLLLLLLLLLLgo",
+    "oLLLLLLLLLggo",
+    "oLLLLLLLLgggo",
+    "oLLLLLLLggggo",
+    ".oLLLLLggggo.",
+    "..ooLLgggoo..",
+    "....owwwo....",
+    "....owwwo....",
+    "....oWWWo....",
+    "...ooooooo...",
+  ],
+  // A mossy tree stump with a couple of growth rings.
+  stump: [
+    "..ooooo..",
+    ".owwwwwo.",
+    ".oWwgwWo.",
+    ".owwwwwo.",
+    "..ooooo..",
+  ],
 };
 
 function makeDecorTexture(scene, key, kind) {
-  const moss = COLORS.jungle;
   const stone = COLORS.wall;
   const palette = {
     ".": null,
     o: COLORS.outline,
-    l: kind === "rock" ? stone : shade(moss, 2.6), // leaf body / rock body
-    g: shade(moss, 2.0), // darker leaf
+    // Foliage greens are fixed (independent of the bright grass base) so bushes
+    // and trees read as darker, leafier clumps against the field.
+    l: kind === "rock" ? stone : 0x4f9e34, // rock body / leaf mid
+    g: kind === "rock" ? shade(stone, 0.6) : 0x2f6b22, // rock crack / leaf shadow
+    L: 0x82c44e, // leaf highlight
     h: shade(stone, 0.7), // rock shadow
+    w: 0x8a5a2a, // trunk wood
+    W: 0x5c3a18, // trunk shadow
   };
   paintGrid(scene, key, { rows: DECOR_ROWS[kind], palette, pixel: 2 });
 }
@@ -425,5 +465,7 @@ export function generateTextures(scene) {
   makePickupTexture(scene, "pickup_power", "power");
   makeDecorTexture(scene, "decor_bush", "bush");
   makeDecorTexture(scene, "decor_rock", "rock");
+  makeDecorTexture(scene, "decor_tree", "tree");
+  makeDecorTexture(scene, "decor_stump", "stump");
   makeCampTexture(scene, "camp");
 }

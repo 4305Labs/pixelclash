@@ -1019,10 +1019,10 @@ export default class ArenaScene extends Phaser.Scene {
     };
     const lanes = controls.map(sample);
 
-    const CURB = 0x141d38; // dark stone edge
-    const ROAD = 0x36447c; // lighter paved path (reads against the dark jungle)
-    const ROAD_HI = 0x46568f; // top-lit paving (a soft bevel along the road)
-    const LINE = 0x5a6cb0; // faint worn centre line
+    const CURB = 0x5e4426; // dark earth edge of the path
+    const ROAD = 0xb08750; // packed dirt path (reads against the green grass)
+    const ROAD_HI = 0xcaa468; // sun-lit dirt (a soft bevel along the path)
+    const LINE = 0xd8b87e; // pale worn track down the middle
 
     // Nexus plaza: a paved disc where the three lanes converge at each base, so
     // each nexus reads as a hub. Drawn under the lane ribbons (same colours) so
@@ -1095,7 +1095,7 @@ export default class ArenaScene extends Phaser.Scene {
   // floor (-9) but below the walls (-5) and all units, so heroes pass in front.
   drawDecor() {
     this.decor = DECOR_SPOTS.map((d) =>
-      this.add.image(d.x, d.y, d.kind === "rock" ? "decor_rock" : "decor_bush").setDepth(-7)
+      this.add.image(d.x, d.y, `decor_${d.kind}`).setDepth(-7)
     );
     // Bush stealth zones: translucent leafy patches drawn ABOVE units (depth
     // 100) so a hero standing in one is partly obscured by the foliage.
