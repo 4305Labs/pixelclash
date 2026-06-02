@@ -27,6 +27,10 @@ const SOUNDS = {
     [523, 659, 784].forEach((f, i) =>
       a.blip({ type: "sine", freq: f, dur: 0.16, gain: 0.14, delay: i * 0.13 })
     ),
+  // A magical rising "whoosh" when a hero uses its ability.
+  cast: (a) => a.blip({ type: "triangle", freq: 300, freqEnd: 760, dur: 0.16, gain: 0.13 }),
+  // A low boom for an AoE shockwave (Nova / Leap Slam).
+  blast: (a) => a.blip({ type: "sawtooth", freq: 170, freqEnd: 42, dur: 0.32, gain: 0.2 }),
 };
 
 const STORAGE_KEY = "pixelclash.muted";

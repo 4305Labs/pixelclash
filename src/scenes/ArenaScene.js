@@ -421,8 +421,9 @@ export default class ArenaScene extends Phaser.Scene {
     const button = this.buttons[kind];
     if (this.localAlive() && button.isReady()) {
       button.startCooldown(this.cooldowns[kind]);
-      // Play the shoot blip only when we actually fire (alive + off cooldown).
-      if (kind !== "dash") this.audio.play("shoot");
+      // A beefier "cast" for abilities; the lighter "shoot" blip for basics.
+      if (kind === "ability") this.audio.play("cast");
+      else if (kind !== "dash") this.audio.play("shoot");
       // Pop the local hero on an attack (the dash has its own movement burst).
       if (kind !== "dash") {
         const me = this.sprites.get(this.net.localId);
@@ -949,6 +950,7 @@ export default class ArenaScene extends Phaser.Scene {
         .setStrokeStyle(3, color, 0.9)
         .setDepth(48);
       this.spawnSpark(x.x, x.y, color); // a bright flash at the centre
+      this.audio.play("blast"); // a low boom for the shockwave
       this.tweens.add({
         targets: ring,
         scale: { from: 0.3, to: 1.15 },
