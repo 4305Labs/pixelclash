@@ -1095,6 +1095,10 @@ export default class ArenaScene extends Phaser.Scene {
   // floor (-9) but below the walls (-5) and all units, so heroes pass in front.
   drawDecor() {
     this.decor = DECOR_SPOTS.map((d) => {
+      // A soft shadow under trees grounds the big canopies on the grass.
+      if (d.kind === "tree") {
+        this.add.ellipse(d.x, d.y + 13, 26, 9, 0x000000, 0.22).setDepth(-7.5);
+      }
       const img = this.add.image(d.x, d.y, `decor_${d.kind}`).setDepth(-7);
       // Trees and bushes get a gentle wind rustle (a subtle width wobble with a
       // randomised phase, so they don't all sway in sync). Doesn't move them.
