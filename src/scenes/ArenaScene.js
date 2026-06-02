@@ -421,9 +421,11 @@ export default class ArenaScene extends Phaser.Scene {
     const button = this.buttons[kind];
     if (this.localAlive() && button.isReady()) {
       button.startCooldown(this.cooldowns[kind]);
-      // A beefier "cast" for abilities; the lighter "shoot" blip for basics.
+      // A beefier "cast" for abilities, a whoosh for a dash, the lighter
+      // "shoot" blip for basics.
       if (kind === "ability") this.audio.play("cast");
-      else if (kind !== "dash") this.audio.play("shoot");
+      else if (kind === "dash") this.audio.play("dash");
+      else this.audio.play("shoot");
       // Pop the local hero on an attack (the dash has its own movement burst).
       if (kind !== "dash") {
         const me = this.sprites.get(this.net.localId);

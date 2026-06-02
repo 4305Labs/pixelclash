@@ -31,6 +31,8 @@ const SOUNDS = {
   cast: (a) => a.blip({ type: "triangle", freq: 300, freqEnd: 760, dur: 0.16, gain: 0.13 }),
   // A low boom for an AoE shockwave (Nova / Leap Slam).
   blast: (a) => a.blip({ type: "sawtooth", freq: 170, freqEnd: 42, dur: 0.32, gain: 0.2 }),
+  // A quick airy whoosh for a dash.
+  dash: (a) => a.blip({ type: "triangle", freq: 720, freqEnd: 360, dur: 0.1, gain: 0.1 }),
 };
 
 const STORAGE_KEY = "pixelclash.muted";
