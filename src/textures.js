@@ -368,6 +368,15 @@ function makeWallTexture(scene, key) {
   g.fillRect(0, 7, S, 1);
   g.fillRect(7, 2, 1, 5);
   g.fillRect(11, 8, 1, 6);
+  // Patches of moss creeping over the stone, so structures look overgrown in
+  // the glade rather than freshly cut.
+  g.fillStyle(0x4f8a32, 1);
+  g.fillRect(1, 12, 3, 2);
+  g.fillRect(12, 13, 3, 2);
+  g.fillRect(9, 1, 2, 2);
+  g.fillStyle(0x6fae45, 1); // brighter moss tips
+  g.fillRect(1, 12, 3, 1);
+  g.fillRect(12, 13, 2, 1);
   g.generateTexture(key, S, S);
   g.destroy();
 }
