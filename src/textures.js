@@ -281,7 +281,9 @@ function makePickupTexture(scene, key, kind) {
 // specks, so a tiled floor looks like textured ground instead of a flat fill.
 // Deterministic (no randomness), so the render tests stay stable.
 function makeFloorTexture(scene, key, baseColor = COLORS.bg, style = "stone") {
-  const S = 40;
+  // Grass uses a larger tile so the pattern repeats half as often (less obvious
+  // tiling); the (now unused) stone style stays 40.
+  const S = style === "moss" ? 80 : 40;
   const g = scene.make.graphics({ x: 0, y: 0 }, false);
   g.fillStyle(baseColor, 1);
   g.fillRect(0, 0, S, S);
@@ -289,20 +291,22 @@ function makeFloorTexture(scene, key, baseColor = COLORS.bg, style = "stone") {
   const dark = shade(baseColor, 0.7);
 
   if (style === "moss") {
-    // Lush grassland: a bright base scattered with darker + lighter grass tufts
-    // and the odd little wildflower, so the field reads like a grassy meadow.
-    const dark = shade(baseColor, 0.78);
+    // Lush grassland: a bright base scattered over an 80×80 tile with darker +
+    // lighter grass tufts and the odd wildflower, placed irregularly so the
+    // field reads like a meadow rather than a grid.
+    const patch = shade(baseColor, 0.8);
     const tuft = shade(baseColor, 1.22);
     const tips = shade(baseColor, 1.5);
-    // Faint darker patches break up the flat green.
-    for (const [x, y] of [[12, 12], [33, 16], [7, 35], [23, 6]]) {
-      g.fillStyle(dark, 1);
-      g.fillRect(x, y, 3, 2);
+    // Irregular darker patches break up the flat green.
+    for (const [x, y, w, h] of [[14, 22, 7, 4], [52, 12, 6, 3], [30, 58, 8, 4], [64, 48, 6, 4], [6, 66, 5, 3], [44, 38, 5, 3]]) {
+      g.fillStyle(patch, 1);
+      g.fillRect(x, y, w, h);
     }
-    // Grass tufts: a 3×2 clump with a brighter top edge (lit from above).
+    // Grass tufts (3×2 clumps, brighter top edge), scattered across the tile.
     const tufts = [
-      [5, 7], [17, 4], [30, 9], [9, 19], [24, 22], [34, 28], [13, 31], [3, 27],
-      [27, 34], [20, 14], [36, 20], [15, 24],
+      [5, 9], [21, 4], [38, 11], [57, 6], [70, 14], [11, 28], [33, 24], [48, 31],
+      [62, 27], [76, 35], [4, 44], [25, 47], [41, 52], [55, 44], [72, 56], [16, 63],
+      [35, 70], [50, 66], [68, 72], [9, 53], [29, 14], [60, 60],
     ];
     for (const [x, y] of tufts) {
       g.fillStyle(tuft, 1);
@@ -310,10 +314,10 @@ function makeFloorTexture(scene, key, baseColor = COLORS.bg, style = "stone") {
       g.fillStyle(tips, 1);
       g.fillRect(x, y, 3, 1);
     }
-    // A few wildflowers: a coloured petal block with a white centre dot.
+    // Sparse wildflowers: a coloured petal block with a white centre dot.
     const flowers = [
-      [8, 10, 0xffe34d], [29, 6, 0xffffff], [19, 30, 0xff7bbf],
-      [34, 34, 0xc77bff], [4, 20, 0xffe34d],
+      [12, 16, 0xffe34d], [46, 20, 0xff7bbf], [66, 8, 0xffffff],
+      [24, 40, 0xc77bff], [58, 50, 0xffe34d], [36, 64, 0x6fc0ff], [8, 72, 0xff7bbf],
     ];
     for (const [x, y, c] of flowers) {
       g.fillStyle(c, 1);
