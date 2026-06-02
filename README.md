@@ -6,7 +6,7 @@ camps** for buffs, ambush from the **bushes**, level up and shop for upgrades �
 and raze the enemy base to win. Play **solo against AI bots** in one click, or
 open a second tab for a real 1v1 (scales toward 3v3).
 
-![A live match — a grassy glade with three dirt-path lanes, tower chokepoints, trees, camps, stealth bushes, detailed RPG heroes on team-coloured rings, bases, and the HUD](docs/screenshot-map.png)
+![A live match — a grassy glade with three open dirt-path lanes, towers, trees, camps, stealth bushes, detailed RPG heroes on team-coloured rings, bases, and the HUD](docs/screenshot-map.png)
 
 - **Game engine:** [Phaser 3](https://phaser.io) (HTML5, runs in any browser)
 - **Dev server / bundler:** [Vite](https://vitejs.dev)
@@ -23,12 +23,12 @@ Everything is free and runs on your own machine — no accounts, no credit card.
   spread, a piercing bolt, a damage-soaking shield, a homing arrow, an AoE nova,
   and a leap slam — one per hero, not just a bigger shot).
 - **3 lanes** (top / mid / bottom) of AI minion waves, with a **guard tower** on
-  every lane — six per side, each guarding a **chokepoint**.
+  every lane — six per side.
 - **Tower-gated bases** — a base is shielded until all its towers fall.
 - **Gold & leveling** — last-hit for XP/gold, auto-level, and a shop (damage /
   max-HP / attack-speed upgrades).
 - **A real map** — a grassy glade with winding **dirt-path lanes**, trees,
-  flowers and mossy stone ruins, lane chokepoints, **jungle gank routes** that
+  flowers and mossy stone ruins, **jungle gank routes** that
   open at the towers, **neutral camps** that give a buff when cleared, and
   **stealth bushes** for ambushes.
 - **Map pickups** (heal / power orbs) and a **base healing fountain**.
@@ -139,13 +139,12 @@ the enemy base and fighting whatever they meet. They're weak alone, but they soa
 fire and chip the base — push a lane alongside your wave to break through.
 
 **Guard towers:** each team has a defensive tower on **every lane** (six in
-total) between its base and the center. Each tower **guards a chokepoint** —
-walls flank it so the lane narrows to a single gap you must run through, right
-under the tower's guns. A tower auto-zaps the nearest enemy in range (orange
-bolts), so diving in alone is dangerous — let your minions soak the tower while
-you whittle it down. **A base is shielded (a glowing ring) and can't be touched
-until ALL of its towers are destroyed**, so the towers are the gate to victory:
-break a team's towers, then raze the exposed base to win.
+total) between its base and the center, sitting in the open lane. A tower
+auto-zaps the nearest enemy in range (orange bolts), so diving in alone is
+dangerous — let your minions soak the tower while you whittle it down. **A base
+is shielded (a glowing ring) and can't be touched until ALL of its towers are
+destroyed**, so the towers are the gate to victory: break a team's towers, then
+raze the exposed base to win.
 
 **Ganking the lanes:** the jungle dividers open right at each tower, and a
 **stealth bush** sits at that opening — so a roamer can lurk in the brush, then
@@ -199,7 +198,7 @@ and it's written up plainly in
 ## A look at it
 
 The top image shows the whole arena: a grassy glade with three dirt-path lanes
-and **tower chokepoints**, trees and mossy ruins, neutral camps, stealth bushes,
+and towers, trees and mossy ruins, neutral camps, stealth bushes,
 heroes (each on a team-coloured ground ring), bases, and the HUD.
 
 | The six heroes | Picking a hero (lobby) | Mid-lane clash & shop HUD |

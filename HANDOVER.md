@@ -14,7 +14,8 @@
 >   `textures.js` decor/camp palettes use FIXED greens — don't `shade()` the now
 >   bright `COLORS.jungle` base (it clips). Earlier: smarter bots (`stepBots`,
 >   m39); curved MOBA lanes + nexus plazas; "Tiny RPG" heroes on team rings;
->   chokepoints/gank gaps; per-hero abilities.
+>   chokepoints removed (lanes are OPEN — towers are landmarks, not walls);
+>   jungle gank gaps; per-hero abilities.
 > **Status:** all tests green (57 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
