@@ -32,8 +32,9 @@ try {
       hasJungle: s.textures.exists("floor_jungle"),
       hasJungleFloor: !!s.jungleFloor,
       laneCount: objs.length,
+      // The curved side-lane runs are rotated; only the dead-straight mid lane is level.
       diagonals: objs.filter((o) => o.type === "Rectangle" && Math.abs(o.rot) > 0.01).length,
-      levelRowYs: objs.filter((o) => o.type === "Rectangle" && Math.abs(o.rot) < 0.01).map((o) => o.y),
+      allYs: objs.map((o) => o.y),
     };
   });
 
@@ -41,16 +42,16 @@ try {
   assert(v.hasJungleFloor, "the jungle floor covers the whole arena");
   assert(v.laneCount > 0, "the lanes are drawn as flowing road ribbons");
 
-  // Every lane's road runs level along its row (mid straight across; the side
-  // lanes' middle sections between their entries).
+  // Each lane's road passes along its row (mid straight across; the side lanes'
+  // middle sections, before they sweep away toward the bases).
   for (const ln of LANES) {
     assert(
-      v.levelRowYs.some((y) => Math.abs(y - ln.row) <= 2),
+      v.allYs.some((y) => Math.abs(y - ln.row) <= 10),
       `the ${ln.id} lane road runs along its row`
     );
   }
-  // The two side lanes each sweep out of BOTH bases → at least four diagonal runs.
-  assert(v.diagonals >= 4, "the side lanes sweep diagonally out of both bases");
+  // The two side lanes each sweep (curve) out of BOTH bases → many rotated runs.
+  assert(v.diagonals >= 4, "the side lanes sweep out of both bases");
 
   // --- Jungle decor: one prop per DECOR_SPOT, all in the jungle gaps ----------
   const decor = await page.evaluate(() => {

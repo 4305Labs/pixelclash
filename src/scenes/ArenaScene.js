@@ -1002,22 +1002,31 @@ export default class ArenaScene extends Phaser.Scene {
     const top = rowOf("top");
     const bot = rowOf("bot");
 
-    // Path of each lane: from the left nexus, out to its row, across, and into the
-    // right nexus (mid is just straight across).
-    const paths = [
-      [[0, mid], [entryL, top], [entryR, top], [GAME_WIDTH, mid]],
+    // Control points of each lane: from the left nexus, out to its row, across
+    // (pinned in the centre so the body stays flat), and into the right nexus.
+    // The side lanes are smoothed into a gentle ARC through a Catmull-Rom spline
+    // so they sweep curvily out of each base instead of bending at a corner.
+    const half = GAME_WIDTH / 2;
+    const controls = [
+      [[0, mid], [entryL, top], [half, top], [entryR, top], [GAME_WIDTH, mid]],
       [[0, mid], [GAME_WIDTH, mid]],
-      [[0, mid], [entryL, bot], [entryR, bot], [GAME_WIDTH, mid]],
+      [[0, mid], [entryL, bot], [half, bot], [entryR, bot], [GAME_WIDTH, mid]],
     ];
+    const sample = (cps) => {
+      if (cps.length <= 2) return cps;
+      const spline = new Phaser.Curves.Spline(cps.map(([x, y]) => new Phaser.Math.Vector2(x, y)));
+      return spline.getPoints(20).map((v) => [v.x, v.y]);
+    };
+    const lanes = controls.map(sample);
 
     const CURB = 0x141d38; // dark stone edge
     const ROAD = 0x36447c; // lighter paved path (reads against the dark jungle)
     const LINE = 0x46568f; // faint worn centre line
 
     this.laneFloors = [];
-    for (const p of paths) this.laneFloors.push(...this.drawLaneRibbon(p, band + 10, CURB, -9.5));
-    for (const p of paths) this.laneFloors.push(...this.drawLaneRibbon(p, band, ROAD, -9));
-    for (const p of paths) this.laneFloors.push(...this.drawLaneRibbon(p, 8, LINE, -8.8));
+    for (const p of lanes) this.laneFloors.push(...this.drawLaneRibbon(p, band + 10, CURB, -9.5));
+    for (const p of lanes) this.laneFloors.push(...this.drawLaneRibbon(p, band, ROAD, -9));
+    for (const p of lanes) this.laneFloors.push(...this.drawLaneRibbon(p, 8, LINE, -8.8));
 
     // A faint team tint at each base end (where the lanes converge), so each side
     // reads as that team's territory.
