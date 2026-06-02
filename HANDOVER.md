@@ -4,15 +4,17 @@
 > human) can pick this project up cold and keep building safely.
 > **Update this file after every major change** (see *Update protocol* at the end).
 >
-> **Last updated:** grassland "glades" retheme — bright grass field
->   (`COLORS.jungle`) with scattered tufts/wildflowers (80px tile), warm DIRT
->   lane paths, warm grey-stone structures with moss, and new tree/stump decor
->   (`DECOR_ROWS` + `DECOR_SPOTS`). Purely visual; gameplay unchanged. Before
->   that: smarter AI bots (`GameServer.stepBots` + `lowestEnemyHeroNear`/
->   `enemyTowerCovering`/`hasMinionSupport`, tested in m39); flowing curved MOBA
->   lanes + nexus plazas (`ArenaScene.drawGrid`); detailed "Tiny RPG" heroes
->   (`src/rpgsprites.js`, `HERO_SCALE`) on team rings; chokepoints/gank gaps;
->   per-hero abilities.
+> **Last updated:** art-coherence pass on the grassland "glades" look —
+>   hero touch-ups (rebuilt tank as a great-helm + tower shield, single-bit
+>   brawler axe, attached knight shield, wood ranger bow, clearer scout dagger;
+>   all in `src/rpgsprites.js`), goblin lane minions, a darker forest camp, and
+>   a jungle camp in all four pockets (`CAMP_SPOTS`). Built on the glades
+>   retheme (bright grass + dirt lane paths + trees/stumps/flowers + mossy stone,
+>   in `textures.js`/`ArenaScene.drawGrid`) and audio (cast/blast/dash). NB:
+>   `textures.js` decor/camp palettes use FIXED greens — don't `shade()` the now
+>   bright `COLORS.jungle` base (it clips). Earlier: smarter bots (`stepBots`,
+>   m39); curved MOBA lanes + nexus plazas; "Tiny RPG" heroes on team rings;
+>   chokepoints/gank gaps; per-hero abilities.
 > **Status:** all tests green (57 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
