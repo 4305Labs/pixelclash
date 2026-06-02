@@ -962,24 +962,33 @@ export default class ArenaScene extends Phaser.Scene {
     for (const id of this.seenBlasts) if (!live.has(id)) this.seenBlasts.delete(id);
   }
 
-  // A stone road as a rotated rectangle from (x1,y1) to (x2,y2), `band` wide.
-  // Used for the diagonal connectors that fan the side lanes out of each base.
-  // `COLORS.grid` is the lighter stone-blue, so the road reads against the dark
-  // jungle (the straight bands are a textured tile; these are a flat fill).
-  drawRoad(x1, y1, x2, y2, band, color = COLORS.grid) {
-    const len = Math.hypot(x2 - x1, y2 - y1);
-    const r = this.add
-      .rectangle((x1 + x2) / 2, (y1 + y2) / 2, len, band, color)
-      .setRotation(Math.atan2(y2 - y1, x2 - x1))
-      .setDepth(-9);
-    return r;
+  // Draw one flowing lane "ribbon": a thick rounded polyline through `points`
+  // (a rotated rectangle for each straight run + a disc at every vertex to round
+  // the bends), so a lane sweeps smoothly instead of meeting at hard corners.
+  drawLaneRibbon(points, width, color, depth) {
+    const half = width / 2;
+    const made = [];
+    for (let i = 0; i < points.length - 1; i++) {
+      const [x1, y1] = points[i];
+      const [x2, y2] = points[i + 1];
+      const len = Math.hypot(x2 - x1, y2 - y1);
+      made.push(
+        this.add
+          .rectangle((x1 + x2) / 2, (y1 + y2) / 2, len, width, color)
+          .setRotation(Math.atan2(y2 - y1, x2 - x1))
+          .setDepth(depth)
+      );
+    }
+    for (const [x, y] of points) made.push(this.add.circle(x, y, half, color).setDepth(depth));
+    return made;
   }
 
   drawGrid() {
-    // Mossy jungle floor across the WHOLE arena, then stone "roads": the mid lane
-    // runs straight across, while the top/bottom lanes run between their entries
-    // and DIAGONAL connectors fan them out of each base — so the three lanes
-    // radiate from the nexus instead of being parallel strips.
+    // Mossy jungle floor across the WHOLE arena, then the three lanes as flowing
+    // stone ROADS: the mid lane runs straight across; the top/bottom lanes sweep
+    // up/down out of each nexus and curve back in — three roads radiating from
+    // each base and converging, like a MOBA map. Each lane is a dark curb under a
+    // lighter paved path, with a faint centre line, all with rounded bends.
     this.jungleFloor = this.add
       .tileSprite(0, 0, GAME_WIDTH, GAME_HEIGHT, "floor_jungle")
       .setOrigin(0, 0)
@@ -988,37 +997,32 @@ export default class ArenaScene extends Phaser.Scene {
     const band = LANE_BAND_HALF * 2;
     const entryL = LANE_ENTRY_X;
     const entryR = GAME_WIDTH - LANE_ENTRY_X;
-    const midRow = GAME_HEIGHT / 2;
+    const mid = GAME_HEIGHT / 2;
+    const rowOf = (id) => LANES.find((l) => l.id === id).row;
+    const top = rowOf("top");
+    const bot = rowOf("bot");
+
+    // Path of each lane: from the left nexus, out to its row, across, and into the
+    // right nexus (mid is just straight across).
+    const paths = [
+      [[0, mid], [entryL, top], [entryR, top], [GAME_WIDTH, mid]],
+      [[0, mid], [GAME_WIDTH, mid]],
+      [[0, mid], [entryL, bot], [entryR, bot], [GAME_WIDTH, mid]],
+    ];
+
+    const CURB = 0x141d38; // dark stone edge
+    const ROAD = 0x36447c; // lighter paved path (reads against the dark jungle)
+    const LINE = 0x46568f; // faint worn centre line
 
     this.laneFloors = [];
-    for (const ln of LANES) {
-      if (ln.id === "mid") {
-        // Mid lane: a full-width stone band.
-        this.laneFloors.push(
-          this.add
-            .tileSprite(0, ln.row - LANE_BAND_HALF, GAME_WIDTH, band, "floor")
-            .setOrigin(0, 0)
-            .setDepth(-9)
-        );
-      } else {
-        // Side lane: a straight stone band only BETWEEN the two entries…
-        this.laneFloors.push(
-          this.add
-            .tileSprite(entryL, ln.row - LANE_BAND_HALF, entryR - entryL, band, "floor")
-            .setOrigin(0, 0)
-            .setDepth(-9)
-        );
-        // …plus a diagonal connector from each base (mid row) to that entry.
-        this.laneFloors.push(this.drawRoad(0, midRow, entryL, ln.row, band));
-        this.laneFloors.push(this.drawRoad(GAME_WIDTH, midRow, entryR, ln.row, band));
-      }
-    }
+    for (const p of paths) this.laneFloors.push(...this.drawLaneRibbon(p, band + 10, CURB, -9.5));
+    for (const p of paths) this.laneFloors.push(...this.drawLaneRibbon(p, band, ROAD, -9));
+    for (const p of paths) this.laneFloors.push(...this.drawLaneRibbon(p, 8, LINE, -8.8));
 
-    // A faint team tint at each base end (where the lanes converge), so each
-    // side reads as that team's territory.
-    const rows = LANES.map((l) => l.row);
-    const yTop = Math.min(...rows) - LANE_BAND_HALF;
-    const yBot = Math.max(...rows) + LANE_BAND_HALF;
+    // A faint team tint at each base end (where the lanes converge), so each side
+    // reads as that team's territory.
+    const yTop = top - LANE_BAND_HALF;
+    const yBot = bot + LANE_BAND_HALF;
     this.add
       .rectangle(0, yTop, entryL, yBot - yTop, COLORS.blueTeam, 0.08)
       .setOrigin(0, 0)

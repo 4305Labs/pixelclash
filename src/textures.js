@@ -402,7 +402,8 @@ function makeDecorTexture(scene, key, kind) {
 
 // Called once when the arena starts. Creates every texture the game needs.
 export function generateTextures(scene) {
-  makeFloorTexture(scene, "floor", COLORS.bg, "stone");
+  // Lanes are now drawn as solid flowing road ribbons (see ArenaScene.drawGrid),
+  // so only the jungle floor needs a texture.
   makeFloorTexture(scene, "floor_jungle", COLORS.jungle, "moss");
   makeWallTexture(scene, "wall");
   // Detailed front-facing "Tiny RPG" heroes: one texture "hero_<cls>_<team>" per
