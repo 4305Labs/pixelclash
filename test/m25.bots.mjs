@@ -45,9 +45,16 @@ try {
   assert(server.phase === "playing", "match is live");
   const bot = bots[0];
   const bx0 = bot.x;
-  for (let i = 0; i < 12; i++) server.step(1 / 30);
+  const by0 = bot.y;
+  // Track firing across the whole window — a bot holding next to a camp it's
+  // clearing won't move, and its bolts get consumed before we'd check at the end.
+  let everFired = false;
+  for (let i = 0; i < 12; i++) {
+    server.step(1 / 30);
+    if (server.projectiles.some((b) => String(b.ownerId).startsWith("bot"))) everFired = true;
+  }
   assert(
-    bot.x !== bx0 || server.projectiles.some((b) => String(b.ownerId).startsWith("bot")),
+    bot.x !== bx0 || bot.y !== by0 || everFired,
     "the bot acts — it moves and/or shoots"
   );
 

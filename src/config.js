@@ -259,12 +259,14 @@ export const CAMP = {
   buffMs: 8000, // attack buff granted to the killer, in ms
 };
 
-// Two camps, one in each jungle (mirror-symmetric). Kept clear of the spawn
-// rows, divider walls, and lane.
-// Rotationally symmetric (180° about center) so each team has one nearer camp.
+// One camp in EACH of the four jungle pockets, so every jungle quadrant is worth
+// pathing through. Kept clear of the spawn rows, divider walls, and lanes, and
+// rotationally symmetric (180° about centre) so the two teams are even.
 export const CAMP_SPOTS = [
-  { id: "camp_top", x: 200, y: 185 }, // top-left jungle (nearer blue)
-  { id: "camp_bot", x: GAME_WIDTH - 200, y: GAME_HEIGHT - 185 }, // bottom-right (nearer red)
+  { id: "camp_ul", x: 200, y: 185 }, // upper-left jungle (blue side)
+  { id: "camp_lr", x: GAME_WIDTH - 200, y: GAME_HEIGHT - 185 }, // lower-right (red side)
+  { id: "camp_ur", x: GAME_WIDTH - 200, y: 185 }, // upper-right jungle (red side)
+  { id: "camp_ll", x: 200, y: GAME_HEIGHT - 185 }, // lower-left (blue side)
 ];
 
 // --- Bases & match ----------------------------------------------------------
