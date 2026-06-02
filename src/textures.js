@@ -235,12 +235,13 @@ const CAMP_ROWS = [
 ];
 
 function makeCampTexture(scene, key) {
-  const moss = COLORS.jungle;
+  // Fixed forest-ogre greens (independent of the bright grass base) so the brute
+  // reads as a darker monster against the field, not a washed-out blob.
   const palette = {
     ".": null,
     o: COLORS.outline,
-    b: shade(moss, 1.6), // dark body / spikes
-    g: shade(moss, 2.8), // body
+    b: 0x2c4a1c, // dark body / spikes
+    g: 0x5e9e3a, // body
     w: COLORS.white, // eyes
     r: 0xff004d, // angry mouth
   };
