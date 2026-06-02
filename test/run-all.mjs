@@ -62,6 +62,7 @@ const tests = [
   "./m35.bush.render.mjs",
   "./m36.abilities.mjs",
   "./m38.rpgsprites.mjs",
+  "./m39.bots.mjs",
 ];
 
 let failed = false;

@@ -4,16 +4,16 @@
 > human) can pick this project up cold and keep building safely.
 > **Update this file after every major change** (see *Update protocol* at the end).
 >
-> **Last updated:** heroes restyled as detailed "Tiny RPG" front-facing
->   characters — knight, rogue, heavy-shield tank, green archer, wizard,
->   barbarian — each a single 24x24 pose with a weapon, in chibi proportions
->   (big head centred on a narrow body), team-coloured garment, mirrored when
->   walking left, with the existing bob + ground shadow. Data in
->   `src/rpgsprites.js`; rendered at `HERO_SCALE`. This REPLACED the Game Boy
->   top-down 4-direction system (gbsprites.js removed). Before that: the
->   map-layout pass (tower chokepoints + jungle gank gaps in `config.js`
->   `WALLS`/`BUSH_ZONES`), per-hero abilities, the four-part art overhaul.
-> **Status:** all tests green (56 test groups), live two-browser test green, build OK.
+> **Last updated:** smarter AI bots (`GameServer.stepBots` + perception helpers
+>   `lowestEnemyHeroNear`/`enemyTowerCovering`/`hasMinionSupport`): they collapse
+>   on weak nearby heroes, fire abilities with intent (enemy hero in range, not
+>   random), refuse to dive an enemy tower without minion support, retreat home
+>   when low, and dash to engage/escape. Tested in m39. Before that: flowing
+>   curved MOBA lane visuals + nexus plazas (`ArenaScene.drawGrid`); detailed
+>   "Tiny RPG" front-facing heroes (`src/rpgsprites.js`, `HERO_SCALE`) on
+>   team-coloured rings; the map-layout pass (chokepoints/gank gaps); per-hero
+>   abilities; the four-part art overhaul.
+> **Status:** all tests green (57 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
 > **`claude/pixel-moba-game-WobPa`** (PR #1 → `main`). `main` is the empty root

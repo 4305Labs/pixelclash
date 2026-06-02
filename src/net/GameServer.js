@@ -224,18 +224,30 @@ export default class GameServer {
   stepBots() {
     for (const p of this.players.values()) {
       if (!p.bot || !p.alive) continue;
-      const target = this.nearestTarget(p);
+      // Prefer collapsing on a weak nearby enemy hero (a kill); otherwise head
+      // for whatever the auto-aim would shoot (minion/tower/exposed base).
+      const focus = this.lowestEnemyHeroNear(p, 280);
+      const target = focus || this.nearestTarget(p);
       if (!target) {
         p.input.dx = 0;
         p.input.dy = 0;
         continue;
       }
       const low = p.hp < CLASSES[p.cls].maxHp * 0.3;
+      const home = this.bases.get(p.team);
+      const dangerTower = this.enemyTowerCovering(p, 26);
+      const supported = this.hasMinionSupport(p, 170);
+
       let mx, my; // desired move direction
       if (low) {
-        const home = this.bases.get(p.team); // run for our base
+        // Hurt → retreat toward home (still auto-firing back as we kite).
         mx = home.x - p.x;
         my = home.y - p.y;
+      } else if (dangerTower && !supported) {
+        // Don't dive an enemy tower without minions to soak it — back off to its
+        // edge and wait for the wave.
+        mx = p.x - dangerTower.x;
+        my = p.y - dangerTower.y;
       } else {
         const dx = target.x - p.x;
         const dy = target.y - p.y;
@@ -252,9 +264,19 @@ export default class GameServer {
         p.input.dx = 0;
         p.input.dy = 0;
       }
+
       this.tryAttack(p, "basic");
-      if (!low && Math.random() < 0.03) this.tryAbility(p);
-      if (Math.random() < 0.04) this.tryDash(p);
+      // Use the ability with intent: when a (visible) enemy hero is in striking
+      // range, not at random. tryAbility() still gates it on cooldown.
+      const enemyHero = focus || this.nearestEnemyPlayer(p);
+      if (!low && enemyHero && (enemyHero.x - p.x) ** 2 + (enemyHero.y - p.y) ** 2 < 300 * 300) {
+        this.tryAbility(p);
+      }
+      // Dash with purpose: escape when hurt, or close a big gap to engage. (face
+      // already points the way we're moving; tryDash gates on cooldown.)
+      const gap = Math.hypot(target.x - p.x, target.y - p.y);
+      if (low || (!dangerTower && gap > BOT_STANDOFF * 1.6)) this.tryDash(p);
+
       this.tryBuy(p); // spend gold on upgrades as soon as it can afford one
     }
   }
@@ -613,6 +635,42 @@ export default class GameServer {
       }
     }
     return best;
+  }
+
+  // --- Bot perception helpers ------------------------------------------------
+  // The weakest visible enemy hero within `maxDist` (so bots collapse on a kill).
+  lowestEnemyHeroNear(player, maxDist) {
+    let best = null;
+    let bestHp = Infinity;
+    for (const o of this.players.values()) {
+      if (o.team === player.team || !o.alive || this.isHidden(o)) continue;
+      if ((o.x - player.x) ** 2 + (o.y - player.y) ** 2 > maxDist * maxDist) continue;
+      if (o.hp < bestHp) {
+        bestHp = o.hp;
+        best = o;
+      }
+    }
+    return best;
+  }
+
+  // An alive enemy tower whose guns cover the player's spot (so it knows not to
+  // dive). `pad` widens the danger radius a little.
+  enemyTowerCovering(player, pad = 0) {
+    const r = TOWER.range + pad;
+    for (const tw of this.towers) {
+      if (!tw.alive || tw.team === player.team) continue;
+      if ((tw.x - player.x) ** 2 + (tw.y - player.y) ** 2 <= r * r) return tw;
+    }
+    return null;
+  }
+
+  // Is a friendly minion close enough to soak a tower while the bot pushes?
+  hasMinionSupport(player, r) {
+    for (const m of this.minions) {
+      if (!m.alive || m.team !== player.team) continue;
+      if ((m.x - player.x) ** 2 + (m.y - player.y) ** 2 <= r * r) return true;
+    }
+    return false;
   }
 
   // Closest enemy thing to aim at: any living enemy player, or the enemy base.
