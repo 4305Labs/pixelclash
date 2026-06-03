@@ -1034,8 +1034,8 @@ export default class ArenaScene extends Phaser.Scene {
     // they merge seamlessly into one paved area.
     for (const team of ["blue", "red"]) {
       const b = BASE_POS[team];
-      this.add.circle(b.x, b.y, 82, CURB).setDepth(-9.6);
-      this.add.circle(b.x, b.y, 75, ROAD).setDepth(-9.1);
+      this.add.circle(b.x, b.y, 62, CURB).setDepth(-9.6);
+      this.add.circle(b.x, b.y, 55, ROAD).setDepth(-9.1);
     }
 
     this.laneFloors = [];

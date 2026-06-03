@@ -27,7 +27,7 @@ export const COLORS = {
 // Each lane is drawn as a stone "road" band centred on its row, this tall (px);
 // the mossy jungle floor fills the gaps between the lanes. See `LANES` below for
 // the row of each lane. Half-height ±62 around row → bands of 124px.
-export const LANE_BAND_HALF = 62;
+export const LANE_BAND_HALF = 38;
 
 // Non-colliding decor props scattered on the mossy JUNGLE strips between the
 // lanes (the gaps around y≈205 and y≈395) so the jungle doesn't feel empty.
