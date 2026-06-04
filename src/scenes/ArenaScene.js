@@ -739,6 +739,7 @@ export default class ArenaScene extends Phaser.Scene {
         sprite = new Player(this, p.x, p.y, p.team);
         sprite.lastHp = p.hp; // remember HP so we can detect damage later
         sprite.lastAlive = p.alive; // ...and alive-state so we can detect death
+        sprite.lastLevel = p.level || 1; // ...and level so we only chime on a rise
         this.sprites.set(p.id, sprite);
       }
 
@@ -777,6 +778,9 @@ export default class ArenaScene extends Phaser.Scene {
       // the hero's last position, tinted toward its team colour.
       if (sprite.lastAlive && !p.alive) {
         this.audio.play("death");
+        // If an ENEMY hero just went down, add a short triumphant "kill" sting
+        // on top — a win for our side deserves a little extra punch.
+        if (this.net.team && p.team !== this.net.team) this.audio.play("kill");
         this.spawnDeathPoof(sprite.x, sprite.y, p.team);
         this.triggerShake("kill"); // a noticeable jolt — a hero just went down
       }
@@ -784,7 +788,18 @@ export default class ArenaScene extends Phaser.Scene {
 
       if (p.cls) sprite.setClass(p.cls);
       sprite.setBot(p.bot);
-      sprite.setLevel(p.level || 1);
+      // Level-up chime for OUR hero: play once when our level ticks up. The
+      // first snapshot seeds lastLevel (above) so we never chime on join.
+      const lvl = p.level || 1;
+      if (
+        p.id === this.net.localId &&
+        sprite.lastLevel !== undefined &&
+        lvl > sprite.lastLevel
+      ) {
+        this.audio.play("levelup");
+      }
+      sprite.lastLevel = lvl;
+      sprite.setLevel(lvl);
       sprite.setHp(p.hp, p.maxHp);
       sprite.setAlive(p.alive);
       sprite.setPowered(p.powered);

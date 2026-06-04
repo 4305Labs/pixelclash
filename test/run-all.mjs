@@ -74,6 +74,7 @@ const tests = [
   "./m48.baseart.render.mjs",
   "./m49.shake.render.mjs",
   "./m50.floorart.render.mjs",
+  "./m51.audio.node.mjs",
 ];
 
 let failed = false;

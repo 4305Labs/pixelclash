@@ -17,10 +17,22 @@ const SOUNDS = {
   hit: (a) => a.blip({ type: "square", freq: 200, freqEnd: 120, dur: 0.09, gain: 0.14 }),
   death: (a) => a.blip({ type: "sawtooth", freq: 300, freqEnd: 70, dur: 0.35, gain: 0.16 }),
   base: (a) => a.blip({ type: "square", freq: 140, freqEnd: 50, dur: 0.5, gain: 0.2 }),
-  // A bright two-note rising chime when you grab a pickup.
+  // A bright three-note rising chime (C–E–C') when you grab a pickup — a touch
+  // sparklier than a single beep so collecting always feels rewarding.
   pickup: (a) =>
-    [523, 784].forEach((f, i) =>
-      a.blip({ type: "sine", freq: f, dur: 0.1, gain: 0.12, delay: i * 0.07 })
+    [523, 659, 1047].forEach((f, i) =>
+      a.blip({ type: "sine", freq: f, dur: 0.1, gain: 0.12, delay: i * 0.06 })
+    ),
+  // A short, punchy knockout sting when an enemy hero goes down: a bright stab
+  // that snaps downward in pitch — celebratory but quick, not a long jingle.
+  kill: (a) => {
+    a.blip({ type: "square", freq: 880, freqEnd: 660, dur: 0.07, gain: 0.13 });
+    a.blip({ type: "triangle", freq: 1320, freqEnd: 880, dur: 0.12, gain: 0.11, delay: 0.06 });
+  },
+  // A rising two-note chime when YOUR hero levels up (G–C'), so progress is felt.
+  levelup: (a) =>
+    [784, 1047].forEach((f, i) =>
+      a.blip({ type: "triangle", freq: f, dur: 0.14, gain: 0.13, delay: i * 0.1 })
     ),
   // A little 3-note victory arpeggio (C–E–G), each note delayed after the last.
   win: (a) =>
