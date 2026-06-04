@@ -118,30 +118,102 @@ function makeMinionTexture(scene, key, color) {
   paintGrid(scene, key, { rows: MINION_ROWS, palette, pixel: 2 });
 }
 
-// Draws a team base: a faceted gem crystal. We build it procedurally (the shape
-// is symmetric, so a grid would be fiddly): an outlined diamond, split into a
-// lit LEFT facet and a shadowed RIGHT facet for a cut-gemstone look, plus a
-// bright core and a small white sparkle. Size is unchanged (radius*2) so hit
-// detection and layout are identical to before.
+// Draws a team BASE: a grand stone keep crowned with a big floating team crystal
+// — the nexus you destroy to win. Built procedurally to match the mossy-stone
+// tower (see makeTowerTexture): a wide stepped plinth of crisp grey stone with a
+// lit left edge / shadowed right edge, two flanking pillars topped with little
+// team banners, creeping moss to tie it to the glades, and a large glowing,
+// faceted team CRYSTAL hovering above its socket as the obvious objective. A soft
+// grounding shadow seats it on the grass. Reads clearly bigger / more important
+// than a tower. Size is UNCHANGED (radius*2 = 48) so hit detection, shield ring,
+// and layout are identical to before; team colour rides the crystal + banners.
 function makeBaseTexture(scene, key, color) {
   const g = scene.make.graphics({ x: 0, y: 0 }, false);
   const r = BASE.radius;
-  const size = r * 2;
+  const size = r * 2; // 48 — load-bearing, must stay identical
+  const stone = COLORS.wall;
+  const edge = COLORS.wallEdge; // darker stone outline (mossy-stone palette)
 
-  // Outlined diamond silhouette.
+  // Soft cast shadow on the ground at the foot of the keep (a wide oval pad), so
+  // the structure reads as a solid building standing on the grass.
+  g.fillStyle(COLORS.outline, 0.22);
+  g.fillEllipse(r, size - 4, size - 8, 8);
+
+  // --- Stepped stone plinth: a broad two-tier base, lit from the top-left -----
+  // Each tier is an outlined block (dark edge) with the stone fill inset, a lit
+  // left strip and a shadowed right strip, so the keep reads as carved masonry.
+  const tier = (x, w, y, h) => {
+    g.fillStyle(edge, 1);
+    g.fillRect(x - 1, y - 1, w + 2, h + 2);
+    g.fillStyle(stone, 1);
+    g.fillRect(x, y, w, h);
+    g.fillStyle(shade(stone, 1.28), 1); // lit left edge
+    g.fillRect(x, y, 3, h);
+    g.fillStyle(shade(stone, 0.62), 1); // shadowed right edge
+    g.fillRect(x + w - 3, y, 3, h);
+  };
+  tier(6, size - 12, size - 12, 8); // wide bottom step
+  tier(11, size - 22, size - 19, 8); // narrower upper step
+  // Faint brick seams across the upper step for stonework grain.
+  g.fillStyle(shade(stone, 0.78), 1);
+  g.fillRect(13, size - 15, size - 26, 1);
+  for (const bx of [r - 8, r, r + 8]) g.fillRect(bx, size - 19, 1, 7);
+
+  // --- Two flanking pillars with team banners ---------------------------------
+  // Short stone columns at the back corners, each capped with a small cloth
+  // banner in the team colour so blue vs red read apart even from a distance.
+  const pillar = (px) => {
+    g.fillStyle(edge, 1);
+    g.fillRect(px - 1, 9, 7, 22);
+    g.fillStyle(stone, 1);
+    g.fillRect(px, 10, 5, 20);
+    g.fillStyle(shade(stone, 1.28), 1); // lit left edge
+    g.fillRect(px, 10, 1, 20);
+    g.fillStyle(shade(stone, 0.62), 1); // shadowed right edge
+    g.fillRect(px + 4, 10, 1, 20);
+    // Banner: a pole tip plus a hanging team-coloured flag with a darker fold.
+    g.fillStyle(edge, 1);
+    g.fillRect(px + 2, 4, 1, 6); // pole
+    g.fillStyle(shade(color, 1.2), 1);
+    g.fillRect(px - 2, 5, 9, 6); // flag body
+    g.fillStyle(shade(color, 0.7), 1);
+    g.fillRect(px - 2, 9, 9, 2); // shaded lower fold
+  };
+  pillar(5); // left pillar
+  pillar(size - 10); // right pillar
+
+  // Creeping moss patches near the foot, matching the overgrown glade walls.
+  g.fillStyle(0x4f8a32, 1);
+  g.fillRect(8, size - 7, 5, 3);
+  g.fillRect(size - 14, size - 6, 5, 3);
+  g.fillStyle(0x6fae45, 1); // brighter moss tips
+  g.fillRect(8, size - 7, 5, 1);
+  g.fillRect(size - 14, size - 6, 4, 1);
+
+  // --- The big glowing team crystal: the nexus core hovering over its socket --
+  const gx = r;
+  const gy = r - 2; // sits high so it crowns the keep
+  const gr = r - 7; // large gem — clearly bigger than a tower's crystal
+  // A dark stone socket the crystal rises from, set into the upper step.
+  g.fillStyle(edge, 1);
+  g.fillRect(r - 7, size - 22, 14, 6);
   g.fillStyle(COLORS.outline, 1);
-  g.fillPoints(diamond(r, r, r), true);
-
-  // Four cut facets around the centre, lit from the top-left: the upper-left
-  // face is brightest and the lower-right darkest, so the gem reads as faceted
-  // crystal rather than a flat lozenge.
-  const e = r - 2;
-  const top = { x: r, y: r - e };
-  const bot = { x: r, y: r + e };
-  const left = { x: r - e, y: r };
-  const right = { x: r + e, y: r };
-  const ctr = { x: r, y: r };
-  g.fillStyle(shade(color, 1.45), 1); // upper-left: brightest
+  g.fillRect(r - 5, size - 21, 10, 4);
+  // Soft halo so the core looks lit (two faint diamonds under the gem).
+  g.fillStyle(color, 0.16);
+  g.fillPoints(diamond(gx, gy, gr + 5), true);
+  g.fillStyle(color, 0.24);
+  g.fillPoints(diamond(gx, gy, gr + 2), true);
+  // Outlined faceted diamond, lit from the top-left like the tower crystal.
+  g.fillStyle(COLORS.outline, 1);
+  g.fillPoints(diamond(gx, gy, gr + 1), true);
+  const e = gr;
+  const top = { x: gx, y: gy - e };
+  const bot = { x: gx, y: gy + e };
+  const left = { x: gx - e, y: gy };
+  const right = { x: gx + e, y: gy };
+  const ctr = { x: gx, y: gy };
+  g.fillStyle(shade(color, 1.45), 1); // upper-left facet: brightest
   g.fillPoints([top, left, ctr], true);
   g.fillStyle(shade(color, 1.1), 1); // upper-right
   g.fillPoints([top, right, ctr], true);
@@ -149,18 +221,15 @@ function makeBaseTexture(scene, key, color) {
   g.fillPoints([bot, left, ctr], true);
   g.fillStyle(shade(color, 0.5), 1); // lower-right: darkest
   g.fillPoints([bot, right, ctr], true);
-
   // Thin facet seam lines from centre to each tip sharpen the cut.
   g.lineStyle(1, COLORS.outline, 0.5);
-  for (const p of [top, bot, left, right]) g.lineBetween(r, r, p.x, p.y);
-
-  // Bright core + a sparkle up-left.
-  g.fillStyle(COLORS.white, 1);
-  g.fillPoints(diamond(r, r, r * 0.3), true);
+  for (const p of [top, bot, left, right]) g.lineBetween(gx, gy, p.x, p.y);
+  // Bright energised core + a hard white spark up-left = a charged nexus.
   g.fillStyle(shade(color, 1.8), 1);
-  g.fillPoints(diamond(r, r, r * 0.16), true);
+  g.fillPoints(diamond(gx, gy, gr * 0.42), true);
   g.fillStyle(COLORS.white, 1);
-  g.fillRect(r - Math.round(r * 0.45), r - Math.round(r * 0.45), 2, 2);
+  g.fillPoints(diamond(gx, gy, gr * 0.2), true);
+  g.fillRect(gx - Math.round(gr * 0.42), gy - Math.round(gr * 0.42), 2, 2);
 
   g.generateTexture(key, size, size);
   g.destroy();

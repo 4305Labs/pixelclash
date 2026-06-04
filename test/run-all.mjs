@@ -71,6 +71,7 @@ const tests = [
   "./m45.deathpoof.render.mjs",
   "./m46.towerart.render.mjs",
   "./m47.trails.render.mjs",
+  "./m48.baseart.render.mjs",
 ];
 
 let failed = false;
