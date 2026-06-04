@@ -72,13 +72,31 @@ try {
       ],
     });
   });
-  await page.waitForTimeout(250);
-  const dead = await page.evaluate(() => {
-    const me = window.PIXELCLASH.game.scene.getScene("ArenaScene").sprites.get("p1");
-    return { dead: me.dead, angle: me.bodySprite.angle, finite: Number.isFinite(me.bodySprite.scaleX) };
-  });
-  assert(dead.dead, "a knocked-out hero enters the dead/tumble state");
-  assert(dead.angle !== 0 && dead.finite, "the death tumble spins the body (and stays finite)");
+  // The tumble spins the body via a ~420ms tween (angle 0 -> 540). A single
+  // instant sample is flaky: Phaser WRAPS the angle (it passes through 360 ≡ 0
+  // mid-spin) and headless rAF can be throttled, so the one reading occasionally
+  // lands on a near-zero angle. Instead POLL across the whole tumble window and
+  // assert the dead flag latched and the body was clearly rotated at some point,
+  // staying finite throughout (the same "ever-over-a-window" pattern as m25).
+  let latchedDead = false;
+  let maxAngle = 0;
+  let everFinite = true;
+  for (let i = 0; i < 24; i++) {
+    const d = await page.evaluate(() => {
+      const me = window.PIXELCLASH.game.scene.getScene("ArenaScene").sprites.get("p1");
+      return {
+        dead: me.dead,
+        angle: me.bodySprite.angle,
+        finite: Number.isFinite(me.bodySprite.scaleX) && Number.isFinite(me.bodySprite.angle),
+      };
+    });
+    if (d.dead) latchedDead = true;
+    if (!d.finite) everFinite = false;
+    if (Math.abs(d.angle) > maxAngle) maxAngle = Math.abs(d.angle);
+    await page.waitForTimeout(30);
+  }
+  assert(latchedDead, "a knocked-out hero enters the dead/tumble state");
+  assert(maxAngle > 1 && everFinite, "the death tumble spins the body (and stays finite)");
 
   // --- Respawn: clean upright reset ------------------------------------------
   await page.evaluate(() => {
