@@ -79,30 +79,41 @@ function makeRpgHero(scene, cls, team) {
   paintGrid(scene, `hero_${cls}_${team}`, { rows: RPG_HEROES[cls], palette: rpgPalette(team), pixel: 1 });
 }
 
-// A 10×10 little goblin lane minion (painted at pixel=2 → 20×20): pointy ears,
-// two eyes, stubby legs, in a lighter team tint so it reads as a "lesser"
-// creature next to the heroes.
+// A 10×10 little goblin lane minion (painted at pixel=2 → 20×20, size UNCHANGED):
+// pointy ears, a hunched body with a top-lit highlight and a shaded belly, two
+// white eyes with dark pupils, a snaggle-tooth grin, stubby legs, and a little
+// grey club shouldered on one side so it reads as an armed-but-lesser creature
+// next to the heroes. Still painted in a lighter team tint so it stays "lesser".
+//   o = black outline   b = team body   h = lit highlight   d = shaded belly
+//   w = eye white       e = pupils + mouth (black)
+//   g = club shaft (grey)   G = club head (darker grey)
 const MINION_ROWS = [
-  "..o....o..",
-  ".obo..obo.",
-  ".obbbbbbo.",
-  ".obwbbwbo.",
-  ".obbbbbbo.",
-  ".obdbbdbo.",
-  ".obbbbbbo.",
-  ".obo..obo.",
-  ".oo....oo.",
-  "..........",
+  ".o.gG..o..",
+  "obohG.obo.",
+  "obbhgbbbo.",
+  "obwbbwbbo.",
+  "obeobeobo.",
+  "obbbbbbbo.",
+  "obdeeedbo.",
+  ".obbbbbo..",
+  ".oo.o.oo..",
+  "..o...o...",
 ];
 
-// Draws a minion sprite into `key`, tinted with `color`.
+// Draws a minion sprite into `key`, tinted with `color`. The team `color` (a
+// lighter tint from COLORS.minionBlue/minionRed) carries the body; the grey club
+// is neutral so the weapon reads the same on both teams.
 function makeMinionTexture(scene, key, color) {
   const palette = {
     ".": null,
     o: COLORS.outline,
     b: color,
-    d: shade(color, 0.7),
-    w: COLORS.white, // eye
+    h: shade(color, 1.25), // top-lit highlight on the body
+    d: shade(color, 0.7), // shaded belly
+    w: COLORS.white, // eye white
+    e: COLORS.outline, // pupils + mouth line
+    g: 0x9a8f7e, // club shaft (neutral grey-brown, matches the stone palette)
+    G: 0x6f665a, // club head (darker)
   };
   paintGrid(scene, key, { rows: MINION_ROWS, palette, pixel: 2 });
 }

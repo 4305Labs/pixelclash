@@ -66,6 +66,7 @@ const tests = [
   "./m40.towers-solid.mjs",
   "./m41.vignette.render.mjs",
   "./m42.pickupart.render.mjs",
+  "./m44.minionart.render.mjs",
 ];
 
 let failed = false;
