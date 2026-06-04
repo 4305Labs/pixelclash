@@ -39,7 +39,10 @@ export const RPG_HEROES = {
     "........................",
     "........................",
   ],
-  // Rogue — drawn hood, light leather, a short dagger in the right hand.
+  // Rogue — drawn hood, light leather, and a clearer up-angled dagger in the
+  // right hand: a gold hilt + crossguard (h/g) tucked at the glove rising into a
+  // pointed steel blade (b), so the weapon reads as a dagger rather than a
+  // free-floating blob.
   scout: [
     "........................",
     "........oooo............",
@@ -48,12 +51,12 @@ export const RPG_HEROES = {
     ".....occccccco..........",
     ".....ocCssssCco.........",
     ".....oCsesesCco.........",
-    "......oCsssCo..obbo.....",
-    "......oCkssCo..obbo.....",
+    "......oCsssCo...........",
+    "......oCkssCo...obo.....",
     ".......occco...obbo.....",
-    "........oLLLo.ohhho.....",
-    "......oLccccLo.oLo......",
-    "......oLcppcLoo.........",
+    "........oLLLo.ohgbo.....",
+    "......oLccccLooLhbo.....",
+    "......oLcppcLoo.ho......",
     "......oMcCCcMo..........",
     "......oMccccMo..........",
     ".......oLccLo...........",
@@ -94,25 +97,28 @@ export const RPG_HEROES = {
     "........................",
     "........................",
   ],
-  // Archer — green hood + cloak, a longbow held in the right hand, nocked arrow.
+  // Archer — green hood + cloak, holding a clearly CURVED recurve longbow out to
+  // the right: wood limbs (W) bowing out with recurved tips, a bright bowstring
+  // (b) down the chord, and a nocked arrow (b shaft) running left to the hand, so
+  // the weapon reads as a bow-and-arrow at a glance, not a plain vertical bar.
   ranger: [
-    "........................",
     "...............oWo......",
-    ".......oooooo..oWo......",
-    "......onnnnnno.oWo......",
-    ".....onnnnnnno.oWo......",
-    ".....onGsssGno.oWo......",
-    ".....oGseseGo..oWo......",
-    "......oGsssGo..oWo......",
-    "......oGkssGo..oWo......",
-    ".......onnno...oWo......",
-    "........oGGGo..oWo......",
-    "......oGcccccGsoWo......",
-    "......oGcCpCcGsoWo......",
-    "......oGccpccGsoWo......",
-    "......oGcCpCcG.oWo......",
-    ".......oGcccG..oWo......",
-    ".......oGo.oGo..o.......",
+    "...............oWWo.....",
+    ".......oooooo..obbWo....",
+    "......onnnnnno..bWWo....",
+    ".....onnnnnnno..bWWo....",
+    ".....onGsssGno..boWo....",
+    ".....oGseseGo...bWWo....",
+    "......oGsssGo...bWWo....",
+    ".......oGkssGb..boWo....",
+    ".....obbbbbbbbb.bWWo....",
+    ".......oGGGGb...bWWo....",
+    "......oGcccccG..obWo....",
+    "......oGcCpCcG...oWo....",
+    "......oGccpccG...oWo....",
+    "......oGcCpCcG...oWo....",
+    ".......oGcccG....oWo....",
+    ".......oGo.oGo..........",
     ".......oWo.oWo..........",
     ".......oWo.oWo..........",
     ".......ooo.ooo..........",
