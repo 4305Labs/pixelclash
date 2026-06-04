@@ -15,10 +15,14 @@
 >   `config.js` `DMGTEXT`, m43); and **sharper goblin lane-minions** (crisper
 >   silhouette + club, team tint + 20x20 size preserved, m44); a **death poof**
 >   (dusty puff + ring burst when a hero dies or a minion leaves the snapshot,
->   team-tinted, `config.js` `POOF`, m45); and **mossy-stone guard towers** with a
+>   team-tinted, `config.js` `POOF`, m45); **mossy-stone guard towers** with a
 >   glowing team crystal (crenellated turret, 44x44 size + team colours preserved,
->   m46). All six polish commits are client/render-only (no snapshot or server
->   change). Before that: art-coherence pass on the grassland "glades" look —
+>   m46); **fading projectile trails** (bolts drop short ghost dots in their own
+>   colour, hard-capped so they never leak, `config.js` `TRAIL`, m47); and a
+>   **grand mossy-stone base/nexus keep** (stepped plinth + banners + big team
+>   crystal, 48x48 size + shield overlay preserved, m48). All eight polish commits
+>   are client/render-only (no snapshot or server change). Before that:
+>   art-coherence pass on the grassland "glades" look —
 >   hero touch-ups (rebuilt tank as a great-helm + tower shield, single-bit
 >   brawler axe, attached knight shield, wood ranger bow, clearer scout dagger;
 >   all in `src/rpgsprites.js`), goblin lane minions, a darker forest camp, and
@@ -30,7 +34,7 @@
 >   m39); curved MOBA lanes + nexus plazas; "Tiny RPG" heroes on team rings;
 >   chokepoints removed (lanes are OPEN — towers are landmarks, not walls);
 >   jungle gank gaps; per-hero abilities.
-> **Status:** all tests green (63 test groups), live two-browser test green, build OK.
+> **Status:** all tests green (66 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
 > **`claude/pixel-moba-game-WobPa`** (PR #1 → `main`). `main` is the empty root
