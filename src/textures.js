@@ -248,22 +248,52 @@ function makeCampTexture(scene, key) {
   paintGrid(scene, key, { rows: CAMP_ROWS, palette, pixel: 2 });
 }
 
-// Draws a pickup orb: an outlined gem-disc with shading (shadowed lower body, a
-// bright upper-left highlight) and a white symbol — a plus for heal (green), a
-// lightning bolt for power (orange). Size unchanged (radius*2).
+// Draws a pickup orb: a glossy round gem that reads clearly from across the
+// arena. Layered from the outside in: a soft outer GLOW ring (two faint halos so
+// the orb looks lit), a black outline, a shadowed lower body, a brighter lit
+// body nudged up-left, a crisp rim light along the top edge, a white SPECULAR
+// dot, and a white symbol — a plus for heal (green), a lightning bolt for power
+// (orange). Two explicit hex bases keep the teams readable (green vs orange) and
+// avoid clipping from shade() of an already-bright colour. Size is UNCHANGED
+// (radius*2) — it's load-bearing for pickup hit detection.
 function makePickupTexture(scene, key, kind) {
   const g = scene.make.graphics({ x: 0, y: 0 }, false);
   const r = PICKUP.radius;
   const s = r * 2;
-  const body = kind === "heal" ? 0x00e436 : 0xffa300;
+  // Explicit colours per kind: a base, a brighter "lit" tone, a darker shadow,
+  // and a glow tint. Heal stays green-ish, power keeps its orange.
+  const c = kind === "heal"
+    ? { base: 0x18c64a, lit: 0x52f07a, dark: 0x0c7a2c, glow: 0x6effa0 }
+    : { base: 0xffa300, lit: 0xffd24a, dark: 0xb56b00, glow: 0xffd070 };
+
+  // Soft outer glow: two faint, translucent halos out to the texture edge so the
+  // orb looks like it's emitting light (drawn first, the solid orb sits on top).
+  g.fillStyle(c.glow, 0.18);
+  g.fillCircle(r, r, r);          // outer halo, full texture radius
+  g.fillStyle(c.glow, 0.3);
+  g.fillCircle(r, r, r - 1);      // inner halo, a touch tighter & brighter
+
+  // Outlined round silhouette (a clean disc just inside the glow).
   g.fillStyle(COLORS.outline, 1);
-  g.fillCircle(r, r, r);
-  g.fillStyle(shade(body, 0.7), 1); // shadowed base
   g.fillCircle(r, r, r - 2);
-  g.fillStyle(body, 1); // lit body, nudged up-left
-  g.fillCircle(r - 1, r - 1, r - 4);
-  g.fillStyle(shade(body, 1.5), 1); // glossy highlight
-  g.fillCircle(r - 3, r - 3, Math.max(1, r * 0.18));
+  // Shadowed base, then the brighter lit body nudged up-left for volume.
+  g.fillStyle(c.dark, 1);
+  g.fillCircle(r, r, r - 3);
+  g.fillStyle(c.base, 1);
+  g.fillCircle(r - 1, r - 1, r - 5);
+  // A crisp rim light arcing along the top — a thin bright crescent carved back
+  // to the body below so it reads as a curved, glossy surface.
+  g.fillStyle(c.lit, 1);
+  g.fillCircle(r - 1, r - 2, r - 6);
+  g.fillStyle(c.base, 1);
+  g.fillCircle(r - 1, r, r - 6);
+
+  // Bright white specular dot up-left (a soft halo + a hard core = "shine").
+  g.fillStyle(COLORS.white, 0.9);
+  g.fillCircle(r - 3, r - 3, Math.max(1.5, r * 0.22));
+  g.fillStyle(COLORS.white, 1);
+  g.fillCircle(r - 3, r - 3, Math.max(1, r * 0.12));
+
   g.fillStyle(COLORS.white, 1);
   if (kind === "heal") {
     // A plus sign.
