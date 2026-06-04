@@ -24,6 +24,7 @@ import {
   DECOR_SPOTS,
   BUSH_ZONES,
   BASE_POS,
+  VIGNETTE,
 } from "../config.js";
 import { generateTextures } from "../textures.js";
 import { stepPosition, towerObstacles } from "../sim.js";
@@ -317,8 +318,59 @@ export default class ArenaScene extends Phaser.Scene {
       .setDepth(2501)
       .setVisible(false);
 
+    this.createDangerVignette();
     this.createStartGate();
     this.net.join();
+  }
+
+  // Build the low-HP "danger" vignette: a red glow hugging the screen edges that
+  // we fade in when the LOCAL hero is badly hurt. It's a single Graphics overlay
+  // of nested edge bars (darkest at the very rim, fading inward) wrapped in a
+  // container whose alpha we drive each frame. Fixed to the camera (scrollFactor
+  // 0) and sat just under the HUD text so it frames the action without hiding it.
+  // Purely cosmetic — it reads HP from the snapshot and changes nothing else.
+  createDangerVignette() {
+    const g = this.add.graphics().setScrollFactor(0);
+    const edge = 90; // how far the glow reaches in from each edge (px)
+    const step = 6; // band thickness; smaller = smoother gradient
+    for (let i = 0; i < edge; i += step) {
+      // Inner bands are fainter, so the red is densest right at the rim.
+      const a = 0.5 * (1 - i / edge);
+      g.fillStyle(VIGNETTE.color, a);
+      g.fillRect(0, i, GAME_WIDTH, step); // top
+      g.fillRect(0, GAME_HEIGHT - i - step, GAME_WIDTH, step); // bottom
+      g.fillRect(i, 0, step, GAME_HEIGHT); // left
+      g.fillRect(GAME_WIDTH - i - step, 0, step, GAME_HEIGHT); // right
+    }
+    // Container lets us scale the WHOLE overlay's opacity with one alpha value.
+    this.dangerVignette = this.add
+      .container(0, 0, [g])
+      .setScrollFactor(0)
+      .setDepth(95) // above the static atmosphere vignette (90), below HUD (500)
+      .setAlpha(0)
+      .setVisible(false);
+    this.vignettePhase = 0; // advances over time to make the glow breathe
+  }
+
+  // Fade the danger vignette in/out based on the LOCAL hero's HP. Only shows
+  // while alive and below VIGNETTE.threshold; the closer to 0 HP, the stronger,
+  // with a gentle pulse on top. Clears instantly on heal / death / respawn.
+  updateVignette(dt) {
+    if (!this.dangerVignette) return;
+    const me = this.net.players.find((p) => p.id === this.net.localId);
+    const frac = me && me.maxHp ? me.hp / me.maxHp : 1;
+    const danger = !!me && me.alive && frac < VIGNETTE.threshold;
+
+    if (!danger) {
+      this.dangerVignette.setVisible(false).setAlpha(0);
+      return;
+    }
+    // 0 at the threshold → 1 at empty HP: how deep into the danger zone we are.
+    const t = Phaser.Math.Clamp(1 - frac / VIGNETTE.threshold, 0, 1);
+    this.vignettePhase += dt * VIGNETTE.pulseSpeed;
+    const pulse = VIGNETTE.pulseAmount * Math.sin(this.vignettePhase);
+    const alpha = Phaser.Math.Clamp(VIGNETTE.maxAlpha * t + pulse, 0, 1);
+    this.dangerVignette.setVisible(true).setAlpha(alpha);
   }
 
   // A full-screen "tap to start" gate. Mobile browsers won't play any sound
@@ -396,6 +448,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.updateHud();
     this.updateKillFeed();
     this.updateShopHud();
+    this.updateVignette(dt);
     this.updateOrientationHint();
 
     // 3) Redraw the cooldown sweeps on the action buttons.

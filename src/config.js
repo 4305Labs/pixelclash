@@ -361,6 +361,21 @@ export const PROGRESS = {
   shopMaxStacks: 6,
 };
 
+// --- Low-HP danger vignette -------------------------------------------------
+// Client-only "juice": when the LOCAL hero is alive and badly hurt, a soft red
+// glow pulses at the screen edges, getting stronger the closer to death they
+// are. Purely visual (read from the snapshot HP) — it never touches gameplay.
+// `threshold` is the HP fraction below which it shows; `maxAlpha` is the overlay
+// opacity at ~0 HP (it scales down to 0 at the threshold); `pulse*` drive the
+// gentle breathing; `color` is the tint.
+export const VIGNETTE = {
+  threshold: 0.3, // show only below 30% HP
+  maxAlpha: 0.55, // strongest opacity (at ~0 HP)
+  pulseAmount: 0.18, // how much the pulse adds/removes from the alpha
+  pulseSpeed: 5.0, // radians/sec of the breathing pulse
+  color: 0xff0033, // danger red
+};
+
 // --- Kill feed --------------------------------------------------------------
 // Recent knockouts shown as a fading list in the corner. `ms` is how long an
 // entry lingers; `max` is how many lines show at once.

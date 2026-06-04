@@ -64,6 +64,7 @@ const tests = [
   "./m38.rpgsprites.mjs",
   "./m39.bots.mjs",
   "./m40.towers-solid.mjs",
+  "./m41.vignette.render.mjs",
 ];
 
 let failed = false;
