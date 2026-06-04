@@ -417,6 +417,20 @@ export const POOF = {
   color: 0xe8e0d0, // dusty pale puff colour (neutral, reads on grass + stone)
 };
 
+// --- Camera shake -----------------------------------------------------------
+// Client-only "juice": a short, punchy camera shake on big moments, so they feel
+// weighty. Triggered purely from snapshot transitions on the client (a hero
+// going alive -> dead, or a base/nexus losing HP), so it never touches the
+// server or the snapshot shape. Each entry is `{ ms, intensity }` passed
+// straight to Phaser's `cameras.main.shake(ms, intensity)` — `ms` is the
+// duration and `intensity` is the magnitude as a fraction of the viewport (so
+// ~0.006 is a small nudge). Kept brief + small so it adds impact without
+// nausea. A hero knockout is a noticeable shake; a base hit is stronger.
+export const SHAKE = {
+  kill: { ms: 180, intensity: 0.006 }, // a hero is knocked out — noticeable, brief
+  base: { ms: 320, intensity: 0.011 }, // a base/nexus takes damage or falls — stronger
+};
+
 // --- Projectile trails ------------------------------------------------------
 // Client-only "juice": every flying bolt leaves a brief, fading motion trail so
 // shots read as fast and energetic. As a projectile sprite moves between

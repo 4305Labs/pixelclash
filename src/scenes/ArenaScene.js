@@ -28,6 +28,7 @@ import {
   VIGNETTE,
   POOF,
   TRAIL,
+  SHAKE,
 } from "../config.js";
 import { generateTextures } from "../textures.js";
 import { stepPosition, towerObstacles } from "../sim.js";
@@ -516,6 +517,7 @@ export default class ArenaScene extends Phaser.Scene {
       if (b.alive && b.hp < base.lastHp) {
         base.flashHit();
         this.audio.play("hit");
+        this.triggerShake("base"); // a stronger jolt — the nexus is taking hits
       }
       base.lastHp = b.hp;
       // A base just fell (alive -> dead): play the big "destroyed" boom.
@@ -776,6 +778,7 @@ export default class ArenaScene extends Phaser.Scene {
       if (sprite.lastAlive && !p.alive) {
         this.audio.play("death");
         this.spawnDeathPoof(sprite.x, sprite.y, p.team);
+        this.triggerShake("kill"); // a noticeable jolt — a hero just went down
       }
       sprite.lastAlive = p.alive;
 
@@ -893,6 +896,23 @@ export default class ArenaScene extends Phaser.Scene {
         ring.destroy();
       },
     });
+  }
+
+  // A short, punchy camera shake for a big moment. `kind` picks a `{ ms,
+  // intensity }` preset from SHAKE in config ("kill" for a hero knockout,
+  // "base" for a nexus hit). We record the last shake in `this._lastShake` (so
+  // the render test can assert WHEN a shake fired without needing real camera
+  // motion) AND call Phaser's built-in camera shake to actually wobble the view.
+  // Triggered only from existing snapshot transitions (see syncPlayers /
+  // syncBases) — purely cosmetic, it never touches the server.
+  triggerShake(kind) {
+    const cfg = SHAKE[kind];
+    if (!cfg) return;
+    this._lastShake = { kind, ms: cfg.ms, intensity: cfg.intensity, at: this.time.now };
+    // The camera exists in the real game; guard so a headless harness without a
+    // camera can't throw.
+    const cam = this.cameras && this.cameras.main;
+    if (cam && cam.shake) cam.shake(cfg.ms, cfg.intensity);
   }
 
   // A quick muzzle-flash spark: a bright dot that pops bigger and fades out,
