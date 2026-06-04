@@ -73,6 +73,7 @@ const tests = [
   "./m47.trails.render.mjs",
   "./m48.baseart.render.mjs",
   "./m49.shake.render.mjs",
+  "./m50.floorart.render.mjs",
 ];
 
 let failed = false;

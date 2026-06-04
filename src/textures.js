@@ -478,10 +478,14 @@ function makeFloorTexture(scene, key, baseColor = COLORS.bg, style = "stone") {
       g.fillRect(x, y, w, h);
     }
     // Grass tufts (3×2 clumps, brighter top edge), scattered across the tile.
+    // A handful of extra tufts thicken the meadow without raising contrast: they
+    // reuse the same low-contrast tuft/tips tones, so the field reads lusher but
+    // stays calm and readable under the units.
     const tufts = [
       [5, 9], [21, 4], [38, 11], [57, 6], [70, 14], [11, 28], [33, 24], [48, 31],
       [62, 27], [76, 35], [4, 44], [25, 47], [41, 52], [55, 44], [72, 56], [16, 63],
       [35, 70], [50, 66], [68, 72], [9, 53], [29, 14], [60, 60],
+      [18, 38], [44, 7], [73, 44], [2, 20], [52, 73], [27, 33], [64, 18], [40, 46],
     ];
     for (const [x, y] of tufts) {
       g.fillStyle(tuft, 1);
@@ -489,10 +493,31 @@ function makeFloorTexture(scene, key, baseColor = COLORS.bg, style = "stone") {
       g.fillStyle(tips, 1);
       g.fillRect(x, y, 3, 1);
     }
-    // Sparse wildflowers: a coloured petal block with a white centre dot.
+    // A few single bright blades poking up between the tufts — a 1px tip dot —
+    // for fine grass detail that catches the eye without being a shape.
+    g.fillStyle(tips, 1);
+    for (const [x, y] of [[15, 11], [53, 35], [31, 49], [67, 63], [7, 31], [46, 60]]) {
+      g.fillRect(x, y, 1, 1);
+    }
+    // A scatter of tiny pebbles (a 2×1 stone speck capped by a lighter top dot)
+    // in neutral stone tones, so they read as ground grain. Low-contrast and
+    // small enough never to be mistaken for a pickup. Explicit hex (stone family),
+    // never shade(jungle) — the bright grass base clips when lightened.
+    const pebble = 0x7a7264;     // muted grey-brown stone
+    const pebbleLit = 0x968c7c;  // its lit top edge
+    for (const [x, y] of [[34, 17], [9, 41], [71, 30], [47, 58], [22, 68], [61, 9]]) {
+      g.fillStyle(pebble, 1);
+      g.fillRect(x, y, 2, 1);
+      g.fillStyle(pebbleLit, 1);
+      g.fillRect(x, y, 1, 1);
+    }
+    // Sparse wildflowers: a coloured petal block with a white centre dot. A couple
+    // of extra tiny blooms (kept to the same muted petal palette) sprinkle a bit
+    // more colour variation across the meadow without crowding it.
     const flowers = [
       [12, 16, 0xffe34d], [46, 20, 0xff7bbf], [66, 8, 0xffffff],
       [24, 40, 0xc77bff], [58, 50, 0xffe34d], [36, 64, 0x6fc0ff], [8, 72, 0xff7bbf],
+      [70, 64, 0xffe34d], [3, 55, 0x6fc0ff],
     ];
     for (const [x, y, c] of flowers) {
       g.fillStyle(c, 1);
@@ -585,16 +610,18 @@ const DECOR_ROWS = {
     "..oooooo..",
   ],
   // A round leafy tree: layered canopy (highlight L / body l / shadow g) over a
-  // short wooden trunk. 13 wide so it reads as a proper glade tree.
+  // short wooden trunk. 13 wide so it reads as a proper glade tree. The mid-tone
+  // body (l) dapples the interior so the canopy looks rounded and leafy rather
+  // than a flat green sheet. Size UNCHANGED (13×13 grid → 26×26 at pixel=2).
   tree: [
     "....ooooo....",
     "..ooLLLLLoo..",
-    ".oLLLLLLLLLo.",
-    "oLLLLLLLLLLgo",
-    "oLLLLLLLLLggo",
-    "oLLLLLLLLgggo",
-    "oLLLLLLLggggo",
-    ".oLLLLLggggo.",
+    ".oLLlLLLlLLo.",
+    "oLLLLlLLlLLgo",
+    "oLLlLLLLlLggo",
+    "oLLLLLlLLgggo",
+    "oLLlLLLlggggo",
+    ".oLLLllggggo.",
     "..ooLLgggoo..",
     "....owwwo....",
     "....owwwo....",
