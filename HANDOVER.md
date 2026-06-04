@@ -18,10 +18,15 @@
 >   team-tinted, `config.js` `POOF`, m45); **mossy-stone guard towers** with a
 >   glowing team crystal (crenellated turret, 44x44 size + team colours preserved,
 >   m46); **fading projectile trails** (bolts drop short ghost dots in their own
->   colour, hard-capped so they never leak, `config.js` `TRAIL`, m47); and a
+>   colour, hard-capped so they never leak, `config.js` `TRAIL`, m47); a
 >   **grand mossy-stone base/nexus keep** (stepped plinth + banners + big team
->   crystal, 48x48 size + shield overlay preserved, m48). All eight polish commits
->   are client/render-only (no snapshot or server change). Before that:
+>   crystal, 48x48 size + shield overlay preserved, m48); **camera shake on
+>   knockouts** (a brief jolt on a hero kill, stronger on a base hit, hooked into
+>   the existing death/base-hp transitions, `config.js` `SHAKE`, m49); and a
+>   **lusher glade floor + leafier trees** (more low-contrast tufts/blades/pebbles/
+>   blooms + dappled tree canopy, all explicit-hex greens, floor 80x80 + tree 26x26
+>   preserved, m50). All ten polish commits are client/render-only (no snapshot or
+>   server change). Before that:
 >   art-coherence pass on the grassland "glades" look —
 >   hero touch-ups (rebuilt tank as a great-helm + tower shield, single-bit
 >   brawler axe, attached knight shield, wood ranger bow, clearer scout dagger;
@@ -34,7 +39,7 @@
 >   m39); curved MOBA lanes + nexus plazas; "Tiny RPG" heroes on team rings;
 >   chokepoints removed (lanes are OPEN — towers are landmarks, not walls);
 >   jungle gank gaps; per-hero abilities.
-> **Status:** all tests green (66 test groups), live two-browser test green, build OK.
+> **Status:** all tests green (68 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
 > **`claude/pixel-moba-game-WobPa`** (PR #1 → `main`). `main` is the empty root
