@@ -17,6 +17,7 @@ import {
   CLASSES,
   CLASS_ORDER,
   KILLFEED,
+  DMGTEXT,
   PROGRESS,
   LANES,
   LANE_BAND_HALF,
@@ -745,11 +746,14 @@ export default class ArenaScene extends Phaser.Scene {
         sprite.smoothFollow();
       }
 
-      // Detect damage: if HP dropped since the last snapshot, show feedback.
+      // Detect damage: if HP dropped since the last snapshot for the SAME hero,
+      // show feedback. Healing (hp up) and respawn (dead -> alive at full HP) are
+      // not a drop, and a brand-new id seeds lastHp = hp above, so neither pops a
+      // number. Our own hero's hits read bigger and red.
       if (p.alive && p.hp < sprite.lastHp) {
         const dmg = sprite.lastHp - p.hp;
         sprite.flashHit();
-        this.spawnDamageNumber(sprite.x, sprite.y, dmg);
+        this.spawnDamageNumber(sprite.x, sprite.y, dmg, p.id === this.net.localId);
         this.audio.play("hit");
       }
 
@@ -791,24 +795,30 @@ export default class ArenaScene extends Phaser.Scene {
     }
   }
 
-  // A floating damage number that rises and fades, then cleans itself up.
-  spawnDamageNumber(x, y, amount) {
+  // A floating damage number ("-12") that pops at a unit, rises a short way while
+  // fading, then cleans itself up. The amount is derived purely from HP deltas on
+  // the client (see syncPlayers/syncMinions) — nothing here touches the server.
+  // `isLocal` is true only for damage to OUR own hero, which reads bigger and red
+  // so we feel our own hits. All sizes/colors/timing come from DMGTEXT in config.
+  spawnDamageNumber(x, y, amount, isLocal = false) {
+    const size = isLocal ? DMGTEXT.localFontSize : DMGTEXT.fontSize;
+    const color = isLocal ? DMGTEXT.localColor : DMGTEXT.color;
     const text = this.add
-      .text(x, y - 18, String(amount), {
+      .text(x, y - 18, `-${amount}`, {
         fontFamily: "monospace",
-        fontSize: "18px",
-        color: "#ffffff",
-        stroke: "#000000",
-        strokeThickness: 3,
+        fontSize: `${size}px`,
+        color,
+        stroke: DMGTEXT.stroke,
+        strokeThickness: DMGTEXT.strokeThickness,
       })
       .setOrigin(0.5)
       .setDepth(1500);
     this.damageNumbers.push(text);
     this.tweens.add({
       targets: text,
-      y: y - 50,
-      alpha: 0,
-      duration: 650,
+      y: text.y - DMGTEXT.rise, // float up by the configured rise distance
+      alpha: 0, // ...fading out as it goes
+      duration: DMGTEXT.lifeMs,
       ease: "Quad.out",
       onComplete: () => {
         const i = this.damageNumbers.indexOf(text);
@@ -945,7 +955,13 @@ export default class ArenaScene extends Phaser.Scene {
       sprite.setTarget(m.x, m.y);
       sprite.smoothFollow();
       sprite.animate(dt);
-      if (m.hp < sprite.lastHp) sprite.flashHit(); // hit feedback (no sound — too many)
+      // HP dropped since the last snapshot for the SAME minion = real damage:
+      // flash and float a damage number. A brand-new minion seeds lastHp = hp
+      // above, so its first sighting never pops one. (No sound — too many.)
+      if (m.hp < sprite.lastHp) {
+        sprite.flashHit();
+        this.spawnDamageNumber(sprite.x, sprite.y, sprite.lastHp - m.hp);
+      }
       sprite.lastHp = m.hp;
       sprite.setHp(m.hp);
     }

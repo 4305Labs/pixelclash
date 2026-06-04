@@ -68,7 +68,7 @@ try {
   console.log("feedback:", JSON.stringify(view));
   assert(view.playerHit, "damaged player flashes (hit flag set)");
   assert(view.damageNumbers >= 1, "a floating damage number was spawned");
-  assert(view.lastDamageText.includes("30"), "damage number shows the amount (30)");
+  assert(view.lastDamageText.includes("-30"), "damage number shows the amount (-30)");
   assert(view.baseHit, "damaged base flashes");
 
   // The damage number cleans itself up after its tween.

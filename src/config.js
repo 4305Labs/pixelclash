@@ -376,6 +376,27 @@ export const VIGNETTE = {
   color: 0xff0033, // danger red
 };
 
+// --- Floating damage numbers ------------------------------------------------
+// Client-only "juice": whenever a unit's HP drops between two snapshots, a small
+// pixel number (e.g. "-12") pops at its position and floats up while fading out,
+// then destroys itself. Purely visual — the amount is derived from snapshot HP
+// deltas, so it never touches the server or the snapshot shape.
+// `rise` is how far (px) the number drifts up; `lifeMs` is how long it lives
+// before vanishing; `fontSize`/`localFontSize` are the text sizes (the LOCAL
+// hero's own hits read a touch bigger and red so your own damage stands out);
+// `color`/`localColor` are the fills; `stroke`/`strokeThickness` give the dark
+// pixel outline so numbers stay readable over any background.
+export const DMGTEXT = {
+  rise: 32, // how far the number floats upward (px)
+  lifeMs: 700, // time to rise + fade out before it's destroyed (ms)
+  fontSize: 16, // normal damage-number size (px)
+  localFontSize: 20, // a touch bigger when it's the LOCAL hero taking damage
+  color: "#ffec27", // readable yellow for most hits
+  localColor: "#ff5151", // red for damage to your own hero
+  stroke: "#000000", // dark outline
+  strokeThickness: 4,
+};
+
 // --- Kill feed --------------------------------------------------------------
 // Recent knockouts shown as a fading list in the corner. `ms` is how long an
 // entry lingers; `max` is how many lines show at once.
