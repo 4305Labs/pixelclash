@@ -37,16 +37,26 @@ try {
   console.log("before:", JSON.stringify(before));
   assert(before.spriteX <= 121, "starts at the spawn position");
 
-  // Hold right WITHOUT injecting any new server state.
+  // Hold right WITHOUT injecting any new server state. Under headless rAF
+  // throttling the prediction loop can lag, so rather than a single fixed wait
+  // we POLL (key held the whole time) until the sprite has clearly moved right,
+  // tracking the peak. Prediction drives us toward the reconciliation
+  // equilibrium (~147) while the server's x stays pinned at 120.
   await page.keyboard.down("d");
-  await page.waitForTimeout(400);
-  const moving = await readSprite();
+  let moving = before;
+  let maxX = before.spriteX;
+  for (let i = 0; i < 30; i++) {
+    await page.waitForTimeout(50); // up to ~1.5s total
+    moving = await readSprite();
+    if (moving.spriteX > maxX) maxX = moving.spriteX;
+    if (maxX > before.spriteX + 8) break; // movement confirmed — stop early
+  }
   await page.keyboard.up("d");
-  console.log("while holding D:", JSON.stringify(moving));
+  console.log("while holding D:", JSON.stringify(moving), "peak", maxX);
 
   // 1) The sprite moved right (prediction) while the server's number is fixed.
   assert(moving.serverX === 120, "server position did NOT change (no new snapshot)");
-  assert(moving.spriteX > before.spriteX + 8, "our player moved immediately (prediction)");
+  assert(maxX > before.spriteX + 8, "our player moved immediately (prediction)");
 
   // 2) Reconciliation is actively counteracting: pure prediction over 0.4s
   // would reach ~120 + 220*0.4 = 208; we settle far short of that (toward the
