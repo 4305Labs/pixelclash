@@ -13,3 +13,6 @@ npm-debug.log*
 
 # Editor folders
 .vscode/
+
+# Claude Code sub-agent worktrees (transient; created by isolated agents)
+.claude/worktrees/
