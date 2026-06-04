@@ -176,34 +176,75 @@ function diamond(cx, cy, r) {
   ];
 }
 
-// Draws a guard tower: a stone turret with battlements. An outlined stone base,
-// a lit top edge and shadowed sides for height, crenellations along the top, a
-// team-coloured cannon disc, and a bright muzzle. Size unchanged (radius*2).
+// Draws a guard tower: a crisp mossy-stone defensive turret. Reading top-to-
+// bottom: crenellated battlements (raised merlon blocks with gaps), a tapered
+// stone shaft with a lit left edge / shadowed right edge and a couple of brick
+// seams, a few creeping moss patches to match the glade walls, and a glowing
+// team-coloured CRYSTAL set in a dark socket where the tower zaps from (a layered
+// glow -> outline -> faceted gem -> white spark). A soft dark base/shadow grounds
+// it. Painted with graphics primitives within the SAME canvas (radius*2) so the
+// baked texture size — load-bearing for tower hit detection/placement — is
+// UNCHANGED. Team colour rides the crystal so blue vs red read apart.
 function makeTowerTexture(scene, key, color) {
   const g = scene.make.graphics({ x: 0, y: 0 }, false);
-  const s = TOWER.radius * 2;
+  const s = TOWER.radius * 2; // 44 — must stay identical to before
   const c = TOWER.radius;
   const stone = COLORS.wall;
+  const edge = COLORS.wallEdge; // darker stone outline (mossy-stone palette)
 
-  // Stone body: black-outlined square with lit/shadowed edges.
-  g.fillStyle(COLORS.outline, 1);
-  g.fillRect(0, 0, s, s);
+  // Soft cast shadow on the ground at the foot of the turret (an oval pad), so
+  // the tower reads as a solid object standing on the grass rather than a decal.
+  g.fillStyle(COLORS.outline, 0.22);
+  g.fillEllipse(c, s - 3, s - 8, 7);
+
+  // --- Stone shaft: a slightly tapered turret (wider at the base) -------------
+  // Outlined trapezoid silhouette, then the stone fill inset by the outline.
+  const topY = 6; // battlements sit above this
+  const baseY = s - 4;
+  const topInset = 7; // narrower at the top
+  const botInset = 4; // wider at the foot
+  const shaft = (inset, yTop, yBot) => [
+    { x: inset, y: yTop },
+    { x: s - inset, y: yTop },
+    { x: s - botInset, y: yBot },
+    { x: botInset, y: yBot },
+  ];
+  g.fillStyle(edge, 1); // dark stone outline
+  g.fillPoints(shaft(topInset - 1, topY - 1, baseY + 1), true);
+  g.fillStyle(stone, 1); // body
+  g.fillPoints(shaft(topInset, topY, baseY), true);
+  // Lit left face and shadowed right face for a rounded, top-left-lit column.
+  g.fillStyle(shade(stone, 1.28), 1);
+  g.fillRect(topInset, topY, 4, baseY - topY);
+  g.fillStyle(shade(stone, 0.62), 1);
+  g.fillRect(s - botInset - 5, topY, 4, baseY - topY);
+  // Brick courses (faint darker seams across the shaft) for stonework grain.
+  g.fillStyle(shade(stone, 0.78), 1);
+  for (const sy of [16, 26, 36]) g.fillRect(topInset + 1, sy, s - 2 * topInset - 2, 1);
+
+  // Creeping moss patches near the foot, matching the overgrown wall tiles.
+  g.fillStyle(0x4f8a32, 1);
+  g.fillRect(7, baseY - 7, 4, 3);
+  g.fillRect(s - 12, baseY - 5, 4, 3);
+  g.fillStyle(0x6fae45, 1); // brighter moss tips
+  g.fillRect(7, baseY - 7, 4, 1);
+  g.fillRect(s - 12, baseY - 5, 3, 1);
+
+  // --- Battlements: crenellations along the top parapet -----------------------
+  // A solid parapet band, then raised merlon blocks with transparent gaps so the
+  // top edge reads as a crisp 3D crown of crenels.
+  g.fillStyle(edge, 1);
+  g.fillRect(topInset - 1, 4, s - 2 * (topInset - 1), 4);
   g.fillStyle(stone, 1);
-  g.fillRect(2, 2, s - 4, s - 4);
-  g.fillStyle(shade(stone, 1.3), 1); // lit top
-  g.fillRect(2, 2, s - 4, 3);
-  g.fillStyle(shade(stone, 0.65), 1); // shadowed bottom + right
-  g.fillRect(2, s - 5, s - 4, 3);
-  g.fillRect(s - 5, 2, 3, s - 4);
-
-  // Battlements: raised merlon blocks (lit top, shadowed under-edge) standing
-  // proud of the parapet, with transparent gaps between — reads as 3D crenels.
+  g.fillRect(topInset, 5, s - 2 * topInset, 2);
+  g.fillStyle(shade(stone, 1.3), 1); // lit cap of the parapet
+  g.fillRect(topInset, 5, s - 2 * topInset, 1);
   const merlons = 3;
-  const span = (s - 6) / merlons;
+  const span = (s - 2 * topInset) / merlons;
   for (let i = 0; i < merlons; i++) {
-    const mx = 3 + i * span + span * 0.18;
-    const mw = span * 0.64;
-    g.fillStyle(COLORS.outline, 1);
+    const mx = topInset + i * span + span * 0.16;
+    const mw = span * 0.68;
+    g.fillStyle(edge, 1);
     g.fillRect(mx - 1, 0, mw + 2, 5);
     g.fillStyle(stone, 1);
     g.fillRect(mx, 1, mw, 4);
@@ -211,15 +252,37 @@ function makeTowerTexture(scene, key, color) {
     g.fillRect(mx, 1, mw, 1);
   }
 
-  // Team cannon disc + bright muzzle.
+  // --- Glowing team crystal in a dark socket (the muzzle it zaps from) ---------
+  const gx = c;
+  const gy = c + 3; // centred on the shaft, a touch low so the parapet frames it
+  const gr = c - 9; // gem radius
+  // Soft halo so the crystal looks lit (drawn under the socket rim).
+  g.fillStyle(color, 0.22);
+  g.fillCircle(gx, gy, gr + 4);
+  // Dark stone socket the gem is mounted in.
+  g.fillStyle(edge, 1);
+  g.fillCircle(gx, gy, gr + 2);
   g.fillStyle(COLORS.outline, 1);
-  g.fillCircle(c, c + 1, c - 5);
-  g.fillStyle(color, 1);
-  g.fillCircle(c, c + 1, c - 7);
-  g.fillStyle(shade(color, 1.4), 1); // highlight glint
-  g.fillCircle(c - 2, c - 1, 2);
+  g.fillCircle(gx, gy, gr + 1);
+  // Faceted gem: an outlined diamond split into a lit and a shadowed half.
+  const top = { x: gx, y: gy - gr };
+  const bot = { x: gx, y: gy + gr };
+  const left = { x: gx - gr, y: gy };
+  const right = { x: gx + gr, y: gy };
+  const ctr = { x: gx, y: gy };
+  g.fillStyle(shade(color, 1.45), 1); // upper-left facet (brightest)
+  g.fillPoints([top, left, ctr], true);
+  g.fillStyle(shade(color, 1.1), 1);
+  g.fillPoints([top, right, ctr], true);
+  g.fillStyle(shade(color, 0.85), 1);
+  g.fillPoints([bot, left, ctr], true);
+  g.fillStyle(shade(color, 0.55), 1); // lower-right facet (darkest)
+  g.fillPoints([bot, right, ctr], true);
+  // Bright energised core + a hard white spark up-left = a charged lens.
+  g.fillStyle(shade(color, 1.7), 1);
+  g.fillCircle(gx, gy, Math.max(1.5, gr * 0.4));
   g.fillStyle(COLORS.white, 1);
-  g.fillCircle(c, c + 1, (c - 7) * 0.35);
+  g.fillCircle(gx - 1, gy - 1, Math.max(1, gr * 0.22));
 
   g.generateTexture(key, s, s);
   g.destroy();
