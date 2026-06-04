@@ -26,6 +26,7 @@ import {
   BUSH_ZONES,
   BASE_POS,
   VIGNETTE,
+  POOF,
 } from "../config.js";
 import { generateTextures } from "../textures.js";
 import { stepPosition, towerObstacles } from "../sim.js";
@@ -69,6 +70,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.towerSprites = new Map(); // team -> Tower display object
     this.baseSprites = new Map(); // team -> Base display object
     this.damageNumbers = []; // active floating damage-number texts
+    this.deathPoofs = []; // active death-poof shapes (puffs + rings)
 
     // --- Input: movement -----------------------------------------------------
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -767,8 +769,12 @@ export default class ArenaScene extends Phaser.Scene {
       sprite.lastPowered = p.powered;
       sprite.lastHp = p.hp;
 
-      // Detect a knockout (alive -> dead) for the death sound.
-      if (sprite.lastAlive && !p.alive) this.audio.play("death");
+      // Detect a knockout (alive -> dead) for the death sound + a death poof at
+      // the hero's last position, tinted toward its team colour.
+      if (sprite.lastAlive && !p.alive) {
+        this.audio.play("death");
+        this.spawnDeathPoof(sprite.x, sprite.y, p.team);
+      }
       sprite.lastAlive = p.alive;
 
       if (p.cls) sprite.setClass(p.cls);
@@ -824,6 +830,65 @@ export default class ArenaScene extends Phaser.Scene {
         const i = this.damageNumbers.indexOf(text);
         if (i !== -1) this.damageNumbers.splice(i, 1);
         text.destroy();
+      },
+    });
+  }
+
+  // A brief pixel "poof" where a unit just died: a small cluster of dusty puff
+  // dots that drift outward while growing + fading, plus one expanding ring. The
+  // shapes auto-destroy on tween complete and are tracked in `this.deathPoofs`
+  // (read by the render test). Triggered purely from snapshot transitions on the
+  // client (hero alive -> dead, or a minion leaving the snapshot) — see
+  // syncPlayers/syncMinions — so nothing here touches the server. The optional
+  // `team` lightly tints the puffs toward that side's colour; all sizes/timing
+  // come from POOF in config.
+  spawnDeathPoof(x, y, team) {
+    const tint =
+      team === "blue" ? COLORS.blueTeam : team === "red" ? COLORS.redTeam : POOF.color;
+
+    // The dusty puff dots: each starts at the centre and is tweened out to a
+    // random nearby point while it grows and fades. We blend the neutral dust
+    // colour with a hint of team colour so the burst reads as "that unit".
+    for (let i = 0; i < POOF.count; i++) {
+      const angle = (Math.PI * 2 * i) / POOF.count + Math.random() * 0.6;
+      const dist = POOF.spread * (0.5 + Math.random() * 0.5);
+      const useTeam = i % 2 === 0; // alternate dust + team tint for a little colour
+      const puff = this.add
+        .circle(x, y, POOF.size, useTeam ? tint : POOF.color, 0.85)
+        .setDepth(70);
+      this.deathPoofs.push(puff);
+      this.tweens.add({
+        targets: puff,
+        x: x + Math.cos(angle) * dist,
+        y: y + Math.sin(angle) * dist,
+        scale: POOF.grow,
+        alpha: 0,
+        duration: POOF.lifeMs,
+        ease: "Quad.out",
+        onComplete: () => {
+          const k = this.deathPoofs.indexOf(puff);
+          if (k !== -1) this.deathPoofs.splice(k, 1);
+          puff.destroy();
+        },
+      });
+    }
+
+    // A single expanding ring on top, for a clean "burst" read.
+    const ring = this.add
+      .circle(x, y, POOF.ring, POOF.color, 0)
+      .setStrokeStyle(2, POOF.color, 0.9)
+      .setDepth(70);
+    this.deathPoofs.push(ring);
+    this.tweens.add({
+      targets: ring,
+      scale: POOF.ringGrow,
+      alpha: 0,
+      duration: POOF.lifeMs,
+      ease: "Quad.out",
+      onComplete: () => {
+        const k = this.deathPoofs.indexOf(ring);
+        if (k !== -1) this.deathPoofs.splice(k, 1);
+        ring.destroy();
       },
     });
   }
@@ -967,6 +1032,10 @@ export default class ArenaScene extends Phaser.Scene {
     }
     for (const [id, sprite] of this.minionSprites) {
       if (!seen.has(id)) {
+        // The server removes a minion from the snapshot when it dies, so an id
+        // that vanished = a dead minion. Poof at its last known spot before we
+        // tear the sprite down, tinted toward its team colour.
+        this.spawnDeathPoof(sprite.x, sprite.y, sprite.team);
         sprite.destroy();
         this.minionSprites.delete(id);
       }

@@ -397,6 +397,26 @@ export const DMGTEXT = {
   strokeThickness: 4,
 };
 
+// --- Death poof -------------------------------------------------------------
+// Client-only "juice": when a unit dies, a brief pixel "poof" bursts at its last
+// position — a small cluster of dusty puff dots that expand outward and fade,
+// plus a quick expanding ring. Triggered purely from snapshot transitions on the
+// client (a hero going alive -> dead, or a lane minion disappearing from the
+// snapshot), so it never touches the server or the snapshot shape.
+// `count` puffs spread up to `spread` px from the centre, each `size` px, all
+// fading + growing over `lifeMs`; `ring*` size the expanding shockwave ring;
+// `color` is the dusty puff tint (a neutral pale grey reads on any background).
+export const POOF = {
+  count: 6, // number of little puff dots in the burst
+  size: 5, // radius of each puff dot (px)
+  spread: 22, // how far the puffs drift out from the centre (px)
+  grow: 2.0, // how much each puff scales up as it fades
+  ring: 10, // starting radius of the expanding ring (px)
+  ringGrow: 2.6, // how much the ring scales up before it vanishes
+  lifeMs: 360, // how long the whole poof lives before it cleans itself up (ms)
+  color: 0xe8e0d0, // dusty pale puff colour (neutral, reads on grass + stone)
+};
+
 // --- Kill feed --------------------------------------------------------------
 // Recent knockouts shown as a fading list in the corner. `ms` is how long an
 // entry lingers; `max` is how many lines show at once.

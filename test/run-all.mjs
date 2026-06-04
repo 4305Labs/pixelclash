@@ -68,6 +68,8 @@ const tests = [
   "./m42.pickupart.render.mjs",
   "./m43.dmgnumbers.render.mjs",
   "./m44.minionart.render.mjs",
+  "./m45.deathpoof.render.mjs",
+  "./m46.towerart.render.mjs",
 ];
 
 let failed = false;
