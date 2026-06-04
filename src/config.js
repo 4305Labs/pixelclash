@@ -417,6 +417,28 @@ export const POOF = {
   color: 0xe8e0d0, // dusty pale puff colour (neutral, reads on grass + stone)
 };
 
+// --- Projectile trails ------------------------------------------------------
+// Client-only "juice": every flying bolt leaves a brief, fading motion trail so
+// shots read as fast and energetic. As a projectile sprite moves between
+// snapshots (interpolated each frame), we periodically drop a small "ghost" dot
+// at its current position, coloured to match the bolt; each dot shrinks + fades
+// out and then destroys itself. Purely visual — it reads the existing
+// `projectiles[]` from the snapshot and never touches the server or its shape.
+// A dot is only dropped once the bolt has moved at least `minStepPx` AND
+// `intervalMs` has passed since the last one (so a still/slow bolt can't spam
+// them); `dotScale` sizes a dot relative to its bolt's radius; `lifeMs` is how
+// long each dot fades + shrinks before it's destroyed; `startAlpha` is a dot's
+// initial opacity; `max` is a hard cap on how many trail dots can exist at once
+// (a safety net so the effect can never leak objects, however many bolts fly).
+export const TRAIL = {
+  minStepPx: 7, // min distance a bolt moves before dropping the next dot (px)
+  intervalMs: 40, // min ms between trail dots for a single projectile
+  dotScale: 0.7, // a dot's radius = its bolt's radius * this
+  lifeMs: 240, // how long each dot fades + shrinks before it's destroyed (ms)
+  startAlpha: 0.5, // starting opacity of a fresh trail dot
+  max: 80, // hard cap on simultaneously-live trail dots (perf safety net)
+};
+
 // --- Kill feed --------------------------------------------------------------
 // Recent knockouts shown as a fading list in the corner. `ms` is how long an
 // entry lingers; `max` is how many lines show at once.

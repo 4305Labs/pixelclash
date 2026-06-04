@@ -27,6 +27,7 @@ import {
   BASE_POS,
   VIGNETTE,
   POOF,
+  TRAIL,
 } from "../config.js";
 import { generateTextures } from "../textures.js";
 import { stepPosition, towerObstacles } from "../sim.js";
@@ -71,6 +72,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.baseSprites = new Map(); // team -> Base display object
     this.damageNumbers = []; // active floating damage-number texts
     this.deathPoofs = []; // active death-poof shapes (puffs + rings)
+    this.projectileTrails = []; // active fading "ghost" dots behind moving bolts
 
     // --- Input: movement -----------------------------------------------------
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -908,6 +910,40 @@ export default class ArenaScene extends Phaser.Scene {
     });
   }
 
+  // A single fading "ghost" dot left behind a flying bolt, so a shot draws a
+  // short motion trail as it crosses the arena. Each dot starts a touch smaller
+  // than the bolt and in the bolt's own colour, then shrinks + fades over
+  // TRAIL.lifeMs and destroys itself on tween complete. Tracked in
+  // `this.projectileTrails` (read by the render test) and hard-capped at
+  // TRAIL.max — when we'd exceed it we drop the OLDEST dot first, so the trail
+  // can never leak objects no matter how many bolts are in flight. Spawned from
+  // snapshot-driven projectile motion in syncProjectiles — nothing here touches
+  // the server. Sits just under the bolt head (depth 49) so the head reads on top.
+  spawnProjectileTrail(x, y, boltRadius, color) {
+    // Cap the live dots: if we're already at the limit, retire the oldest one
+    // now (its tween's onComplete will harmlessly no-op on the already-gone dot).
+    if (this.projectileTrails.length >= TRAIL.max) {
+      const oldest = this.projectileTrails.shift();
+      if (oldest) oldest.destroy();
+    }
+    const dot = this.add
+      .circle(x, y, boltRadius * TRAIL.dotScale, color, TRAIL.startAlpha)
+      .setDepth(49);
+    this.projectileTrails.push(dot);
+    this.tweens.add({
+      targets: dot,
+      scale: 0.2, // shrink down as it fades...
+      alpha: 0, // ...to fully transparent
+      duration: TRAIL.lifeMs,
+      ease: "Quad.out",
+      onComplete: () => {
+        const i = this.projectileTrails.indexOf(dot);
+        if (i !== -1) this.projectileTrails.splice(i, 1);
+        dot.destroy();
+      },
+    });
+  }
+
   // Client-side prediction for the local player.
   predictLocal(sprite, serverP, dt) {
     const input = this.lastInput || { dx: 0, dy: 0 };
@@ -1060,9 +1096,24 @@ export default class ArenaScene extends Phaser.Scene {
         }
         dot = this.add.circle(b.x, b.y, radius, color).setDepth(50);
         dot.baseRadius = radius;
+        dot.boltColor = color; // remembered so the trail dots match the bolt
         dot.bornAt = this.time.now;
+        dot.lastTrailX = b.x; // where we last dropped a trail dot...
+        dot.lastTrailY = b.y;
+        dot.lastTrailAt = this.time.now; // ...and when, to throttle the trail
         this.bolts.set(b.id, dot);
         this.spawnSpark(b.x, b.y, color); // muzzle flash at the shot's origin
+      }
+      // Leave a brief fading "ghost" behind the bolt as it travels, so shots
+      // read as fast + energetic. We only drop a dot once the bolt has moved a
+      // little AND a short interval has passed, so a still/slow bolt can't spam
+      // them. The dot sits at the PREVIOUS position (the space just vacated).
+      const moved = Math.hypot(b.x - dot.lastTrailX, b.y - dot.lastTrailY);
+      if (moved >= TRAIL.minStepPx && this.time.now - dot.lastTrailAt >= TRAIL.intervalMs) {
+        this.spawnProjectileTrail(dot.lastTrailX, dot.lastTrailY, dot.baseRadius, dot.boltColor);
+        dot.lastTrailX = b.x;
+        dot.lastTrailY = b.y;
+        dot.lastTrailAt = this.time.now;
       }
       dot.setPosition(b.x, b.y);
       // A subtle energetic pulse (±12% radius) so bolts read as "live" energy.

@@ -70,6 +70,7 @@ const tests = [
   "./m44.minionart.render.mjs",
   "./m45.deathpoof.render.mjs",
   "./m46.towerart.render.mjs",
+  "./m47.trails.render.mjs",
 ];
 
 let failed = false;
