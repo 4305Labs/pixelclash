@@ -7,11 +7,15 @@
 > **Last updated:** an automated **polish workflow** (`workflows/polish-moba.mjs`,
 >   a dynamic-workflow harness that fans focused sub-agents out over a
 >   generate→filter→implement→adversarially-verify→sequential-integrate loop) and
->   its first two landed polish commits: a **low-HP danger vignette** (client-only
->   red screen-edge glow under 30% HP, tunables in `config.js` `VIGNETTE`, m41) and
->   an **art glow-up for the pickup orbs** (glow ring + rim light + specular shine,
->   texture size unchanged, m42). Before that: art-coherence pass on the grassland
->   "glades" look —
+>   four landed polish commits from it: a **low-HP danger vignette** (client-only
+>   red screen-edge glow under 30% HP, `config.js` `VIGNETTE`, m41); an **art
+>   glow-up for the pickup orbs** (glow ring + rim light + specular shine, texture
+>   size unchanged, m42); **floating damage numbers** (config-driven "-N" juice
+>   from snapshot HP deltas, bigger/red for your own hero, now on minions too,
+>   `config.js` `DMGTEXT`, m43); and **sharper goblin lane-minions** (crisper
+>   silhouette + club, team tint + 20x20 size preserved, m44). All four are
+>   client/render-only (no snapshot or server change). Before that: art-coherence
+>   pass on the grassland "glades" look —
 >   hero touch-ups (rebuilt tank as a great-helm + tower shield, single-bit
 >   brawler axe, attached knight shield, wood ranger bow, clearer scout dagger;
 >   all in `src/rpgsprites.js`), goblin lane minions, a darker forest camp, and
@@ -23,7 +27,7 @@
 >   m39); curved MOBA lanes + nexus plazas; "Tiny RPG" heroes on team rings;
 >   chokepoints removed (lanes are OPEN — towers are landmarks, not walls);
 >   jungle gank gaps; per-hero abilities.
-> **Status:** all tests green (60 test groups), live two-browser test green, build OK.
+> **Status:** all tests green (61 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
 > **`claude/pixel-moba-game-WobPa`** (PR #1 → `main`). `main` is the empty root
