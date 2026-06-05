@@ -589,25 +589,33 @@ function makeWallTexture(scene, key) {
 // rock, both on a transparent background, palettes derived from the jungle
 // colour so they sit naturally on the green floor.
 const DECOR_ROWS = {
+  // A leafy bush: a rounded clump with a lit highlight cap (L), a mid-green body
+  // (l) dappled with leaf shadow (g) toward the bottom for roundness, and a soft
+  // grey ground shadow (h) underneath so it sits on the grass instead of floating.
+  // 10×8 grid → 20×16 at pixel=2 — size UNCHANGED.
   bush: [
     "...oooo...",
     "..oLLLLo..",
-    ".oLLgglLoo",
-    "oLLggggLLo",
-    "oLLgggggLo",
-    "oLgggggggo",
-    ".oLggggLo.",
-    "..oo..oo..",
+    ".oLLllLLo.",
+    "oLLllllLLo",
+    "oLlllllllo",
+    "oLlggggllo",
+    ".oggggggo.",
+    "..hhhhhh..",
   ],
+  // A mossy boulder: a rounded grey rock lit on the top-left (stone l), shaded
+  // down the right (h), with a single dark crack pixel (g) for character, seated
+  // on a darker ground shadow (g) along its base. 10×8 grid → 20×16 at pixel=2 —
+  // size UNCHANGED.
   rock: [
     "..........",
     "...oooo...",
     "..olllho..",
-    ".ollllhho.",
-    "ollllhhho.",
+    ".ollllho..",
+    "olllhghho.",
     "olllhhhho.",
-    ".oohhhhoo.",
-    "..oooooo..",
+    ".ohhhhhho.",
+    "..gggggg..",
   ],
   // A round leafy tree: layered canopy (highlight L / body l / shadow g) over a
   // short wooden trunk. 13 wide so it reads as a proper glade tree. The mid-tone
@@ -628,22 +636,28 @@ const DECOR_ROWS = {
     "....oWWWo....",
     "...ooooooo...",
   ],
-  // A mossy tree stump with a couple of growth rings.
+  // A mossy tree stump: a green moss-dappled top surface (g/l), a wooden side
+  // with dark rim shading and a couple of growth rings (w light wood / W dark),
+  // grounded on a soft grey shadow (h). 9×5 grid → 18×10 at pixel=2 — size
+  // UNCHANGED.
   stump: [
     "..ooooo..",
-    ".owwwwwo.",
-    ".oWwgwWo.",
-    ".owwwwwo.",
-    "..ooooo..",
+    ".oglglgo.",
+    ".oWwwwWo.",
+    ".owWWwwo.",
+    "..hhhhh..",
   ],
-  // A little cluster of wildflowers on stems — a yellow, a blue, and a pink.
+  // A little cluster of wildflowers: a yellow and a blue bloom on tall stems with
+  // a shorter pink one between them, each bloom framed by an outline cap so it
+  // pops, a couple of leaves (l), and a green grass-tuft base (g) so the cluster
+  // sits on the ground. 11×6 grid → 22×12 at pixel=2 — size UNCHANGED.
   flowers: [
     "..o.....o..",
     ".oyo...obo.",
-    "..g.....g..",
-    "....o......",
-    "...opo.....",
-    "...gggg....",
+    "..g..o..g..",
+    ".lg.opo.gl.",
+    "..g..g..g..",
+    "..lgggggl..",
   ],
 };
 

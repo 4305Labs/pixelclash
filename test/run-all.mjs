@@ -77,6 +77,7 @@ const tests = [
   "./m51.audio.node.mjs",
   "./m52.heroart.render.mjs",
   "./m53.respawn.render.mjs",
+  "./m54.decorart.render.mjs",
 ];
 
 let failed = false;
