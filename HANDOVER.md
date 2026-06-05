@@ -29,7 +29,11 @@
 >   "levelup" chime on your own level rise, sparklier 3-note pickup — all through
 >   the existing headless-safe audio guard, m51); and **clearer hero weapons** (a
 >   curved recurve bow for the ranger + a gold-hilted dagger for the scout, grids
->   still 24x24 + team-tinted, m52). Twelve polish commits, all client/render-only
+>   still 24x24 + team-tinted, m52); a **respawn countdown indicator** (a depleting
+>   team-coloured ring + seconds remaining over downed heroes, read from
+>   `respawnIn`, `config.js` `RESPAWN`, m53); and **crisper jungle decor**
+>   (bush/rock/stump/flowers repainted with grounding shadows, tree left alone,
+>   sizes preserved, m54). Fourteen polish commits, all client/render-only
 >   (no snapshot or server change); the suite's two load-sensitive timing flakes
 >   (m32 death-tumble, m7 prediction) were also de-flaked to poll instead of
 >   sampling once. Before that:
@@ -45,7 +49,7 @@
 >   m39); curved MOBA lanes + nexus plazas; "Tiny RPG" heroes on team rings;
 >   chokepoints removed (lanes are OPEN — towers are landmarks, not walls);
 >   jungle gank gaps; per-hero abilities.
-> **Status:** all tests green (70 test groups), live two-browser test green, build OK.
+> **Status:** all tests green (72 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
 > **`claude/pixel-moba-game-WobPa`** (PR #1 → `main`). `main` is the empty root
