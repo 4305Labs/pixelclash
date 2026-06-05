@@ -203,7 +203,15 @@ export const CLASSES = {
     // dominator (durable AND far the most DPS). Shortest reach is its trade.
     basic: { dmg: 7, cd: 320, speed: 360, ttl: 800 },
     // Leap Slam: lunge forward and smash, hurting everything around the landing.
-    ability: { type: "leap", dmg: 34, cd: 2400, distance: 170, slamRadius: 62 },
+    // dmg 26 / cd 2400 => ~10.8 ability-DPS — sits BELOW the squishy single-target
+    // nukers (soldier pierce 30 / 12.0 DPS, ranger homing 28 / 12.2 DPS), as it
+    // should: the brawler already gets mobility (the lunge) and AoE on its slam.
+    // Was 34 (~14.2 ability-DPS) — the HIGHEST damage-per-cooldown ability in the
+    // roster, on a class that is ALSO a durable 120-HP bruiser with high basic DPS
+    // (21.9): a strict outlier that crowded the mage's burst niche. Trimmed so the
+    // leap stays a strong AoE engage without out-bursting the dedicated damage
+    // picks; the mage's Nova (40) remains the clear premier single-hit nuke.
+    ability: { type: "leap", dmg: 26, cd: 2400, distance: 170, slamRadius: 62 },
   },
 };
 
