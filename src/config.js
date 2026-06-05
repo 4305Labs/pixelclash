@@ -120,7 +120,15 @@ export const SPAWNS = {
 // --- Combat -----------------------------------------------------------------
 export const COMBAT = {
   maxHp: 100,
-  respawnMs: 2000, // time knocked out before respawning at your spawn
+  // Time knocked out before respawning at your spawn. Pacing tuning (m57): was
+  // 2000 (2s), which is a clear outlier — a hero is back almost before the fight
+  // it died in has ended, so WINNING a teamfight never buys any time to push an
+  // objective (take a tower / the base). That removed the core MOBA arc and left
+  // matches grinding to the timer. 4500ms gives a real "you won — now push"
+  // window WITHOUT a single death snowballing the game (well short of the
+  // long-respawn failure where one death ends it). Still well under the match
+  // clock and the fountain/heal timings, so nothing else needs retuning.
+  respawnMs: 4500, // time knocked out before respawning at your spawn
 
   // Two attack types. cd = cooldown in ms, speed = px/sec, ttl = lifetime (ms).
   basic: { dmg: 8, cd: 400, speed: 420, ttl: 1400, radius: 5, color: 0xffec27 },

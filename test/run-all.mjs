@@ -80,6 +80,7 @@ const tests = [
   "./m54.decorart.render.mjs",
   "./m55.balance.mjs",
   "./m56.abilitybalance.mjs",
+  "./m57.pacing.mjs",
 ];
 
 let failed = false;
