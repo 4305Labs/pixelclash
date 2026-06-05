@@ -81,15 +81,28 @@ try {
   assert(respawned.count <= afterDeath, "respawn (dead -> alive at full HP) does NOT pop a number");
 
   // --- Lane minions ---------------------------------------------------------
-  // Seed the minion at full HP (40): first sighting, no popup.
+  // Seed the minion at full HP (40): first sighting, no popup. Under headless
+  // rAF throttling the sync loop can lag, so POLL until the minion SPRITE is
+  // actually registered with lastHp = 40 — otherwise the next snapshot would be
+  // read as a brand-new sighting (no drop) and spuriously pop nothing.
   await page.evaluate((s) => window.PIXELCLASH.net._receive(s), state({ minions: [minion(40)] }));
-  await page.waitForTimeout(80);
+  const minionSeeded = () =>
+    page.evaluate(() => {
+      const s = window.PIXELCLASH.game.scene.getScene("ArenaScene");
+      const sp = s.minionSprites && s.minionSprites.get("m1");
+      return !!sp && sp.lastHp === 40;
+    });
+  for (let i = 0; i < 40 && !(await minionSeeded()); i++) await page.waitForTimeout(50);
   const mSeed = (await readNumbers(page)).count;
 
-  // Minion takes 8 damage (40 -> 32): a "-8" popup appears.
+  // Minion takes 8 damage (40 -> 32): a "-8" popup appears. The sync that spawns
+  // it is rAF-driven and can lag under load, so poll until it shows (or give up).
   await page.evaluate((s) => window.PIXELCLASH.net._receive(s), state({ minions: [minion(32)] }));
-  await page.waitForTimeout(80);
-  const mHurt = await readNumbers(page);
+  let mHurt = await readNumbers(page);
+  for (let i = 0; i < 40 && !mHurt.texts.includes("-8"); i++) {
+    await page.waitForTimeout(50);
+    mHurt = await readNumbers(page);
+  }
   assert(mHurt.count > mSeed, "a damage popup appears when a minion loses HP");
   assert(mHurt.texts.includes("-8"), "the minion popup shows the right amount (-8): " + JSON.stringify(mHurt.texts));
 
