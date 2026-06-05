@@ -81,6 +81,7 @@ const tests = [
   "./m55.balance.mjs",
   "./m56.abilitybalance.mjs",
   "./m57.pacing.mjs",
+  "./m58.botpush.mjs",
 ];
 
 let failed = false;

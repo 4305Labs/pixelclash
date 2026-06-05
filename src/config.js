@@ -234,13 +234,34 @@ export const MINION = {
   dmg: 4, // damage per melee hit
   attackCd: 600, // ms between a minion's hits
   range: 40, // melee reach (center-to-center, px) to land a hit
-  aggro: 150, // how close an enemy unit must be for a minion to chase it (px)
+  aggro: 80, // how close an enemy unit must be for a minion to chase it (px).
+  // Kept deliberately SHORT: a longer leash made opposing waves chase each other
+  // into a permanent dead-centre lock (every bot match drew 0-0). With a short
+  // leash a minion holds its lane but keeps marching toward the tower, so once a
+  // side wins a clash its surplus actually reaches the structure and a lane opens.
   half: 10, // half the on-screen size (smaller than a 16px player)
   waveEvery: 9000, // ms between waves
   perWave: 3, // minions spawned per team each wave
   laneGap: 40, // vertical spacing between minions in a wave
   firstWaveMs: 2000, // delay after "playing" begins before the first wave
   spawnAhead: 70, // how far in front of the base a wave appears (px)
+};
+
+// --- AI bots ----------------------------------------------------------------
+// Tunables for the bot brain (only active when the server runs with
+// `{ bots: true }`). A bot OWNS a lane and ADVANCES down it toward the enemy
+// structures, clearing whatever its auto-attack can hit on the way. It only
+// HOLDS at a standoff to kite an enemy HERO (a duel); against minions/towers it
+// keeps pushing so its presence tips the lane and its own wave breaks through.
+export const BOTS = {
+  heroStandoff: 200, // px gap to an enemy HERO past which a bot dashes in to close
+  lowHpFrac: 0.3, // retreat home below this fraction of max HP
+  chaseHpFrac: 0.45, // only DIVERT to chase an enemy hero this hurt (a finishable kill)
+  chaseEdge: 15, // ...and only if we have at least this much more HP than it (a real edge)
+  abilityRange: 300, // fire the ability when an enemy hero is within this (px)
+  dashEngageMult: 1.6, // dash to close when the gap exceeds heroStandoff * this
+  towerPad: 26, // widen an enemy tower's danger radius by this when deciding to dive
+  minionSupport: 170, // a friendly minion this close lets a bot dive a tower (px)
 };
 
 // --- Dash (a quick burst move along your facing direction) ------------------

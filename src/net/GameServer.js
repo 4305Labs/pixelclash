@@ -34,10 +34,9 @@ import {
   DEFAULT_CLASS,
   KILLFEED,
   PROGRESS,
+  BOTS,
 } from "../config.js";
 import { stepPosition, normalizeInput, resolveMove, pointInWall, towerObstacles } from "../sim.js";
-
-const BOT_STANDOFF = 200; // how far a bot holds from its target to shoot
 
 export default class GameServer {
   // `opts.bots` enables AI bots that fill empty team slots so a lone player can
@@ -216,27 +215,45 @@ export default class GameServer {
     if (bot) this.removeBot(bot.id);
   }
 
-  // Bot brain: head for the nearest enemy (hero, minion, tower, or an exposed
-  // base — the same picker the auto-aim uses) and hold at firing range; but when
-  // low on HP, retreat toward home while still kiting shots back. Attacks
-  // auto-aim the nearest enemy regardless of which way we're moving, and the odd
-  // dash closes the gap (or covers the escape).
+  // Bot brain (the heart of bot-vs-bot pacing): a bot OWNS a lane and ADVANCES
+  // down it toward the enemy structures, clearing whatever its auto-attack hits
+  // on the way. The earlier brain just held BOT_STANDOFF px back from the nearest
+  // unit — so two mirror-image bots sat behind their own towers, never pushed,
+  // and the lanes annihilated to a 0-0 draw. Now a bot only HOLDS to kite an
+  // enemy HERO (a duel); against minions/towers it keeps pressing forward, so its
+  // body + DPS tip the lane and its own wave finally breaks through.
+  //
+  // Attacks auto-aim the nearest enemy regardless of which way we're moving, the
+  // ability fires when an enemy hero is in striking range, and the odd dash
+  // closes a gap (or covers an escape). When low on HP we retreat home, then come
+  // back and resume pushing.
   stepBots() {
     for (const p of this.players.values()) {
       if (!p.bot || !p.alive) continue;
-      // Prefer collapsing on a weak nearby enemy hero (a kill); otherwise head
-      // for whatever the auto-aim would shoot (minion/tower/exposed base).
-      const focus = this.lowestEnemyHeroNear(p, 280);
-      const target = focus || this.nearestTarget(p);
-      if (!target) {
-        p.input.dx = 0;
-        p.input.dy = 0;
-        continue;
-      }
-      const low = p.hp < CLASSES[p.cls].maxHp * 0.3;
+      const low = p.hp < CLASSES[p.cls].maxHp * BOTS.lowHpFrac;
       const home = this.bases.get(p.team);
-      const dangerTower = this.enemyTowerCovering(p, 26);
-      const supported = this.hasMinionSupport(p, 170);
+      // The lane structure we're marching to crack — our standing objective so we
+      // keep pushing even when no enemy unit is right in front of us.
+      const objective = this.botLaneObjective(p);
+      // A nearly-dead enemy hero nearby is worth collapsing on for the kill (it
+      // overrides the lane push). We only chase a hero that's actually FINISHABLE
+      // — a healthy enemy must NOT derail the push, or two mirror bots just trail
+      // each other to a centre stalemate (the old 0-0 bug). For aim/ability intent
+      // we still consider the nearest enemy hero whatever its HP.
+      const nearHero = this.lowestEnemyHeroNear(p, 280);
+      // Chase only a finishable kill: the enemy hero is hurt AND we're clearly
+      // healthier than it (a real advantage). The HP-advantage gate is what stops
+      // two evenly-matched mirror bots from trailing each other to a centre
+      // stalemate (the old 0-0 bug) — when neither has the edge, BOTH default to
+      // pushing their lane objective instead, so they pass by and pressure towers.
+      const finishable =
+        nearHero &&
+        nearHero.hp < CLASSES[nearHero.cls].maxHp * BOTS.chaseHpFrac &&
+        p.hp > nearHero.hp + BOTS.chaseEdge;
+      const focus = finishable ? nearHero : null;
+      const enemyHero = nearHero || this.nearestEnemyPlayer(p);
+      const dangerTower = this.enemyTowerCovering(p, BOTS.towerPad);
+      const supported = this.hasMinionSupport(p, BOTS.minionSupport);
 
       let mx, my; // desired move direction
       if (low) {
@@ -245,15 +262,23 @@ export default class GameServer {
         my = home.y - p.y;
       } else if (dangerTower && !supported) {
         // Don't dive an enemy tower without minions to soak it — back off to its
-        // edge and wait for the wave.
+        // edge and wait for the wave to catch up, then push with it.
         mx = p.x - dangerTower.x;
         my = p.y - dangerTower.y;
+      } else if (focus) {
+        // A WEAKER enemy hero nearby: collapse on it for the kill (move straight
+        // at it — pressing in, never holding, so two bots never freeze in a
+        // mirror standoff). Auto-aim does the shooting.
+        mx = focus.x - p.x;
+        my = focus.y - p.y;
       } else {
-        const dx = target.x - p.x;
-        const dy = target.y - p.y;
-        const dist = Math.hypot(dx, dy) || 1;
-        mx = dist > BOT_STANDOFF ? dx : 0; // close in, or hold to shoot
-        my = dist > BOT_STANDOFF ? dy : 0;
+        // The default and the engine of the whole push: march down the lane
+        // toward the enemy structure. Minions and the enemy hero we drive
+        // straight THROUGH (auto-attack clears them as we go) rather than holding
+        // back — that forward pressure is what tips a lane so our own wave can
+        // finally crack the tower.
+        mx = objective.x - p.x;
+        my = objective.y - p.y;
       }
       const len = Math.hypot(mx, my);
       if (len > 0.01) {
@@ -268,17 +293,42 @@ export default class GameServer {
       this.tryAttack(p, "basic");
       // Use the ability with intent: when a (visible) enemy hero is in striking
       // range, not at random. tryAbility() still gates it on cooldown.
-      const enemyHero = focus || this.nearestEnemyPlayer(p);
-      if (!low && enemyHero && (enemyHero.x - p.x) ** 2 + (enemyHero.y - p.y) ** 2 < 300 * 300) {
+      if (
+        !low &&
+        enemyHero &&
+        (enemyHero.x - p.x) ** 2 + (enemyHero.y - p.y) ** 2 < BOTS.abilityRange * BOTS.abilityRange
+      ) {
         this.tryAbility(p);
       }
-      // Dash with purpose: escape when hurt, or close a big gap to engage. (face
-      // already points the way we're moving; tryDash gates on cooldown.)
-      const gap = Math.hypot(target.x - p.x, target.y - p.y);
-      if (low || (!dangerTower && gap > BOT_STANDOFF * 1.6)) this.tryDash(p);
+      // Dash with purpose: escape when hurt, or close a big gap to the objective
+      // to keep the push moving. (face already points the way we're moving;
+      // tryDash gates on cooldown.)
+      const gap = Math.hypot(objective.x - p.x, objective.y - p.y);
+      if (low || (!dangerTower && gap > BOTS.heroStandoff * BOTS.dashEngageMult)) this.tryDash(p);
 
       this.tryBuy(p); // spend gold on upgrades as soon as it can afford one
     }
+  }
+
+  // The point a bot is pushing toward: along its OWN lane row toward the enemy's
+  // structure on that lane (its tower, or — once that's dead — the base). A bot
+  // owns a lane by its spawn slot so teammates spread across the map. We hold the
+  // bot ON its lane ROW (only converging to the structure's exact y once we're
+  // close in x) so it marches WITH its lane's minions — that keeps its auto-aim
+  // trained on the contesting enemy wave, which is what clears the lane.
+  botLaneObjective(p) {
+    const enemy = p.team === "blue" ? "red" : "blue";
+    const lane = LANES[p.spawnIndex % LANES.length];
+    const tower = this.towers.find((t) => t.team === enemy && t.lane === lane.id && t.alive);
+    const base = this.bases.get(enemy);
+    const goal = tower || base; // a structure with an {x,y}
+    const goalX = goal ? goal.x : p.team === "blue" ? GAME_WIDTH - LANE_ENTRY_X : LANE_ENTRY_X;
+    const goalY = goal ? goal.y : lane.row;
+    // Stay on the lane row until we're within a screen of the structure, then
+    // converge onto it to attack — so the approach hugs the lane, not a diagonal
+    // across open jungle.
+    const close = Math.abs(goalX - p.x) < 220;
+    return { x: goalX, y: close ? goalY : lane.row };
   }
 
   // True once both teams have at least the configured minimum of players.

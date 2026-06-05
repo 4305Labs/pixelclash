@@ -51,11 +51,26 @@
 >   bought time to push an objective); `m57.pacing.mjs` drives the real step() loop
 >   to lock the arc (a tower CAN fall under pressure, base shield gate, no-base-kill
 >   matches end at the timer, wave cadence, respawn band). m43 minion-popup was also
->   de-flaked (poll). KNOWN DEEPER PACING ISSUE (next step): bot-vs-bot matches
->   still draw 0-0 at the timer — symmetric minion waves annihilate at lane centre
->   so no minion reaches a tower, AND bots farm passively in jungle and never
->   engage. Fixing that needs server logic (asymmetric/stronger lane push so a lane
->   can be won, and/or bots that actually push + fight), not a config number.
+>   de-flaked (poll). Then the **bot-push / winnable-lanes pass** (m58) FIXED the
+>   long-standing 0-0 bot stalemate — the one server-logic pacing bug left. Two
+>   root causes: (1) `stepBots` made every bot hold 200px back from the nearest
+>   unit, so two mirror-image bots sat behind their own towers and never pushed;
+>   (2) `MINION.aggro` was 150, a long leash that made opposing waves chase each
+>   other into a permanent dead-centre lock so no minion ever reached a tower. Fix:
+>   `stepBots` now drives each bot down its OWNED lane (by `spawnIndex % LANES`)
+>   toward the enemy structure (`botLaneObjective`), only HOLDING to kite a
+>   *finishable* enemy hero (hurt below `chaseHpFrac` AND we have a `chaseEdge` HP
+>   advantage) — the HP-edge gate is what stops two even bots trailing each other
+>   to a centre stalemate; otherwise it presses forward so its DPS clears the
+>   contesting wave and its own wave breaks through. Bot tunables moved to
+>   `config.js` `BOTS` (heroStandoff, lowHpFrac, chaseHpFrac, chaseEdge,
+>   abilityRange, dashEngageMult, towerPad, minionSupport); `MINION.aggro` 150 -> 80
+>   (short leash: a minion holds its lane but keeps marching, so a WON lane's
+>   survivors reach the tower). Measured: 1v1 cracks a tower at ~98s; 3v3 fells all
+>   six towers (first ~60s) and damages a base by ~89s — matches now DECIDE instead
+>   of drawing. NO snapshot/movement-speed/class-balance change; bots stay opt-in.
+>   `m58.botpush.mjs` drives full bots matches and locks real progress (tower takes
+>   damage / falls, kills happen, sim stays finite + in-bounds every tick).
 >   Before that:
 >   art-coherence pass on the grassland "glades" look —
 >   hero touch-ups (rebuilt tank as a great-helm + tower shield, single-bit
@@ -69,7 +84,7 @@
 >   m39); curved MOBA lanes + nexus plazas; "Tiny RPG" heroes on team rings;
 >   chokepoints removed (lanes are OPEN — towers are landmarks, not walls);
 >   jungle gank gaps; per-hero abilities.
-> **Status:** all tests green (75 test groups), live two-browser test green, build OK.
+> **Status:** all tests green (76 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
 > **`claude/pixel-moba-game-WobPa`** (PR #1 → `main`). `main` is the empty root
@@ -176,7 +191,7 @@ respawnIn, powered, shielded, hidden`. Per-base adds `shielded`.
 | Progression (XP/gold/shop) | `awardKill`, `levelOf`, `effective*`, `tryBuy` | `updateShopHud`, level badges | `PROGRESS` |
 | Match lifecycle + timer | `evaluateLobby`, `beginPlaying`, `endByTimeout` | `updateLobby`, `updateGameOver` | `MATCH` |
 | Scoreboard / kill feed / respawn | `score`, `killFeed`, `damage(...,byTeam,attacker)` | `updateHud`, `updateKillFeed` | `KILLFEED` |
-| AI bots | `stepBots`, `fillBots`, `addBot` | "bot" tag | (`{bots:true}` in server.js) |
+| AI bots (push lanes + fight) | `stepBots`, `botLaneObjective`, `fillBots`, `addBot` | "bot" tag | `BOTS`; (`{bots:true}` in server.js) |
 | Map (3 routes + jungle) | — | `drawGrid/drawDecor/drawWalls` | `WALLS`, `LANE_BAND`, `DECOR_SPOTS` |
 | Art / animation | — | `textures.js`, `rpgsprites.js`, `anim.js`, entities | `COLORS`, RPG grids |
 | Hero sprite / facing | — | `Player.setClass`/`animate` (mirror on left) | `rpgsprites.js`, `HERO_SCALE` |

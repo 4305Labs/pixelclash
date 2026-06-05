@@ -32,7 +32,9 @@ Everything is free and runs on your own machine — no accounts, no credit card.
   open at the towers, **neutral camps** that give a buff when cleared, and
   **stealth bushes** for ambushes.
 - **Map pickups** (heal / power orbs) and a **base healing fountain**.
-- **AI bots** so you can play solo instantly; a match timer with a kill tiebreak.
+- **AI bots** so you can play solo instantly — they push their lane, fight for
+  it, and dive towers with their wave (not passive farmers); a match timer with a
+  kill tiebreak.
 - **Full HUD** — team scoreboard, match clock, kill feed, respawn timer, and a
   per-hero level/gold/shop line.
 - **Mobile-ready** — touch joystick + buttons, a tap-to-start gate, and tappable
