@@ -46,6 +46,16 @@
 >   ability on an already-durable class — so the mage Nova stays the premier burst
 >   and no ability out-bursts its cooldown; `m56.abilitybalance.mjs` locks the
 >   ability invariants (tank shield = utility, mage = top single hit, DPS ceiling).
+>   A **pacing pass** then raised respawn 2s -> 4.5s (measured: 2s was a clear
+>   outlier — a hero returned before the fight ended, so winning a teamfight never
+>   bought time to push an objective); `m57.pacing.mjs` drives the real step() loop
+>   to lock the arc (a tower CAN fall under pressure, base shield gate, no-base-kill
+>   matches end at the timer, wave cadence, respawn band). m43 minion-popup was also
+>   de-flaked (poll). KNOWN DEEPER PACING ISSUE (next step): bot-vs-bot matches
+>   still draw 0-0 at the timer — symmetric minion waves annihilate at lane centre
+>   so no minion reaches a tower, AND bots farm passively in jungle and never
+>   engage. Fixing that needs server logic (asymmetric/stronger lane push so a lane
+>   can be won, and/or bots that actually push + fight), not a config number.
 >   Before that:
 >   art-coherence pass on the grassland "glades" look —
 >   hero touch-ups (rebuilt tank as a great-helm + tower shield, single-bit
@@ -59,7 +69,7 @@
 >   m39); curved MOBA lanes + nexus plazas; "Tiny RPG" heroes on team rings;
 >   chokepoints removed (lanes are OPEN — towers are landmarks, not walls);
 >   jungle gank gaps; per-hero abilities.
-> **Status:** all tests green (74 test groups), live two-browser test green, build OK.
+> **Status:** all tests green (75 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
 > **`claude/pixel-moba-game-WobPa`** (PR #1 → `main`). `main` is the empty root
