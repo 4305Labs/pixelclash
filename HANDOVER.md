@@ -36,7 +36,12 @@
 >   sizes preserved, m54). Fourteen polish commits, all client/render-only
 >   (no snapshot or server change); the suite's two load-sensitive timing flakes
 >   (m32 death-tumble, m7 prediction) were also de-flaked to poll instead of
->   sampling once. Before that:
+>   sampling once. Then the workflow pivoted to **gameplay/balance**: a **class
+>   balance pass** removed the two dominators — brawler 140HP/37DPS -> 120HP/21.9DPS
+>   and tank 20->17.1 DPS with shorter range — so max-HP (tank) and max-DPS (scout)
+>   are different classes and no hero is strictly dominant (config numbers only, no
+>   server logic / movement-speed change); `m55.balance.mjs` locks the
+>   anti-dominance invariants in. Before that:
 >   art-coherence pass on the grassland "glades" look —
 >   hero touch-ups (rebuilt tank as a great-helm + tower shield, single-bit
 >   brawler axe, attached knight shield, wood ranger bow, clearer scout dagger;
@@ -49,7 +54,7 @@
 >   m39); curved MOBA lanes + nexus plazas; "Tiny RPG" heroes on team rings;
 >   chokepoints removed (lanes are OPEN — towers are landmarks, not walls);
 >   jungle gank gaps; per-hero abilities.
-> **Status:** all tests green (72 test groups), live two-browser test green, build OK.
+> **Status:** all tests green (73 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
 > **`claude/pixel-moba-game-WobPa`** (PR #1 → `main`). `main` is the empty root
