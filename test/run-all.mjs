@@ -76,6 +76,7 @@ const tests = [
   "./m50.floorart.render.mjs",
   "./m51.audio.node.mjs",
   "./m52.heroart.render.mjs",
+  "./m53.respawn.render.mjs",
 ];
 
 let failed = false;

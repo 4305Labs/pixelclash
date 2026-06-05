@@ -29,6 +29,7 @@ import {
   POOF,
   TRAIL,
   SHAKE,
+  RESPAWN,
 } from "../config.js";
 import { generateTextures } from "../textures.js";
 import { stepPosition, towerObstacles } from "../sim.js";
@@ -74,6 +75,7 @@ export default class ArenaScene extends Phaser.Scene {
     this.damageNumbers = []; // active floating damage-number texts
     this.deathPoofs = []; // active death-poof shapes (puffs + rings)
     this.projectileTrails = []; // active fading "ghost" dots behind moving bolts
+    this.respawnTimers = new Map(); // player id -> respawn-countdown indicator
 
     // --- Input: movement -----------------------------------------------------
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -809,6 +811,9 @@ export default class ArenaScene extends Phaser.Scene {
       // respects the bush). `hidden` is a global flag, so the local id decides
       // which treatment to apply.
       sprite.setHidden(p.hidden, p.id === this.net.localId);
+      // Respawn countdown: while this hero is DEAD, show a depleting team ring +
+      // the seconds remaining at its position; remove it the instant it's alive.
+      this.syncRespawnTimer(p, sprite);
       // Procedural bob/walk/attack animation (movement is read from the sprite's
       // own travel since last frame, so it works for predicted + interpolated).
       if (p.alive) sprite.animate(dt);
@@ -819,6 +824,85 @@ export default class ArenaScene extends Phaser.Scene {
         this.sprites.delete(id);
       }
     }
+    // Prune any respawn indicators whose player is gone from the snapshot, so we
+    // never leak one for a player who left mid-respawn (mirrors the sprite loop).
+    for (const [id, ind] of this.respawnTimers) {
+      if (!seen.has(id)) {
+        this.destroyRespawnTimer(id);
+      }
+    }
+  }
+
+  // Create / update / destroy the respawn-countdown indicator for one player.
+  // A DEAD hero gets a small team-coloured ring (a backdrop circle with an arc
+  // that DEPLETES as the timer runs down) plus the integer seconds remaining,
+  // drawn at the hero's last position. The LOCAL dead hero's number reads a touch
+  // bigger. The instant the hero is alive again we destroy the indicator. All
+  // sizes/colours/depth come from RESPAWN in config; this reads only the existing
+  // snapshot fields (alive / respawnIn / team / x / y) and never touches the
+  // server. Tracked in `this.respawnTimers` (keyed by player id) for the test.
+  syncRespawnTimer(p, sprite) {
+    // Alive (or no respawn data) → no indicator: tear any existing one down.
+    if (p.alive) {
+      this.destroyRespawnTimer(p.id);
+      return;
+    }
+
+    const isLocal = p.id === this.net.localId;
+    const teamColor = p.team === "red" ? COLORS.redTeam : COLORS.blueTeam;
+    let ind = this.respawnTimers.get(p.id);
+    if (!ind) {
+      // The depleting ring is drawn with a Graphics object (so we can redraw a
+      // partial arc each frame); the seconds sit centred in it as a text label.
+      const ring = this.add.graphics().setDepth(RESPAWN.depth);
+      const label = this.add
+        .text(0, 0, "", {
+          fontFamily: "monospace",
+          fontSize: `${isLocal ? RESPAWN.localFontSize : RESPAWN.fontSize}px`,
+          color: RESPAWN.color,
+          stroke: RESPAWN.stroke,
+          strokeThickness: RESPAWN.strokeThickness,
+        })
+        .setOrigin(0.5)
+        .setDepth(RESPAWN.depth);
+      ind = { ring, label };
+      this.respawnTimers.set(p.id, ind);
+    }
+
+    // Place both at the dead hero's last position.
+    ind.ring.setPosition(sprite.x, sprite.y);
+    ind.label.setPosition(sprite.x, sprite.y + RESPAWN.yOffset);
+
+    // The number: whole seconds remaining (round UP so "1" shows until 0).
+    const secs = Math.max(0, Math.ceil(p.respawnIn || 0));
+    ind.label.setText(`${secs}`);
+
+    // The ring: a faint full backdrop circle, then a team-coloured arc that
+    // shrinks from a full sweep down to nothing as `respawnIn` runs out. We
+    // derive the fraction from the full respawn time so it visibly depletes.
+    const fullSec = RESPAWN.respawnMs / 1000;
+    const frac = Phaser.Math.Clamp((p.respawnIn || 0) / fullSec, 0, 1);
+    ind.ring.clear();
+    ind.ring.lineStyle(RESPAWN.thickness, teamColor, RESPAWN.bgAlpha);
+    ind.ring.strokeCircle(0, 0, RESPAWN.radius);
+    if (frac > 0) {
+      // Start at the top (-90°) and sweep clockwise by the remaining fraction.
+      const start = -Math.PI / 2;
+      const end = start + Math.PI * 2 * frac;
+      ind.ring.lineStyle(RESPAWN.thickness, teamColor, RESPAWN.arcAlpha);
+      ind.ring.beginPath();
+      ind.ring.arc(0, 0, RESPAWN.radius, start, end, false);
+      ind.ring.strokePath();
+    }
+  }
+
+  // Destroy + forget a player's respawn indicator (idempotent).
+  destroyRespawnTimer(id) {
+    const ind = this.respawnTimers.get(id);
+    if (!ind) return;
+    ind.ring.destroy();
+    ind.label.destroy();
+    this.respawnTimers.delete(id);
   }
 
   // A floating damage number ("-12") that pops at a unit, rises a short way while

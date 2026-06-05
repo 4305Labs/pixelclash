@@ -456,6 +456,35 @@ export const TRAIL = {
 // --- Kill feed --------------------------------------------------------------
 // Recent knockouts shown as a fading list in the corner. `ms` is how long an
 // entry lingers; `max` is how many lines show at once.
+// --- Respawn countdown indicator --------------------------------------------
+// Client-only "juice": while a hero is DEAD, show a small marker at its position
+// so players can read when they / allies / enemies come back. Derived purely
+// from the snapshot's existing `alive`/`respawnIn` fields — it never touches the
+// server or the snapshot shape.
+// The marker is a faint full-circle backdrop (`bgAlpha`) with a brighter
+// team-coloured ARC on top (`arcAlpha`) that DEPLETES from a full sweep to
+// nothing as `respawnIn` runs down — derived from `respawnMs` (the full respawn
+// time, matching COMBAT.respawnMs) so the arc visibly empties.
+// `radius` is the ring radius (px); `thickness` is its line width;
+// `fontSize`/`localFontSize` are the seconds text sizes (the LOCAL dead hero's
+// own number reads a touch bigger so it stands out); `color`/`stroke`/
+// `strokeThickness` style the seconds text; `depth` keeps the marker above units
+// but below the HUD; `yOffset` nudges the number off-centre.
+export const RESPAWN = {
+  radius: 18, // ring radius around the dead hero (px)
+  thickness: 3, // ring line width (px)
+  bgAlpha: 0.3, // opacity of the faint full-circle backdrop
+  arcAlpha: 0.95, // opacity of the depleting team-coloured arc
+  fontSize: 16, // seconds-remaining text size (px)
+  localFontSize: 22, // a touch bigger for the LOCAL dead hero's own timer
+  color: "#fff1e8", // seconds text fill (pale, reads on any background)
+  stroke: "#000000", // dark outline so the number stays legible
+  strokeThickness: 4,
+  respawnMs: COMBAT.respawnMs, // full respawn time, for the arc's depletion
+  depth: 80, // above units, below the HUD (500)
+  yOffset: 1, // tiny vertical nudge so the number sits centred in the ring
+};
+
 export const KILLFEED = { ms: 6000, max: 5 };
 
 // --- Map / obstacles --------------------------------------------------------
