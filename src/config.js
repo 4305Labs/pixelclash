@@ -159,10 +159,16 @@ export const CLASSES = {
   },
   tank: {
     name: "Tank",
-    maxHp: 170, // beefy
+    maxHp: 170, // beefy — the highest HP in the roster (the durability pick)
     scale: 1.25, // drawn bigger
     emblem: 0xffec27,
-    basic: { dmg: 13, cd: 650, speed: 360, ttl: 1500 }, // slow, heavy
+    // Slow, heavy, SHORT range. dmg 12 / cd 700 => 17.1 DPS (the lowest sustained
+    // DPS after the burst-caster mage), and ttl 1300 (reach ~468px) so the tank
+    // must close distance. This is the deliberate trade for its huge HP: it soaks
+    // hits but can't out-trade the damage classes. Was 13/650 (20 DPS) + ttl 1500,
+    // which made the tank nearly strictly better than the soldier (more HP AND
+    // equal DPS) — now the soldier clearly out-DPSes and out-ranges it.
+    basic: { dmg: 12, cd: 700, speed: 360, ttl: 1300 }, // slow, heavy, short range
     // Bulwark: raise a shield that halves incoming damage for a few seconds.
     ability: { type: "shield", cd: 3200, durationMs: 3000, reduce: 0.5 },
   },
@@ -188,11 +194,14 @@ export const CLASSES = {
   },
   brawler: {
     name: "Brawler",
-    maxHp: 140, // durable bruiser
+    maxHp: 120, // durable bruiser (was 140 — trimmed so it isn't both tanky AND top-DPS)
     scale: 1.1,
     emblem: 0xffa300, // orange
-    // Short-range (low ttl) but rapid, hard-hitting — a dive bruiser.
-    basic: { dmg: 12, cd: 320, speed: 360, ttl: 800 },
+    // Short-range (low ttl) but rapid — a dive bruiser. dmg 7 / cd 320 => 21.9 DPS:
+    // high, but below the scout's 24.0 so the glass cannon stays the clear top DPS.
+    // Was 12/320 (37.5 DPS) which, paired with 140 HP, made the brawler a strict
+    // dominator (durable AND far the most DPS). Shortest reach is its trade.
+    basic: { dmg: 7, cd: 320, speed: 360, ttl: 800 },
     // Leap Slam: lunge forward and smash, hurting everything around the landing.
     ability: { type: "leap", dmg: 34, cd: 2400, distance: 170, slamRadius: 62 },
   },

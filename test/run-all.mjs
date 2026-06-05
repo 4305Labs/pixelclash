@@ -78,6 +78,7 @@ const tests = [
   "./m52.heroart.render.mjs",
   "./m53.respawn.render.mjs",
   "./m54.decorart.render.mjs",
+  "./m55.balance.mjs",
 ];
 
 let failed = false;
