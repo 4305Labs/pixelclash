@@ -41,7 +41,12 @@
 >   and tank 20->17.1 DPS with shorter range — so max-HP (tank) and max-DPS (scout)
 >   are different classes and no hero is strictly dominant (config numbers only, no
 >   server logic / movement-speed change); `m55.balance.mjs` locks the
->   anti-dominance invariants in. Before that:
+>   anti-dominance invariants in. An **ability balance pass** then trimmed the
+>   brawler's Leap Slam (34 -> 26 dmg) — it was the highest damage-per-cooldown
+>   ability on an already-durable class — so the mage Nova stays the premier burst
+>   and no ability out-bursts its cooldown; `m56.abilitybalance.mjs` locks the
+>   ability invariants (tank shield = utility, mage = top single hit, DPS ceiling).
+>   Before that:
 >   art-coherence pass on the grassland "glades" look —
 >   hero touch-ups (rebuilt tank as a great-helm + tower shield, single-bit
 >   brawler axe, attached knight shield, wood ranger bow, clearer scout dagger;
@@ -54,7 +59,7 @@
 >   m39); curved MOBA lanes + nexus plazas; "Tiny RPG" heroes on team rings;
 >   chokepoints removed (lanes are OPEN — towers are landmarks, not walls);
 >   jungle gank gaps; per-hero abilities.
-> **Status:** all tests green (73 test groups), live two-browser test green, build OK.
+> **Status:** all tests green (74 test groups), live two-browser test green, build OK.
 >
 > ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
 > **`claude/pixel-moba-game-WobPa`** (PR #1 → `main`). `main` is the empty root
