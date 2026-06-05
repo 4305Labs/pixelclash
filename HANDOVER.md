@@ -1,0 +1,301 @@
+# HANDOVER — PixelClash
+
+> **Purpose:** a living handover so any agent (Claude Code, ChatGPT Codex, or a
+> human) can pick this project up cold and keep building safely.
+> **Update this file after every major change** (see *Update protocol* at the end).
+>
+> **Last updated:** an automated **polish workflow** (`workflows/polish-moba.mjs`,
+>   a dynamic-workflow harness that fans focused sub-agents out over a
+>   generate→filter→implement→adversarially-verify→sequential-integrate loop) and
+>   four landed polish commits from it: a **low-HP danger vignette** (client-only
+>   red screen-edge glow under 30% HP, `config.js` `VIGNETTE`, m41); an **art
+>   glow-up for the pickup orbs** (glow ring + rim light + specular shine, texture
+>   size unchanged, m42); **floating damage numbers** (config-driven "-N" juice
+>   from snapshot HP deltas, bigger/red for your own hero, now on minions too,
+>   `config.js` `DMGTEXT`, m43); and **sharper goblin lane-minions** (crisper
+>   silhouette + club, team tint + 20x20 size preserved, m44); a **death poof**
+>   (dusty puff + ring burst when a hero dies or a minion leaves the snapshot,
+>   team-tinted, `config.js` `POOF`, m45); **mossy-stone guard towers** with a
+>   glowing team crystal (crenellated turret, 44x44 size + team colours preserved,
+>   m46); **fading projectile trails** (bolts drop short ghost dots in their own
+>   colour, hard-capped so they never leak, `config.js` `TRAIL`, m47); a
+>   **grand mossy-stone base/nexus keep** (stepped plinth + banners + big team
+>   crystal, 48x48 size + shield overlay preserved, m48); **camera shake on
+>   knockouts** (a brief jolt on a hero kill, stronger on a base hit, hooked into
+>   the existing death/base-hp transitions, `config.js` `SHAKE`, m49); and a
+>   **lusher glade floor + leafier trees** (more low-contrast tufts/blades/pebbles/
+>   blooms + dappled tree canopy, all explicit-hex greens, floor 80x80 + tree 26x26
+>   preserved, m50); **richer SFX** (synth "kill" sting on an enemy knockout,
+>   "levelup" chime on your own level rise, sparklier 3-note pickup — all through
+>   the existing headless-safe audio guard, m51); and **clearer hero weapons** (a
+>   curved recurve bow for the ranger + a gold-hilted dagger for the scout, grids
+>   still 24x24 + team-tinted, m52); a **respawn countdown indicator** (a depleting
+>   team-coloured ring + seconds remaining over downed heroes, read from
+>   `respawnIn`, `config.js` `RESPAWN`, m53); and **crisper jungle decor**
+>   (bush/rock/stump/flowers repainted with grounding shadows, tree left alone,
+>   sizes preserved, m54). Fourteen polish commits, all client/render-only
+>   (no snapshot or server change); the suite's two load-sensitive timing flakes
+>   (m32 death-tumble, m7 prediction) were also de-flaked to poll instead of
+>   sampling once. Then the workflow pivoted to **gameplay/balance**: a **class
+>   balance pass** removed the two dominators — brawler 140HP/37DPS -> 120HP/21.9DPS
+>   and tank 20->17.1 DPS with shorter range — so max-HP (tank) and max-DPS (scout)
+>   are different classes and no hero is strictly dominant (config numbers only, no
+>   server logic / movement-speed change); `m55.balance.mjs` locks the
+>   anti-dominance invariants in. An **ability balance pass** then trimmed the
+>   brawler's Leap Slam (34 -> 26 dmg) — it was the highest damage-per-cooldown
+>   ability on an already-durable class — so the mage Nova stays the premier burst
+>   and no ability out-bursts its cooldown; `m56.abilitybalance.mjs` locks the
+>   ability invariants (tank shield = utility, mage = top single hit, DPS ceiling).
+>   A **pacing pass** then raised respawn 2s -> 4.5s (measured: 2s was a clear
+>   outlier — a hero returned before the fight ended, so winning a teamfight never
+>   bought time to push an objective); `m57.pacing.mjs` drives the real step() loop
+>   to lock the arc (a tower CAN fall under pressure, base shield gate, no-base-kill
+>   matches end at the timer, wave cadence, respawn band). m43 minion-popup was also
+>   de-flaked (poll). Then the **bot-push / winnable-lanes pass** (m58) FIXED the
+>   long-standing 0-0 bot stalemate — the one server-logic pacing bug left. Two
+>   root causes: (1) `stepBots` made every bot hold 200px back from the nearest
+>   unit, so two mirror-image bots sat behind their own towers and never pushed;
+>   (2) `MINION.aggro` was 150, a long leash that made opposing waves chase each
+>   other into a permanent dead-centre lock so no minion ever reached a tower. Fix:
+>   `stepBots` now drives each bot down its OWNED lane (by `spawnIndex % LANES`)
+>   toward the enemy structure (`botLaneObjective`), only HOLDING to kite a
+>   *finishable* enemy hero (hurt below `chaseHpFrac` AND we have a `chaseEdge` HP
+>   advantage) — the HP-edge gate is what stops two even bots trailing each other
+>   to a centre stalemate; otherwise it presses forward so its DPS clears the
+>   contesting wave and its own wave breaks through. Bot tunables moved to
+>   `config.js` `BOTS` (heroStandoff, lowHpFrac, chaseHpFrac, chaseEdge,
+>   abilityRange, dashEngageMult, towerPad, minionSupport); `MINION.aggro` 150 -> 80
+>   (short leash: a minion holds its lane but keeps marching, so a WON lane's
+>   survivors reach the tower). Measured: 1v1 cracks a tower at ~98s; 3v3 fells all
+>   six towers (first ~60s) and damages a base by ~89s — matches now DECIDE instead
+>   of drawing. NO snapshot/movement-speed/class-balance change; bots stay opt-in.
+>   `m58.botpush.mjs` drives full bots matches and locks real progress (tower takes
+>   damage / falls, kills happen, sim stays finite + in-bounds every tick).
+>   Before that:
+>   art-coherence pass on the grassland "glades" look —
+>   hero touch-ups (rebuilt tank as a great-helm + tower shield, single-bit
+>   brawler axe, attached knight shield, wood ranger bow, clearer scout dagger;
+>   all in `src/rpgsprites.js`), goblin lane minions, a darker forest camp, and
+>   a jungle camp in all four pockets (`CAMP_SPOTS`). Built on the glades
+>   retheme (bright grass + dirt lane paths + trees/stumps/flowers + mossy stone,
+>   in `textures.js`/`ArenaScene.drawGrid`) and audio (cast/blast/dash). NB:
+>   `textures.js` decor/camp palettes use FIXED greens — don't `shade()` the now
+>   bright `COLORS.jungle` base (it clips). Earlier: smarter bots (`stepBots`,
+>   m39); curved MOBA lanes + nexus plazas; "Tiny RPG" heroes on team rings;
+>   chokepoints removed (lanes are OPEN — towers are landmarks, not walls);
+>   jungle gank gaps; per-hero abilities.
+> **Status:** all tests green (76 test groups), live two-browser test green, build OK.
+>
+> ⚠️ **WORK FROM THE BRANCH, NOT `main`.** All work lives on
+> **`claude/pixel-moba-game-WobPa`** (PR #1 → `main`). `main` is the empty root
+> commit and does NOT have the game. First thing on a new machine:
+> ```bash
+> git fetch origin && git checkout claude/pixel-moba-game-WobPa
+> ```
+> Keep developing on this branch unless told otherwise.
+
+---
+
+## 1. What this is
+
+PixelClash — a pixel-art, browser-first **MOBA arena battler**. Phaser 3 + Vite
+client; a Node + `ws` **server-authoritative** game server. Move / basic attack /
+ability / dash; lane minions + guard towers push the lane; a base is shielded
+until its tower falls; destroy the enemy base (or be ahead on kills at the time
+limit) to win. Solo vs **AI bots**, up to 3v3. Six hero classes, gold/XP
+progression with a shop, map pickups + a base healing fountain, a 3-route map
+(center lane + top/bottom jungle), and a full HUD (scoreboard, clock, kill feed,
+respawn timer). All art is **drawn in code** (no asset files); all sound is
+**synthesized** at runtime.
+
+## 2. Run it / test it
+
+```bash
+npm install
+npm run server     # authoritative server, ws://localhost:2567 (honors PORT)
+npm run dev        # Vite client, usually http://localhost:5173
+npm run build      # production build -> dist/
+npm test           # the whole headless suite (test/run-all.mjs; builds once)
+node test/live-browser.mjs   # full stack: real ws server + 2 headless Chromium tabs
+node test/screenshot*.mjs    # regenerate docs/*.png
+```
+
+Open the client and you immediately get a **bot opponent** (server starts with
+`{ bots: true }`); open a 2nd tab for a real 1v1 and the bot steps aside.
+
+## 3. Architecture (read these first)
+
+- **`src/net/GameServer.js`** — the authoritative brain. Owns ALL real state
+  (players incl. bots, minions, towers, bases, pickups, projectiles, score, kill
+  feed, match phase/clock, progression) and the fixed-tick `step(dt)` loop. Knows
+  nothing about sockets/Phaser; talks to "connections" (`.send/.onMessage/.onClose`).
+- **`src/sim.js`** — the SINGLE source of movement math (`stepPosition`,
+  `resolveMove`, wall collision, `pointInWall`). Shared by server AND client
+  prediction so they agree. **All heroes share one movement speed** — classes
+  differ in HP/attacks only. Don't break this without updating prediction.
+- **`src/net/NetClient.js`** — browser side: sends input/attack/dash/class/buy,
+  stores the latest snapshot. Phaser-free, unit-testable in Node.
+- **`src/scenes/ArenaScene.js`** — the only scene. Input, HUD, the touch UI, and
+  `sync*()` methods that reconcile sprites to each snapshot. Local hero is
+  predicted (`predictLocal`); everyone else interpolates. Also draws the map
+  (`drawGrid` = floors, `drawDecor` = jungle props, `drawWalls`).
+- **`src/entities/`** — display objects: `Player`, `Minion`, `Tower`, `Base`.
+- **`src/anim.js`** — pure (no-Phaser) procedural animation math: idle bob, walk
+  hop w/ squash-stretch, attack pop. Entities call `animate(dt)`.
+- **`src/config.js`** — ALL tunable numbers + layout. Balance/map lives here.
+- **`src/textures.js`** — every sprite drawn in code. `paintGrid(rows,palette)`
+  + `shade(color,f)` toolkit; `makeGbHero` bakes the directional hero textures;
+  floor/wall/decor/structure makers. `generateTextures(scene)` bakes them all
+  at boot (and calls `validateGbGrids()` first).
+- **`src/rpgsprites.js`** — pure-data detailed hero pixel grids: one 24x24
+  front-facing pose per class (`RPG_HEROES`), chibi proportions, team garment =
+  `c/C/p`. `validateRpgGrids()` asserts 24x24. No Phaser import, so m38
+  unit-tests it in plain Node. (textures.js `rpgPalette` injects the team colour;
+  `Player` mirrors the sprite for left-facing.)
+- **`src/audio.js`** — WebAudio blips (shoot/hit/death/base/win/pickup) + mute,
+  guarded so headless/no-audio is a silent no-op.
+- **`src/record.js`** — persisted win/loss/draw tally (localStorage, guarded).
+- Transports: `WebSocketConnection.js` (real, with `defaultServerUrl()` ws/wss
+  auto-switch + `?server=`/`window.PIXELCLASH_SERVER` override) and
+  `LocalConnection.js` (in-memory, used by tests).
+
+### The snapshot is the contract
+`GameServer.snapshot()` is the ONLY thing the client sees. When you add state,
+add it to `snapshot()` AND read it in `NetClient._receive` AND render it in a
+`sync*`/`update*` method. **`m30.snapshot` enforces that every top-level field is
+read by NetClient**, so a new field with no client reader fails the suite.
+
+Current top-level fields: `t, tick, phase, winner, score, killFeed, needed,
+countdown, timeLeft, players[], projectiles[], blasts[], minions[], pickups[],
+camps[], towers[], bases[]`. `blasts[]` are short-lived AoE shockwave markers
+(`id,x,y,r,team`) the client draws as an expanding ring once per id.
+Per-player: `id, team, x, y, hp, maxHp, alive, cls, bot, level, gold, buys,
+respawnIn, powered, shielded, hidden`. Per-base adds `shielded`.
+
+## 4. Feature map (where to look)
+
+| System | Server (`GameServer.js`) | Client | Config |
+|---|---|---|---|
+| Movement/prediction | `step()` move loop | `predictLocal`, `sim.js` | `PLAYER_SPEED` |
+| Combat (basic/dash) | `tryAttack`, `tryDash` | `doAction` | `COMBAT`, `DASH` |
+| Per-hero abilities (B) | `tryAbility` + `ability*` handlers | shield ring, `syncBlasts` | `CLASSES[cls].ability.type` |
+| Bases + win/shield | `damageBase`, `baseVulnerable` | `Base` (shield ring) | `BASE`, `BASE_POS` |
+| 3 lanes (top/mid/bot) | per-lane in `spawnWave`/`resetTowers` | lane geometry | `LANES`, `TOWER_X` |
+| Lane minions (per lane) | `stepMinions`, `spawnWave`, `moveMinion` | `syncMinions`, `Minion` | `MINION` |
+| Guard towers (6, array) | `stepTowers`, `nearestEnemyUnit`, `baseVulnerable` (all towers) | `syncTowers` (team+lane key), `Tower` | `TOWER`, `TOWER_X` |
+| Map pickups + power buff | `stepPickups`, `grantPickup` | `syncPickups` | `PICKUP`, `PICKUP_SPOTS` |
+| Healing fountain | `stepFountains` | `Base` fountain ring | `BASE.heal*` |
+| Jungle camps (neutral) | `stepCamps`, `damageCamp`, `hitCamp` | `syncCamps`, `Camp` | `CAMP`, `CAMP_SPOTS` |
+| Bush stealth | `isHidden` gates all enemy targeting | `Player.setHidden`, `drawDecor` zones | `BUSH`, `BUSH_ZONES` |
+| Hero classes (×6) | per-class in `freshPlayer`/`tryAttack`/respawn | `Player.setClass`, lobby picker | `CLASSES`, `CLASS_ORDER` |
+| Progression (XP/gold/shop) | `awardKill`, `levelOf`, `effective*`, `tryBuy` | `updateShopHud`, level badges | `PROGRESS` |
+| Match lifecycle + timer | `evaluateLobby`, `beginPlaying`, `endByTimeout` | `updateLobby`, `updateGameOver` | `MATCH` |
+| Scoreboard / kill feed / respawn | `score`, `killFeed`, `damage(...,byTeam,attacker)` | `updateHud`, `updateKillFeed` | `KILLFEED` |
+| AI bots (push lanes + fight) | `stepBots`, `botLaneObjective`, `fillBots`, `addBot` | "bot" tag | `BOTS`; (`{bots:true}` in server.js) |
+| Map (3 routes + jungle) | — | `drawGrid/drawDecor/drawWalls` | `WALLS`, `LANE_BAND`, `DECOR_SPOTS` |
+| Art / animation | — | `textures.js`, `rpgsprites.js`, `anim.js`, entities | `COLORS`, RPG grids |
+| Hero sprite / facing | — | `Player.setClass`/`animate` (mirror on left) | `rpgsprites.js`, `HERO_SCALE` |
+| Audio / record | — | `audio.js`, `record.js` | — |
+
+## 5. Conventions & invariants (don't break these)
+
+- **Server stays authoritative.** Clients only render + predict the LOCAL player.
+- **Tune in `config.js`**, not scattered literals.
+- **All heroes share `PLAYER_SPEED`** (prediction depends on it).
+- **One feature = one commit.** Commit messages end with the session link and
+  **avoid backticks** (they get shell-substituted — use `git commit -F -` heredoc).
+- **Each feature ships tests**: a `test/mNN.<name>.mjs` (server, pure Node) and
+  usually a `.render.mjs` (headless via `openGame()` + injected snapshots), wired
+  into `test/run-all.mjs`. Keep beginner-readable comments.
+- **Whole-system safety nets — run/extend after cross-system changes:**
+  - `m29.integration` — full bots match through the real `step()` loop, asserting
+    invariants every tick (positions finite + in-bounds, hp≤max, gold/xp≥0, …).
+  - `m30.snapshot` — every snapshot is NaN/undefined-free + JSON round-trips, and
+    every top-level field is read by NetClient.
+- **Headless tests have no audio/localStorage device** — guard new browser APIs
+  (see `audio.js`/`record.js` `safeStorage`).
+- **Texture dimensions are load-bearing**: bases/towers/pickups size from config
+  radii and feed hit detection. Keep a sprite's texture the same size when
+  reskinning, or update the matching radius.
+- **Map invariants**: each `LANES` row (top=110, mid=300, bot=490) must stay
+  clear of walls full-width so minions march it (verify with a wall-overlap
+  script before moving a row). `WALLS[0]/[1]` are the two central pillars (now
+  shortened to sit BETWEEN the lanes) — `m13.walls` reads `WALLS[0]` and shoots
+  at its computed mid-row, so keep it a pillar at x≈392. `TOWER_X` spots and
+  `BUSH_ZONES` must stay wall-free. Floors are cosmetic and independent of
+  pathing: `drawGrid` lays jungle, a `LANE_BAND_HALF`-tall stone band per lane
+  (mid full-width; side lanes only between `LANE_ENTRY_X`…`W-entry`), and four
+  rotated-rectangle DIAGONAL connectors fanning the side lanes from each base.
+  The minions' actual fan-out is the spawn `waypoint` (config `LANE_ENTRY_X`),
+  not the floor.
+- **Towers are an ARRAY** `[{team,lane,...}]` (not a Map) — 3 per team. Use
+  `find(t=>t.team===x && t.lane===y)`, not `.get(team)`. `baseVulnerable(team)`
+  is true only when ALL of a team's towers are dead. Client keys tower sprites
+  by `team_lane`.
+
+### Gotchas that have bitten us
+- Several systems are **armed only by `beginPlaying()`** (minion `nextWaveAt`,
+  `matchEndsAt`) and disarmed to `Infinity` otherwise, so tests that set
+  `phase="playing"` directly don't trip them.
+- Towers sit on the center row → some server tests `server.towers.clear()` to
+  isolate a clean lane shot.
+- **Bots are opt-in** (`new GameServer({ bots: true })`) so they never affect
+  existing tests. Team balance counts *humans*; a human replaces a bot.
+- `face` is stored as `{x,y}` but `normalizeInput` returns `{dx,dy}` — a past
+  mismatch caused a dash-to-NaN bug. Keep facing as `{x,y}`.
+- Phaser gives `tileSprite` internal UUID texture keys; store references (e.g.
+  `this.laneFloor`, `this.decor`) rather than filtering the display list by key.
+- **Process discipline:** edits to the same file applied as a parallel batch have
+  landed out of order and produced a broken commit (a called-but-undefined
+  method). Prefer **sequential** edits on a given file, and verify a change with
+  a direct test run before committing — don't trust stale background-task output.
+
+## 6. Deploy (already wired)
+
+`server.js` honors `PORT` (Render/Railway). `index.html` has a commented
+`window.PIXELCLASH_SERVER` hook for cross-host hosting; `defaultServerUrl()`
+auto-uses `wss://` on an https page. Step-by-step guide:
+`docs/HOW-TO-KEEP-BUILDING.md` §9.
+
+## 7. Where things stand / good next steps
+
+The core MOBA loop + progression + 6 heroes + a 3-route jungle map + full pixel-
+art pass (characters/terrain/structures/animation) are all done and tested.
+Candidate next features (each self-contained):
+- **Jungle objectives** — a neutral buff camp per jungle pocket worth gold/XP
+  (reuses the pickup/minion systems).
+- **Bushes as stealth** — hide heroes standing in bush tiles (adds flank mind-games).
+- **Per-hero unique abilities** (behaviorally different, not just stat deltas).
+- **Recall/teleport home**; **lifesteal shop item**; **balance pass** via bot-vs-bot.
+
+## 8. Branch / PR — IMPORTANT
+
+- **All work is on `claude/pixel-moba-game-WobPa`.** This is the ONLY branch with
+  the game. `main` is just the empty root commit (PR #1 targets it) — never
+  develop on `main`, and don't push to other branches without explicit permission.
+- On any fresh checkout / new tool (e.g. ChatGPT Codex), start with:
+  ```bash
+  git fetch origin && git checkout claude/pixel-moba-game-WobPa
+  ```
+- Repo: `4305labs/pixelclash`. PR: **#1**.
+
+## 9. Player-facing docs to keep in sync
+
+- `README.md` — how to play, controls, gallery.
+- `docs/HOW-TO-KEEP-BUILDING.md` — non-coder's guide to tweaking/extending +
+  the free-hosting deploy steps.
+- `CLAUDE.md` — short agent-oriented project guide (overlaps this; keep both current).
+
+---
+
+## Update protocol (do this every major change)
+
+1. Implement the change + its tests; get `npm test` AND `node test/live-browser.mjs`
+   green and `npm run build` clean. Commit.
+2. Update this file:
+   - bump **Last updated** (newest commit hash + subject) and **Status**;
+   - if you changed the snapshot, update §3's field list;
+   - if you added a system, add a §4 row + any new §5 invariant/gotcha;
+   - move anything you finished out of §7.
+3. Keep `README.md`, `docs/HOW-TO-KEEP-BUILDING.md`, and `CLAUDE.md` in sync.
+4. Commit the doc updates (can be the same feature commit).

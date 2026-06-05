@@ -1,0 +1,173 @@
+// Milestone 17 (lane minions): waves spawn from each base and march toward the
+// enemy base, fight enemy units in their way, chip the enemy base on arrival,
+// can be killed by player bolts (and are valid auto-aim targets), and are
+// cleared on reset / never spawn outside live play. Pure Node, no sockets.
+import GameServer from "../src/net/GameServer.js";
+import NetClient from "../src/net/NetClient.js";
+import { createLocalPair } from "../src/net/LocalConnection.js";
+import { MINION, BASE, COMBAT, LANES } from "../src/config.js";
+import { assert } from "./helpers.mjs";
+
+const DT = 1 / 30;
+const stepN = (srv, n) => {
+  for (let i = 0; i < n; i++) srv.step(DT);
+};
+
+const server = new GameServer();
+function connect() {
+  const pair = createLocalPair();
+  server.addConnection(pair.server);
+  const c = new NetClient(pair.client);
+  c.join();
+  return c;
+}
+
+try {
+  const blue = connect(); // p1
+  connect(); // p2 (red)
+
+  // Get to live play.
+  assert(server.phase === "countdown", "both teams present -> countdown");
+  server.timeMs = server.startAt;
+  server.step(DT);
+  assert(server.phase === "playing", "countdown elapses -> playing");
+  assert(server.minions.length === 0, "no minions at the opening whistle");
+
+  // --- Waves spawn after the first-wave delay -------------------------------
+  // Just before the wave, nothing; once the timer is due, a full wave per team.
+  stepN(server, 5);
+  assert(server.minions.length === 0, "no minions before the first wave is due");
+  server.timeMs = server.nextWaveAt;
+  server.step(DT);
+  // A wave spawns perWave minions per LANE per team (3 lanes).
+  const perTeam = MINION.perWave * LANES.length;
+  assert(server.minions.length === perTeam * 2, "first wave: perWave minions per lane per team");
+  assert(
+    server.minions.filter((m) => m.team === "blue").length === perTeam &&
+      server.minions.filter((m) => m.team === "red").length === perTeam,
+    "the wave is split evenly between the teams"
+  );
+  // Each lane has its own column of minions.
+  for (const ln of LANES) {
+    assert(
+      server.minions.filter((m) => m.team === "blue" && m.lane === ln.id).length === MINION.perWave,
+      `blue has a ${ln.id}-lane column`
+    );
+  }
+  // Minions spawn at the NEXUS (base row) and head to a lane-entry waypoint, so
+  // the lanes fan out from the base rather than starting as parallel strips.
+  // (They've already taken one step toward the waypoint, so allow a little
+  // y-drift off the exact nexus row.)
+  assert(
+    server.minions.every((m) => Math.abs(m.y - server.bases.get(m.team).y) <= MINION.speed * DT + 1),
+    "minions spawn on (and start from) the nexus row"
+  );
+  // The side-lane minions still have a waypoint to their lane row (the mid-lane
+  // ones spawn already on the nexus row, so they may have cleared theirs).
+  for (const lane of ["top", "bot"]) {
+    const row = LANES.find((l) => l.id === lane).row;
+    assert(
+      server.minions
+        .filter((m) => m.lane === lane)
+        .every((m) => m.waypoint && m.waypoint.y === row),
+      `${lane}-lane minions have a waypoint out to their lane row`
+    );
+  }
+  // They appear just in front of their base, on the side facing the enemy.
+  // (Staggered behind each other, and they take their first step on the spawn
+  // tick, so allow slack for the column depth.)
+  const aheadMax = MINION.spawnAhead + (MINION.perWave - 1) * 14 + 8;
+  assert(
+    server.minions.every((m) => {
+      const b = server.bases.get(m.team);
+      const ahead = m.team === "blue" ? m.x - b.x : b.x - m.x;
+      return ahead > 0 && ahead <= aheadMax;
+    }),
+    "minions appear just in front of their own base"
+  );
+
+  // --- They march toward the enemy base -------------------------------------
+  server.nextWaveAt = Infinity; // suppress further waves for the marching check
+  const blueX0 = server.minions.find((m) => m.team === "blue").x;
+  const redX0 = server.minions.find((m) => m.team === "red").x;
+  stepN(server, 20);
+  const blueX1 = server.minions.find((m) => m.team === "blue").x;
+  const redX1 = server.minions.find((m) => m.team === "red").x;
+  assert(blueX1 > blueX0, "blue minions advance to the right (toward red's base)");
+  assert(redX1 < redX0, "red minions advance to the left (toward blue's base)");
+
+  // --- Enemy minions fight when they meet -----------------------------------
+  server.minions = [];
+  server.minions.push({ id: "mb", team: "blue", x: 400, y: 300, laneY: 300, hp: MINION.maxHp, alive: true, cd: 0 });
+  server.minions.push({ id: "mr", team: "red", x: 420, y: 300, laneY: 300, hp: MINION.maxHp, alive: true, cd: 0 });
+  server.step(DT);
+  assert(
+    server.minions.find((m) => m.id === "mb").hp === MINION.maxHp - MINION.dmg &&
+      server.minions.find((m) => m.id === "mr").hp === MINION.maxHp - MINION.dmg,
+    "adjacent enemy minions trade blows"
+  );
+
+  // --- A minion at the enemy base chips it ----------------------------------
+  // Move the heroes well clear so the minion's only target is the base.
+  for (const p of server.players.values()) {
+    p.x = 400;
+    p.y = 60;
+  }
+  const redBase = server.bases.get("red");
+  server.towers.forEach((t) => { if (t.team === "red") t.alive = false; }); // base is shielded until its tower falls
+  server.minions = [
+    { id: "siege", team: "blue", x: redBase.x, y: redBase.y, laneY: redBase.y, hp: MINION.maxHp, alive: true, cd: 0 },
+  ];
+  const baseHp0 = redBase.hp;
+  server.step(DT);
+  assert(redBase.hp === baseHp0 - MINION.dmg, "a minion at the enemy base damages it");
+  assert(server.phase === "playing", "one chip doesn't end the match");
+
+  // --- Player bolts kill minions (and minions are auto-aim targets) ---------
+  server.projectiles = []; // clear any stray tower zaps from earlier sub-steps
+  server.minions = [
+    { id: "tgt", team: "red", x: 440, y: 300, laneY: 300, hp: MINION.maxHp, alive: true, cd: 0 },
+  ];
+  const p1 = server.players.get("p1"); // blue
+  p1.x = 400;
+  p1.y = 300;
+  p1.cd.basic = 0;
+  server.tryAttack(p1, "basic");
+  const shot = server.projectiles.find((b) => b.kind !== "tower");
+  assert(shot, "blue fires — auto-aim locks the nearby red minion");
+  assert(shot.vx > 0, "the bolt heads toward the minion (to the right)");
+  stepN(server, 4);
+  assert(
+    server.minions.find((m) => m.id === "tgt").hp < MINION.maxHp,
+    "the bolt damages the red minion"
+  );
+
+  // --- No minions outside live play -----------------------------------------
+  server.phase = "waiting";
+  server.minions = [];
+  server.nextWaveAt = 0; // would be "due", but waiting freezes the world
+  server.step(DT);
+  assert(server.minions.length === 0, "no minions spawn while waiting in the lobby");
+
+  // --- Reset clears the lane ------------------------------------------------
+  server.phase = "playing";
+  server.minions.push({ id: "x", team: "blue", x: 200, y: 300, laneY: 300, hp: 10, alive: true, cd: 0 });
+  server.resetMatch();
+  assert(server.minions.length === 0, "resetMatch clears all minions");
+
+  // --- The snapshot carries minions to the client ---------------------------
+  server.minions = [
+    { id: "snap", team: "blue", x: 222, y: 311, laneY: 300, hp: 17, alive: true, cd: 0 },
+  ];
+  server.broadcast();
+  await new Promise((r) => setTimeout(r, 10));
+  assert(blue.minions.length === 1 && blue.minions[0].id === "snap", "client receives minions");
+  assert(blue.minions[0].x === 222 && blue.minions[0].hp === 17, "minion fields round-trip");
+
+  console.log("\nMILESTONE 17 MINION TESTS PASSED");
+} catch (e) {
+  console.error("\nTEST FAILURE:", e.message);
+  process.exitCode = 1;
+} finally {
+  server.stop();
+}

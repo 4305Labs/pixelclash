@@ -1,30 +1,41 @@
 // ===========================================================================
-// PixelClash — main entry point
-// This file boots the Phaser game engine and loads our first scene.
-// (A "scene" is one screen of the game — like a menu, or the arena.)
+// PixelClash — main entry point.
+// Boots Phaser, opens a connection to the game server, and loads the arena.
 // ===========================================================================
 
 import Phaser from "phaser";
-import HelloScene from "./scenes/HelloScene.js";
+import { GAME_WIDTH, GAME_HEIGHT, COLORS } from "./config.js";
+import ArenaScene from "./scenes/ArenaScene.js";
+import NetClient from "./net/NetClient.js";
+import { WebSocketConnection } from "./net/WebSocketConnection.js";
+import GameAudio from "./audio.js";
 
-// The size of our game world, in pixels. We use a fixed logical size and
-// let Phaser scale it to fit any screen (phone or desktop) for us.
-export const GAME_WIDTH = 800;
-export const GAME_HEIGHT = 600;
+// Create the connection + client BEFORE the game, so the arena can use it.
+const conn = new WebSocketConnection();
+const net = new NetClient(conn);
+const audio = new GameAudio();
 
 const config = {
-  type: Phaser.AUTO, // Let Phaser pick the best renderer (WebGL, falls back to Canvas)
-  parent: "game-root", // Put the game inside the <div id="game-root"> in index.html
-  backgroundColor: "#1d2b53", // A dark blue background (classic pixel-art palette)
-  pixelArt: true, // Keep pixels crisp instead of blurry when scaled
+  type: Phaser.AUTO,
+  parent: "game-root",
+  backgroundColor: COLORS.bg,
+  pixelArt: true,
   scale: {
-    mode: Phaser.Scale.FIT, // Scale the game to fit the screen, keeping proportions
-    autoCenter: Phaser.Scale.CENTER_BOTH, // Center it horizontally and vertically
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
   },
-  scene: [HelloScene], // The list of scenes; the first one starts automatically
+  physics: {
+    default: "arcade",
+    arcade: { debug: false },
+  },
+  scene: [ArenaScene],
 };
 
-// Create the game. This single line starts everything.
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+game.registry.set("net", net); // hand the network client to the scenes
+game.registry.set("audio", audio); // ...and the sound effects
+
+// Expose for automated tests and for poking around in the browser console.
+window.PIXELCLASH = { game, net, audio };
